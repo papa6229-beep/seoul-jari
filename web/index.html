@@ -5,13 +5,13 @@
 <!-- 새로 올린 게 바로 보이도록 페이지는 매번 확인하게 한다. -->
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Chalkmap — 영어 교습소·학원 창업 준비</title>
-<link rel="stylesheet" href="styles.css?v=51">
+<title>서울자리 — 서울 창업 입지 분석</title>
+<link rel="stylesheet" href="styles.css?v=54">
 <script>
 // 브라우저가 옛 화면을 붙잡고 있으면 새 버전으로 한 번 다시 불러온다.
 // 올릴 때마다 이 숫자와 version.json 을 같이 올린다.
 (function(){
-  var PAGE_V = '51';
+  var PAGE_V = '54';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -28,38 +28,73 @@
 <div class="wrap home">
 
   <div class="brand">
-    <h1>Chalkmap</h1>
-    <p>영어 교습소 · 공부방 · 학원 창업 준비</p>
+    <span class="mark">서울 창업 입지 분석</span>
+    <h1>서울자리</h1>
+    <p>서울에서 가게 열기 전, 이 자리부터 읽어보세요.</p>
   </div>
+
+  <section class="home-search" aria-label="입지 분석 시작">
+    <div>
+      <label for="biz">업종을 고르세요</label>
+      <select id="biz">
+        <option value="cafe">개인 카페</option>
+        <option value="food">분식 · 김밥 · 샌드위치</option>
+        <option value="fitness">필라테스 · PT</option>
+        <option value="unmanned">무인점포</option>
+        <option value="academy">학원 · 교습소</option>
+      </select>
+    </div>
+    <div>
+      <label for="area">지역을 고르세요</label>
+      <input id="area" type="search" placeholder="예: 성수동, 연남동, 강남구">
+    </div>
+    <a class="start" id="startAnalysis" href="location.html?biz=cafe">분석 보기</a>
+  </section>
 
   <nav class="menu">
     <a class="tile live" href="location.html">
       <span class="no">01</span>
-      <span class="t">입지 · 상권 분석</span>
-      <span class="d"><span>동네별 학생 · 학원 · 집값 비교</span><span>시장 유형 해석까지</span></span>
+      <span class="t">입지 분석</span>
+      <span class="d"><span>수요 · 경쟁 · 비용 부담을 한 화면에서</span><span>서울 구·동 기준으로 먼저 보기</span></span>
     </a>
     <a class="tile live" href="parents.html">
       <span class="no">02</span>
-      <span class="t">학부모 · 교육환경</span>
-      <span class="d"><span>부모가 고르는 기준과 시장 숫자</span><span>2026 교육 제도까지</span></span>
+      <span class="t">업종별 기준</span>
+      <span class="d"><span>개인 카페 · 필라테스 · 무인점포</span><span>업종마다 다르게 봐야 할 지표</span></span>
     </a>
     <a class="tile live" href="curriculum.html">
-      <span class="no">03 <span class="beta">베타</span></span>
-      <span class="t">수업 · 교재 준비</span>
-      <span class="d"><span>2026 교육과정·평가 기준</span><span>커리큘럼·문항 만들기 미리보기</span></span>
+      <span class="no">03</span>
+      <span class="t">서울 지역 보기</span>
+      <span class="d"><span>자치구와 동네별 상권 신호</span><span>후보지를 넓게 훑어보기</span></span>
     </a>
     <a class="tile live" href="highschool.html">
       <span class="no">04</span>
-      <span class="t">고교 선택 · 대입 연결</span>
-      <span class="d"><span>영어 관점 고등학교 선택 기준</span><span>대입 제도와 고입 요강까지</span></span>
+      <span class="t">창업 체크리스트</span>
+      <span class="d"><span>계약 전 현장 확인 항목</span><span>공공데이터로 놓치기 쉬운 것까지</span></span>
     </a>
   </nav>
 
   <div class="foot">
-    <p>자료 기준 2026년 8월 <details class="dates" data-dates><summary>자료별 기준일</summary></details></p>
-    <p class="src"><span>학원·학교 나이스 교육정보 개방포털</span> <span>학교 재학생 학교알리미(2026 공시)</span> <span>인구 행정안전부</span> <span>아파트·상가 거래 국토교통부</span> <span>상가 임대 한국부동산원</span> <span>시장 분석 자체 조사(2026.09)</span></p>
+    <p>공공데이터 기반 참고 정보 <details class="dates" data-dates><summary>자료별 기준일</summary></details></p>
+    <p class="src"><span>서울 한정 베타</span> <span>광고·제휴 문의 준비 중</span> <span>창업·투자·임대차 계약의 최종 판단 근거가 아닙니다</span></p>
   </div>
 </div>
-<script src="dates.js?v=51"></script>
+<script>
+(function(){
+  var biz = document.getElementById('biz');
+  var area = document.getElementById('area');
+  var start = document.getElementById('startAnalysis');
+  function syncStart(){
+    var url = 'location.html?biz=' + encodeURIComponent(biz.value);
+    var q = area.value.trim();
+    if (q) url += '&q=' + encodeURIComponent(q);
+    start.href = url;
+  }
+  biz.addEventListener('change', syncStart);
+  area.addEventListener('input', syncStart);
+  syncStart();
+})();
+</script>
+<script src="dates.js?v=54"></script>
 </body>
 </html>

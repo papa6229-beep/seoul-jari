@@ -5,15 +5,15 @@
 <!-- 새로 올린 게 바로 보이도록 페이지는 매번 확인하게 한다. -->
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>입지 · 상권 분석 — Chalkmap</title>
-<link rel="stylesheet" href="styles.css?v=51">
+<title>서울 입지 분석 — 서울자리</title>
+<link rel="stylesheet" href="styles.css?v=54">
 <!-- 카카오맵 JavaScript 키. 등록된 도메인에서만 동작하도록 잠겨 있다. -->
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 // 브라우저가 옛 화면을 붙잡고 있으면 새 버전으로 한 번 다시 불러온다.
 // 올릴 때마다 이 숫자와 version.json 을 같이 올린다.
 (function(){
-  var PAGE_V = '51';
+  var PAGE_V = '54';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -31,11 +31,11 @@
 
   <aside class="side">
     <a class="home-link" href="index.html">← 메뉴</a>
-    <h1>입지 · 상권 분석</h1>
+    <h1>서울 입지 분석</h1>
     <div class="field qfield">
       <label for="q">지역 이름 검색</label>
-      <input class="search" id="q" type="search" placeholder="예: 대치동, 분당구" autocomplete="off">
-      <small class="qhint">검색 중에는 지역 범위 · 시장 유형 · 0곳 조건을 건너뛰고 전체에서 찾습니다.</small>
+      <input class="search" id="q" type="search" placeholder="예: 성수동, 연남동, 강남구" autocomplete="off">
+      <small class="qhint">업종과 동네를 고르면 서울 한정으로 수요·경쟁·비용 부담을 먼저 봅니다. 검색 중에는 지역 범위 · 시장 유형 · 0곳 조건을 건너뜁니다.</small>
     </div>
     <button type="button" class="reset" id="reset" hidden>조건 모두 지우기</button>
     <p class="where" id="basis"></p>
@@ -59,7 +59,7 @@
     </div>
 
     <div class="field skip-q" id="mktfield" style="display:none">
-      <label for="mkt">시장 유형 <small>동 단위 · 서울+인접 경기</small></label>
+      <label for="mkt">시장 유형 <small>동 단위 · 서울 한정</small></label>
       <select class="pick" id="mkt"></select>
     </div>
 
@@ -90,7 +90,7 @@
   <main class="main">
     <div class="topbar">
       <h2 id="title"></h2>
-      <span class="basis">2026년 8월 기준 · 서울 + 경기</span>
+      <span class="basis">서울 한정 베타 · 공공데이터 기반 참고 정보</span>
       <details class="dates" data-dates><summary>자료 기준일</summary></details>
     </div>
 
@@ -171,14 +171,21 @@ const kindLabel = k => (ACA_KIND[k] && ACA_KIND[k].label) || k;
 
 const indent = m => m.sub ? '  '.repeat(m.sub) + '└ ' : '';
 // 자료를 갱신하면 올린다. HTML의 styles.css?v= 도 같이 올릴 것.
-const V = '51';
+const V = '54';
 const PER_PAGE = 10;
 const MAX_COLS = 4;
 const BAR_COLORS = ['#2e7d68', '#6f93ab', '#a8906c', '#8f7f9c', '#7d9a6b'];
 const UNKNOWN_DONG = '(동 미상)';
+const BIZ_HINTS = {
+  cafe: {label:'개인 카페', metric:'상가 수', note:'동선, 체류 가능성, 임대료 부담을 함께 봐야 합니다. 현재 화면에서는 상가·아파트·유동을 대신할 수 있는 보조 지표부터 확인합니다.'},
+  food: {label:'분식 · 김밥 · 샌드위치', metric:'학교·상가·주거', note:'반복 구매가 중요하므로 학교, 직장, 주거 밀집을 나눠 봅니다. 배달 반경과 점심 수요는 현장에서 다시 확인해야 합니다.'},
+  fitness: {label:'필라테스 · PT', metric:'주거·소득 보조지표', note:'거주 인구와 지불 여력, 퇴근 후 이동 동선이 중요합니다. 건물 시설 조건과 주차·샤워 공간은 별도 확인이 필요합니다.'},
+  unmanned: {label:'무인점포', metric:'주거·야간·관리 리스크', note:'임대료와 관리 난이도가 핵심입니다. 야간 유동, 치안, 민원 가능성은 공공데이터만으로 단정하지 않습니다.'},
+  academy: {label:'학원 · 교습소', metric:'학생·학교·경쟁', note:'현재 데이터가 가장 많이 연결된 업종입니다. 학생 수, 학교, 기존 학원 밀도와 학원가 거리를 함께 봅니다.'}
+};
 
 const state = {a:'', cols:[], unit:'dong', region:'서울',
-               desc:true, q:'', page:0, hideZero:true, gap:false, listKind:'all', listSort:'old', focus:null, mkt:'', picked:null, tab:'summary', rings:true,
+               desc:true, q:'', page:0, hideZero:true, gap:false, listKind:'all', listSort:'old', focus:null, mkt:'', picked:null, tab:'summary', rings:true, biz:'cafe',
                show:{'초등학교':true, '중학교':true,
                      '영어 전문':true, '영어+타 과목':true, '교습소':true,
                      '아파트':false, '상가':false},
@@ -783,8 +790,7 @@ function renderDetail(list){
     if (v === null || v === undefined) return null;
     return rankBase.filter(r => r[k] !== null && r[k] !== undefined && r[k] > v).length + 1;
   };
-  const rankScope = (rankBase.length && rankBase.every(r => r.sido === rankBase[0].sido) ? rankBase[0].sido : '서울+경기') +
-    ' ' + {dong: '동', gu: '구·시', hub: '학원가'}[state.unit] + ' ' + fmt(rankBase.length) + '곳 중 순위';
+  const rankScope = '서울 ' + {dong: '동', gu: '구', hub: '학원가'}[state.unit] + ' ' + fmt(rankBase.length) + '곳 중 순위';
 
   const won = v => v >= 100_000_000
     ? (v / 100_000_000).toFixed(1).replace(/\.0$/, '') + '억'
@@ -1293,7 +1299,7 @@ function render(){
   renderCols();
 
   segment(unit,   [{k:'dong', l:'동'}, {k:'gu', l:'구 · 시'}, {k:'hub', l:'학원가'}], () => state.unit, k => state.unit = k);
-  segment(region, [{k:'서울', l:'서울'}, {k:'경기', l:'경기'}, {k:'all', l:'서울+경기'}],
+  segment(region, [{k:'서울', l:'서울'}],
           () => state.region, k => state.region = k);
   segment(order,  [{k:'desc', l:'많은 순'}, {k:'asc', l:'적은 순'}],
           () => state.desc ? 'desc' : 'asc', k => state.desc = (k === 'desc'));
@@ -1326,7 +1332,10 @@ function render(){
   title.textContent = state.q.trim()
     ? '「' + state.q.trim() + '」 검색 결과'
     : mA.l + (state.desc ? ' — 많은 순' : ' — 적은 순');
-  explain.innerHTML = columns.map(m => '<b>' + m.l + '</b> — ' + m.d).join('<br>');
+  const biz = BIZ_HINTS[state.biz] || BIZ_HINTS.cafe;
+  explain.innerHTML = '<b>' + biz.label + '</b> — ' + biz.note + '<br>' +
+                      '<b>우선 확인 지표</b> — ' + biz.metric + '<br>' +
+                      columns.map(m => '<b>' + m.l + '</b> — ' + m.d).join('<br>');
 
   const list = rowsFor();
   const stats = columns.map(m => ({
@@ -1405,7 +1414,7 @@ function renderChips(){
   const q = state.q.trim();
   const skip = !!q && !state.gap;
   const unitName = {dong: '동', gu: '구·시', hub: '학원가'};
-  const regionName = {'서울': '서울', '경기': '경기', all: '서울+경기'};
+  const regionName = {'서울': '서울'};
   const list = [];
   const add = (text, clear, off) => list.push({text, clear, off});
   if (q) add('검색 「' + q + '」', () => { state.q = ''; document.getElementById('q').value = ''; });
@@ -1466,8 +1475,7 @@ function renderBlank(){
 /** '학원 적은 순' 단독 화면. 다른 지표는 내리고 이 기준 하나만 나열한다. */
 function renderFew(){
   const list = rowsFor();
-  const where = (state.region === 'all' ? '서울+경기' : state.region) + ' ' +
-                {dong: '동', gu: '구·시', hub: '학원가'}[state.unit];
+  const where = '서울 ' + {dong: '동', gu: '구', hub: '학원가'}[state.unit];
   title.textContent = '학교·아이 수에 비해 영어학원이 적은 순';
   explain.innerHTML =
     '학교와 초4~중3 아이가 <b>보통 이상으로 많은 지역</b> 가운데, 그에 비해 <b>영어 학원·교습소가 적은 곳</b>부터 나열합니다.<br>' +
@@ -1542,11 +1550,15 @@ selA.onchange = e => {
   render();
 };
 q.oninput = e => { state.q = e.target.value; state.page = 0; render(); };
-q.value = '';
+const params = new URLSearchParams(location.search);
+state.biz = BIZ_HINTS[params.get('biz')] ? params.get('biz') : 'cafe';
+state.q = params.get('q') || '';
+q.value = state.q;
 document.getElementById('reset').onclick = () => {
   Object.assign(state, {a: '', cols: [], unit: 'dong', region: '서울', desc: true, q: '', page: 0,
-                        hideZero: true, gap: false, mkt: '', picked: null, tab: 'summary'});
+                        hideZero: true, gap: false, mkt: '', picked: null, tab: 'summary', biz: 'cafe'});
   q.value = '';
+  history.replaceState(null, '', 'location.html');
   render();
   window.scrollTo(0, 0);
 };
@@ -1556,8 +1568,7 @@ fetch('data/regions.json?v=' + V)
   .then(r => r.json())
   .then(d => {
     DATA = d;
-    basis.textContent = '영어학원 ' + fmt(d.counts.english) + '곳 · 초중학교 ' +
-                        fmt(d.counts.schools) + '개교';
+    basis.textContent = '서울 한정 베타 · 현재는 교육업 데이터를 먼저 연결 · ' + (state.unit === 'gu' ? '구' : '동') + ' 단위';
     render();
     // 부동산은 곁들이는 자료라 따로 받고, 오면 다시 그린다.
     fetch('data/realestate.json?v=' + V)
@@ -1586,7 +1597,7 @@ fetch('data/regions.json?v=' + V)
   })
   .catch(() => { rows.innerHTML = '<div class="none">데이터를 불러오지 못했습니다.</div>'; });
 </script>
-<script src="dates.js?v=51"></script>
+<script src="dates.js?v=54"></script>
 </body>
 </html>
 

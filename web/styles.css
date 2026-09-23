@@ -16,9 +16,25 @@ button,select,input{font:inherit}
 /* ---------- 메인 메뉴 ---------- */
 .home{min-height:100vh; display:flex; flex-direction:column; justify-content:center;
       max-width:1120px; margin:0 auto; padding-block:30px; padding-inline:22px}
-.brand{text-align:center; margin-bottom:54px}
-.brand h1{margin:0; font-size:52px; letter-spacing:-.01em; font-weight:800; color:var(--accent)}
-.brand p{margin:14px 0 0; color:var(--ink-2); font-size:16px}
+.brand{text-align:center; margin-bottom:28px}
+.brand .mark{display:inline-block; margin-bottom:10px; color:var(--accent); font-size:14px; font-weight:800}
+.brand h1{margin:0; font-size:58px; letter-spacing:0; font-weight:850; color:var(--ink)}
+.brand p{margin:14px 0 0; color:var(--ink-2); font-size:18px; font-weight:650; word-break:keep-all}
+.home-search{
+  display:grid; grid-template-columns:minmax(180px,250px) 1fr auto; gap:10px; align-items:end;
+  background:var(--ink); color:#fff; border-radius:10px; padding:14px; margin:0 auto 24px; width:min(880px,100%);
+  box-shadow:0 16px 34px rgba(20,22,26,.12)
+}
+.home-search label{display:block; font-size:13px; color:#c9d2d0; margin:0 0 5px; font-weight:700}
+.home-search select,.home-search input{
+  width:100%; border:1px solid rgba(255,255,255,.18); background:#fff; color:var(--ink);
+  border-radius:8px; padding:10px 12px; min-height:44px
+}
+.home-search .start{
+  display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 18px;
+  border-radius:8px; background:#45b386; color:#071411; text-decoration:none; font-weight:850; white-space:nowrap
+}
+.home-search .start:hover{background:#58c796}
 .menu{display:grid; grid-template-columns:repeat(4,1fr); gap:16px}
 .tile{
   background:var(--surface); border:1px solid var(--line); border-radius:12px;
@@ -492,6 +508,8 @@ body.few-mode .meta .legend{display:none}
 @media (max-width:600px){
   .home{justify-content:flex-start; padding-block:48px 30px}
   .brand{margin-bottom:36px}
+  .brand h1{font-size:44px}
+  .home-search{grid-template-columns:1fr; align-items:stretch; margin-bottom:22px}
   .menu{grid-template-columns:1fr; gap:10px}
   .tile{min-height:0; padding:20px 20px}
   .tile .t{margin-top:10px}
@@ -547,7 +565,7 @@ body.blank-mode .meta .legend{visibility:hidden}
 .msec.hub .tag.data{display:inline-block; font-size:12px; font-weight:800; color:#1f5fae; background:#e3edfa;
   border-radius:5px; padding:1px 7px; margin-right:6px}
 
-/* ---------- 학부모 · 교육환경 ---------- */
+/* ---------- 업종별 기준 ---------- */
 .guide .legend-tags{background:#faf9f6; border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:18px}
 .guide .legend-tags p{margin:4px 0; font-size:13.5px; color:var(--ink-2)}
 .guide .legend-tags .tg{margin-right:8px}
@@ -644,7 +662,7 @@ body.blank-mode .meta .legend{visibility:hidden}
 .msec.hub .mcode{font-size:13px; padding:2px 7px; margin-right:4px}
 @media (max-width:700px){ .ringgrid{grid-template-columns:repeat(2,1fr)} }
 
-/* ---------- 수업 · 교재 준비 (베타) ---------- */
+/* ---------- 서울 지역 보기 ---------- */
 .beta{display:inline-block; font-size:11.5px; font-weight:800; color:#8a3ffc; background:#f1e8ff;
   border-radius:5px; padding:1px 7px; vertical-align:3px; letter-spacing:.02em}
 .side h1 .beta{font-size:11px; vertical-align:3px; margin-left:4px}
@@ -786,7 +804,7 @@ body.searching .skip-q .lbl::after, body.searching .skip-q label::after{content:
 .chip button:hover{background:#efece6; color:var(--ink)}
 .chip.off{opacity:.45; text-decoration:line-through}
 
-/* 고교 선택 · 대입 연결 */
+/* 창업 체크리스트 */
 .highschool .lede{font-size:18px; line-height:1.75; margin:0 0 18px}
 .gradepick{display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 12px}
 .gradepick button{font:inherit; font-weight:800; color:var(--ink-2); background:#fff;
