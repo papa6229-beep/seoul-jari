@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=64">
+<link rel="stylesheet" href="styles.css?v=65">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '64';
+  var PAGE_V = '65';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '64';
+const V = '65';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json'
@@ -520,7 +520,11 @@ function renderDetail(rows){
     '<div class="dbody">' + content + '</div>';
   if (state.tab === 'map'){
     for (const el of detail.querySelectorAll('.tg[data-show]')){
-      el.onclick = () => { state.show[el.dataset.show] = !state.show[el.dataset.show]; drawCommercialMap(r, true); };
+      el.onclick = () => {
+        state.show[el.dataset.show] = !state.show[el.dataset.show];
+        el.setAttribute('aria-pressed', String(state.show[el.dataset.show]));
+        drawCommercialMap(r, true);
+      };
     }
     drawCommercialMap(r);
   }
@@ -562,6 +566,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=64"></script>
+<script src="dates.js?v=65"></script>
 </body>
 </html>
