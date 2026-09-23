@@ -407,7 +407,10 @@ select.add-col{
   --pin-a1:#ff1f7a; --pin-a2:#ff7a00; --pin-a3:#ffc800;
   --pin-b:#111827; --pin-p:#00c2a0; --pin-g:#7ed600;
 }
-.mk{position:relative; cursor:pointer; white-space:nowrap}
+.mk{
+  position:relative; cursor:pointer; white-space:nowrap;
+  display:block; width:28px; height:30px; touch-action:manipulation;
+}
 .mk::after{
   content:''; position:absolute; left:50%; bottom:0; box-sizing:border-box;
   border:2.5px solid #fff;
