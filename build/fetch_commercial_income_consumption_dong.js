@@ -6,7 +6,7 @@
     web/data/commercial-income-consumption-dong.json
 */
 const path = require('path');
-const {ROOT, getArg, getKey, normalizeNumber, latestOnly, fetchPagedRows, writeJson} = require('./commercial_api_common');
+const {ROOT, getArg, getKey, normalizeNumber, latestOnly, latestClosedQuarter, fetchPagedRows, writeJson} = require('./commercial_api_common');
 
 const SERVICE = 'VwsmAdstrdNcmCnsmpW';
 const DEFAULT_OUT = path.join(ROOT, 'web', 'data', 'commercial-income-consumption-dong.json');
@@ -50,7 +50,7 @@ async function fetchCommercialIncomeConsumptionDong({key, quarter = '', pageSize
 }
 
 async function main(){
-  const quarter = getArg('quarter', '');
+  const quarter = getArg('quarter', latestClosedQuarter());
   const out = path.resolve(getArg('out', DEFAULT_OUT));
   const summary = await fetchCommercialIncomeConsumptionDong({key: getKey(), quarter});
   writeJson(out, summary);

@@ -14,7 +14,7 @@
 */
 const fs = require('fs');
 const path = require('path');
-const {fetchPagedRows, latestOnly, normalizeNumber} = require('./commercial_api_common');
+const {fetchPagedRows, latestOnly, latestClosedQuarter, normalizeNumber} = require('./commercial_api_common');
 
 const ROOT = path.resolve(__dirname, '..');
 const SERVICE = 'VwsmAdstrdFlpopW';
@@ -105,7 +105,7 @@ async function fetchCommercialFloatingPopulation({
 
 async function main(){
   const key = getKey();
-  const quarter = getArg('quarter', '');
+  const quarter = getArg('quarter', latestClosedQuarter());
   const out = path.resolve(getArg('out', DEFAULT_OUT));
   const summary = await fetchCommercialFloatingPopulation({key, quarter});
   fs.mkdirSync(path.dirname(out), {recursive: true});

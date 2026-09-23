@@ -6,7 +6,7 @@
     web/data/commercial-sales-dong.json
 */
 const path = require('path');
-const {ROOT, getArg, getKey, normalizeNumber, latestOnly, fetchPagedRows, writeJson} = require('./commercial_api_common');
+const {ROOT, getArg, getKey, normalizeNumber, latestOnly, latestClosedQuarter, fetchPagedRows, writeJson} = require('./commercial_api_common');
 
 const SERVICE = 'VwsmAdstrdSelngW';
 const DEFAULT_OUT = path.join(ROOT, 'web', 'data', 'commercial-sales-dong.json');
@@ -67,7 +67,7 @@ async function fetchCommercialSalesDong({key, quarter = '', pageSize = 1000, fet
 }
 
 async function main(){
-  const quarter = getArg('quarter', '');
+  const quarter = getArg('quarter', latestClosedQuarter());
   const out = path.resolve(getArg('out', DEFAULT_OUT));
   const summary = await fetchCommercialSalesDong({key: getKey(), quarter});
   writeJson(out, summary);

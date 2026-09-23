@@ -26,6 +26,18 @@ function latestOnly(rows, key = 'quarter'){
   return rows.filter(row => String(row[key]) === latest);
 }
 
+function latestClosedQuarter(date = new Date()){
+  const kst = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+  let year = kst.getUTCFullYear();
+  const month = kst.getUTCMonth() + 1;
+  let quarter = Math.ceil(month / 3) - 1;
+  if (quarter === 0){
+    year -= 1;
+    quarter = 4;
+  }
+  return `${year}${quarter}`;
+}
+
 async function fetchPagedRows({
   key,
   service,
@@ -62,4 +74,4 @@ function writeJson(out, payload){
   fs.writeFileSync(out, JSON.stringify(payload, null, 2) + '\n', 'utf8');
 }
 
-module.exports = {ROOT, getArg, getKey, normalizeNumber, latestOnly, fetchPagedRows, writeJson};
+module.exports = {ROOT, getArg, getKey, normalizeNumber, latestOnly, latestClosedQuarter, fetchPagedRows, writeJson};

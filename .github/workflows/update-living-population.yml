@@ -8,7 +8,7 @@ on:
         required: false
         default: ''
       quarter:
-        description: '상권분석 유동인구 기준분기 YYYYQ. 예: 20251. 비우면 최신분기'
+        description: '상권분석 기준분기 YYYYQ. 예: 20262. 비우면 직전 완료 분기'
         required: false
         default: ''
   schedule:
