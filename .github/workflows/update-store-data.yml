@@ -1,0 +1,46 @@
+name: Update Store Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit_gu:
+        description: '테스트할 서울 구 이름. 비우면 25개 구 전체 수집'
+        required: false
+        default: ''
+      max_pages:
+        description: '테스트용 최대 페이지 수. 비우면 전체 수집'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test store scripts
+        run: |
+          node build/prep_stores.test.js
+          node build/fetch_stores_api.test.js
+      - name: Fetch store data
+        env:
+          DATA_GO_KR_SERVICE_KEY: ${{ secrets.DATA_GO_KR_SERVICE_KEY }}
+          LIMIT_GU: ${{ inputs.limit_gu }}
+          MAX_PAGES: ${{ inputs.max_pages }}
+        run: |
+          args=()
+          if [ -n "$LIMIT_GU" ]; then args+=("--limit-gu=$LIMIT_GU"); fi
+          if [ -n "$MAX_PAGES" ]; then args+=("--max-pages=$MAX_PAGES"); fi
+          node build/fetch_stores_api.js "${args[@]}"
+      - name: Commit updated data
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: '상가업소 API 데이터 갱신'
+          file_pattern: web/data/store-summary.json

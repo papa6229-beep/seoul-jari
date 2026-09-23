@@ -70,7 +70,23 @@ python build/prep_dates.py                       # -> web/data/dates.json (자�
 node build/prep_stores.test.js                   # 상가업소 집계 테스트
 node build/prep_stores.js data/raw/store_businesses.csv web/data/store-summary.json 2026-09-23
                                                    # -> web/data/store-summary.json (서울 상가업소 업종 요약)
+set DATA_GO_KR_SERVICE_KEY=발급받은_일반_인증키
+node build/fetch_stores_api.js --limit-gu=강남구 --max-pages=1
+                                                   # 상가(상권)정보 API 빠른 점검
+node build/fetch_stores_api.js                    # 서울 25개 구 전체 수집
 ```
+
+### 상가(상권)정보 API 자동 갱신
+
+공공데이터포털 인증키는 코드에 넣지 않는다.
+
+GitHub 저장소에서는 `Settings → Secrets and variables → Actions → New repository secret`에 아래 이름으로 저장한다.
+
+```
+DATA_GO_KR_SERVICE_KEY
+```
+
+그 다음 `Actions → Update Store Data → Run workflow`에서 수동 실행한다. 처음에는 `limit_gu=강남구`, `max_pages=1`로 테스트하고, 응답이 맞으면 입력값을 비워 서울 25개 구 전체를 갱신한다.
 
 `data/raw/aca_*.csv`, `school_*.csv`는 커서 저장소에 담지 않는다. 위 스크립트로 받는다.
 법정동 연계정보 원본은 공공데이터포털 로그인이 필요해 추출본(`dongmap.csv`)만 담았다.

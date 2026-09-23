@@ -70,30 +70,18 @@ function classify(rowText){
   }).map(c => c.id);
 }
 
-function summarizeCsv(text, asOf){
-  const rows = parseCsv(text);
-  if (rows.length < 2) throw new Error('CSV에 데이터가 없습니다.');
-
-  const headers = rows[0].map(v => v.trim());
-  const idx = Object.fromEntries(Object.entries(FIELD_ALIASES).map(([key, aliases]) => [key, pick(headers, aliases)]));
-  for (const key of ['sido', 'gu', 'dong']){
-    if (idx[key] < 0) throw new Error('필수 컬럼을 찾지 못했습니다: ' + key);
-  }
-
+function summarizeRecords(records, asOf){
   const byDong = new Map();
   const byGu = new Map();
   const totals = Object.fromEntries(CATEGORIES.map(c => [c.id, 0]));
   let sourceRows = 0;
 
-  for (const cols of rows.slice(1)){
-    if ((cols[idx.sido] || '').trim() !== '서울') continue;
+  for (const r of records){
+    if ((r.sido || '').trim() !== '서울') continue;
     sourceRows++;
-    const gu = (cols[idx.gu] || '').trim();
-    const dong = (cols[idx.dong] || '').trim() || '(동 미상)';
-    const textForClass = [idx.name, idx.large, idx.middle, idx.small, idx.standard]
-      .filter(i => i >= 0)
-      .map(i => cols[i] || '')
-      .join(' ');
+    const gu = (r.gu || '').trim();
+    const dong = (r.dong || '').trim() || '(동 미상)';
+    const textForClass = [r.name, r.large, r.middle, r.small, r.standard].filter(Boolean).join(' ');
     const cats = classify(textForClass);
     if (!cats.length) continue;
 
@@ -118,6 +106,43 @@ function summarizeCsv(text, asOf){
   };
 }
 
+function summarizeRows(apiRows, asOf){
+  const records = apiRows.map(r => ({
+    sido: r.ctprvnNm || r.시도명 || r.sido,
+    gu: r.signguNm || r.시군구명 || r.gu,
+    dong: r.adongNm || r.ldongNm || r.법정동명 || r.행정동명 || r.dong,
+    name: r.bizesNm || r.상호명 || r.name,
+    large: r.indsLclsNm || r.상권업종대분류명 || r.large,
+    middle: r.indsMclsNm || r.상권업종중분류명 || r.middle,
+    small: r.indsSclsNm || r.상권업종소분류명 || r.small,
+    standard: r.ksicNm || r.표준산업분류명 || r.standard
+  }));
+  return summarizeRecords(records, asOf);
+}
+
+function summarizeCsv(text, asOf){
+  const rows = parseCsv(text);
+  if (rows.length < 2) throw new Error('CSV에 데이터가 없습니다.');
+
+  const headers = rows[0].map(v => v.trim());
+  const idx = Object.fromEntries(Object.entries(FIELD_ALIASES).map(([key, aliases]) => [key, pick(headers, aliases)]));
+  for (const key of ['sido', 'gu', 'dong']){
+    if (idx[key] < 0) throw new Error('필수 컬럼을 찾지 못했습니다: ' + key);
+  }
+
+  const records = rows.slice(1).map(cols => ({
+    sido: cols[idx.sido] || '',
+    gu: cols[idx.gu] || '',
+    dong: cols[idx.dong] || '',
+    name: idx.name >= 0 ? cols[idx.name] || '' : '',
+    large: idx.large >= 0 ? cols[idx.large] || '' : '',
+    middle: idx.middle >= 0 ? cols[idx.middle] || '' : '',
+    small: idx.small >= 0 ? cols[idx.small] || '' : '',
+    standard: idx.standard >= 0 ? cols[idx.standard] || '' : ''
+  }));
+  return summarizeRecords(records, asOf);
+}
+
 function main(){
   const input = process.argv[2] ? path.resolve(process.argv[2]) : DEFAULT_IN;
   const output = process.argv[3] ? path.resolve(process.argv[3]) : DEFAULT_OUT;
@@ -131,4 +156,4 @@ function main(){
 
 if (require.main === module) main();
 
-module.exports = {parseCsv, summarizeCsv, classify, CATEGORIES};
+module.exports = {parseCsv, summarizeCsv, summarizeRows, summarizeRecords, classify, CATEGORIES};

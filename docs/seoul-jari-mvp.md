@@ -53,6 +53,14 @@
 ## 사용자에게 필요한 것
 
 - 서울 열린데이터광장 인증키
-- 공공데이터포털 활용 신청 또는 CSV 내려받기 가능 여부
+- 공공데이터포털 `소상공인시장진흥공단_상가(상권)정보_API` 일반 인증키
 - 새 GitHub 저장소 이름과 공개 여부
 - 유료화 전에 붙일 최소 면책 문구 확인
+
+## 상가 API 수집 방식
+
+- 엔드포인트: `https://apis.data.go.kr/B553077/api/open/sdsc2`
+- 1차 사용 기능: `storeListInDong`
+- 조회 단위: `divId=signguCd`, `key=서울 자치구 코드`
+- 저장 파일: `web/data/store-summary.json`
+- 인증키 저장 위치: 로컬 환경변수 또는 GitHub Actions secret `DATA_GO_KR_SERVICE_KEY`
