@@ -34,6 +34,7 @@ jobs:
           node build/fetch_commercial_floating_population.test.js
           node build/fetch_commercial_sales_dong.test.js
           node build/fetch_commercial_stores_dong.test.js
+          node build/fetch_commercial_worker_population_dong.test.js
       - name: Fetch living population
         env:
           SEOUL_OPENAPI_KEY: ${{ secrets.SEOUL_OPENAPI_KEY }}
@@ -48,8 +49,9 @@ jobs:
           node build/fetch_commercial_floating_population.js "${commercial_args[@]}"
           node build/fetch_commercial_sales_dong.js "${commercial_args[@]}"
           node build/fetch_commercial_stores_dong.js "${commercial_args[@]}"
+          node build/fetch_commercial_worker_population_dong.js "${commercial_args[@]}"
       - name: Commit updated data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: '서울 생활인구 API 데이터 갱신'
-          file_pattern: web/data/living-population-daily-gu.json web/data/commercial-floating-population-dong.json web/data/commercial-sales-dong.json web/data/commercial-stores-dong.json
+          file_pattern: web/data/living-population-daily-gu.json web/data/commercial-floating-population-dong.json web/data/commercial-sales-dong.json web/data/commercial-stores-dong.json web/data/commercial-worker-population-dong.json

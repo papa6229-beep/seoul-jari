@@ -89,6 +89,9 @@ node build/fetch_commercial_sales_dong.js --quarter=20251
 node build/fetch_commercial_stores_dong.test.js
 node build/fetch_commercial_stores_dong.js --quarter=20251
                                                    # -> web/data/commercial-stores-dong.json (상권분석 행정동 점포)
+node build/fetch_commercial_worker_population_dong.test.js
+node build/fetch_commercial_worker_population_dong.js --quarter=20261
+                                                   # -> web/data/commercial-worker-population-dong.json (상권분석 행정동 직장인구)
 node build/prep_admin_dong_codes.test.js
 node build/prep_admin_dong_codes.js C:\Users\BNN\Downloads\전국_행정동_코드정보.zip
                                                    # -> web/data/admin-dong-codes.json (서울 행정동 코드·이름)
@@ -131,6 +134,8 @@ SEOUL_OPENAPI_KEY
 유동인구를 `web/data/commercial-floating-population-dong.json`으로 저장한다.
 행정동 추정매출은 `VwsmAdstrdSelngW`, 행정동 점포는 `VwsmAdstrdStorW` 서비스를 쓴다.
 각각 `web/data/commercial-sales-dong.json`, `web/data/commercial-stores-dong.json`으로 저장한다.
+행정동 직장인구는 `VwsmAdstrdWrcPopltnW` 서비스를 쓰고,
+`web/data/commercial-worker-population-dong.json`으로 저장한다.
 
 서울 생활인구의 행정구역 코드정보 zip은 `prep_admin_dong_codes.js`로 서울 427개 행정동
 코드·이름만 추출해 `web/data/admin-dong-codes.json`으로 저장한다. 이 파일이 있으면
