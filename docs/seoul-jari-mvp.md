@@ -82,6 +82,8 @@
 - 행정동 점포 저장 파일: `web/data/commercial-stores-dong.json`
 - 행정동 직장인구 대상: `VwsmAdstrdWrcPopltnW`
 - 행정동 직장인구 저장 파일: `web/data/commercial-worker-population-dong.json`
+- 행정동 상주인구 대상: `VwsmAdstrdRepopW`
+- 행정동 상주인구 저장 파일: `web/data/commercial-resident-population-dong.json`
 - 받은 파일: `[내국인] 행정동별 서울 생활인구(250m)` 2026-04~2026-08 zip
 - 저장 파일: `web/data/living-population.json`
 - 요약 단위: 서울 25개 구, 427개 행정동 코드
