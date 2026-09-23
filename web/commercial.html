@@ -5,10 +5,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=56">
+<link rel="stylesheet" href="styles.css?v=57">
 <script>
 (function(){
-  var PAGE_V = '56';
+  var PAGE_V = '57';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,15 +73,9 @@
 </div>
 
 <script>
-const V = '56';
+const V = '57';
 const FILES = {
-  codes: 'admin-dong-codes.json',
-  floating: 'commercial-floating-population-dong.json',
-  sales: 'commercial-sales-dong.json',
-  stores: 'commercial-stores-dong.json',
-  workers: 'commercial-worker-population-dong.json',
-  residents: 'commercial-resident-population-dong.json',
-  income: 'commercial-income-consumption-dong.json'
+  view: 'commercial-view-dong.json'
 };
 const BIZ = {
   cafe: {
@@ -147,37 +141,7 @@ async function loadJson(name){
 }
 
 function latestRows(payload){
-  if (!payload) return [];
-  if (Array.isArray(payload.rows)) return payload.rows;
-  if (Array.isArray(payload.dong)) return payload.dong;
-  return [];
-}
-
-function indexBy(rows, key){
-  return Object.fromEntries((rows || []).map(r => [r[key], r]));
-}
-
-function addByCode(rows, codeKey, filter){
-  const map = {};
-  for (const r of rows || []){
-    if (filter && !filter(r)) continue;
-    const k = r[codeKey];
-    if (!k) continue;
-    const t = map[k] || (map[k] = {amount:0, count:0, stores:0, franchise:0, open:0, close:0, items:[]});
-    t.amount += r.amount || 0;
-    t.count += r.count || 0;
-    t.stores += r.store_count || 0;
-    t.franchise += r.franchise_store_count || 0;
-    t.open += r.open_store_count || 0;
-    t.close += r.close_store_count || 0;
-    t.items.push(r);
-  }
-  return map;
-}
-
-function bizFilter(biz){
-  const words = BIZ[biz].words;
-  return r => words.some(w => String(r.business_name || '').includes(w));
+  return payload && Array.isArray(payload.rows) ? payload.rows : [];
 }
 
 function norm(v, min, max, inverse){
@@ -188,46 +152,33 @@ function norm(v, min, max, inverse){
 }
 
 function buildRows(){
-  const codes = DATA.codes && DATA.codes.dongs ? DATA.codes.dongs : [];
-  const floating = indexBy(latestRows(DATA.floating), 'dong_code');
-  const workers = indexBy(latestRows(DATA.workers), 'dong_code');
-  const residents = indexBy(latestRows(DATA.residents), 'dong_code');
-  const income = indexBy(latestRows(DATA.income), 'dong_code');
-  const sales = addByCode(latestRows(DATA.sales), 'dong_code', bizFilter(state.biz));
-  const stores = addByCode(latestRows(DATA.stores), 'dong_code', bizFilter(state.biz));
-
-  const base = codes.map(c => {
-    const f = floating[c.code] || {};
-    const w = workers[c.code] || {};
-    const r = residents[c.code] || {};
-    const inc = income[c.code] || {};
-    const s = sales[c.code] || {};
-    const st = stores[c.code] || {};
-    const core = (r.age_20 || 0) + (r.age_30 || 0) + (r.age_40 || 0) + (w.age_20 || 0) + (w.age_30 || 0) + (w.age_40 || 0);
-    const demand = (f.total || 0) + (w.total || 0) * 800 + (r.total || 0) * 250;
+  const base = latestRows(DATA.view).map(src => {
+    const biz = (src.biz && src.biz[state.biz]) || {};
+    const demand = (src.floating || 0) + (src.workers || 0) * 800 + (src.residents || 0) * 250;
+    const unitPrice = biz.sales && biz.sales_count ? Math.round(biz.sales / biz.sales_count) : null;
     return {
-      code: c.code, gu: c.gu, name: c.name, full_name: c.full_name,
-      floating: f.total || null,
-      lunch_flow: f.t_11_14 || null,
-      evening_flow: f.t_17_21 || null,
-      workers: w.total || null,
-      residents: r.total || null,
-      households: r.households || null,
-      core_people: core || null,
-      spending: inc.total_spending || null,
-      food_spending: inc.food_spending || null,
-      education_spending: inc.education_spending || null,
-      leisure_spending: inc.leisure_culture_spending || null,
-      sales: s.amount || null,
-      sales_count: s.count || null,
-      unit_price: s.amount && s.count ? Math.round(s.amount / s.count) : null,
-      stores: st.stores || null,
-      franchises: st.franchise || null,
-      open: st.open || null,
-      close: st.close || null,
+      code: src.code, gu: src.gu, name: src.name, full_name: src.full_name,
+      floating: src.floating || null,
+      lunch_flow: src.lunch_flow || null,
+      evening_flow: src.evening_flow || null,
+      workers: src.workers || null,
+      residents: src.residents || null,
+      households: src.households || null,
+      core_people: src.core_people || null,
+      spending: src.spending || null,
+      food_spending: src.food_spending || null,
+      education_spending: src.education_spending || null,
+      leisure_spending: src.leisure_spending || null,
+      sales: biz.sales || null,
+      sales_count: biz.sales_count || null,
+      unit_price: unitPrice,
+      stores: biz.stores || null,
+      franchises: biz.franchises || null,
+      open: biz.open || null,
+      close: biz.close || null,
       demand_raw: demand,
-      sales_items: s.items || [],
-      store_items: st.items || []
+      sales_items: biz.sales_items || [],
+      store_items: biz.store_items || []
     };
   });
 
@@ -248,11 +199,11 @@ function buildRows(){
 
 function dataAlert(){
   const missing = Object.entries(FILES)
-    .filter(([k]) => k !== 'codes' && (!DATA[k] || !latestRows(DATA[k]).length))
+    .filter(([k]) => !DATA[k] || !latestRows(DATA[k]).length)
     .map(([k, f]) => f);
   if (!missing.length){ alert.hidden = true; return; }
   alert.hidden = false;
-  alert.innerHTML = '<b>아직 생성되지 않은 자동갱신 파일이 있습니다.</b><br>' +
+  alert.innerHTML = '<b>아직 생성되지 않은 화면용 자동갱신 파일이 있습니다.</b><br>' +
     'GitHub Actions의 <b>Update Living Population</b>을 실행하면 채워집니다. 현재 화면은 이미 있는 데이터만으로 보여줍니다.<br>' +
     '<small>' + missing.join(' · ') + '</small>';
 }
@@ -260,10 +211,11 @@ function dataAlert(){
 function renderSummary(rows){
   const b = BIZ[state.biz];
   const loaded = Object.keys(DATA).filter(k => DATA[k]).length;
+  const quarter = DATA.view && DATA.view.quarter ? DATA.view.quarter : '-';
   summary.innerHTML =
     '<div><span>업종</span><b>' + b.label + '</b><p>' + b.caution + '</p></div>' +
     '<div><span>판단축</span><b>' + b.demand.join(' · ') + '</b><p>점수는 수요, 매출, 소비, 경쟁을 섞은 참고 순위입니다.</p></div>' +
-    '<div><span>자료</span><b>' + loaded + '/7개 연결</b><p>행정동 ' + fmt(rows.length) + '곳 기준</p></div>';
+    '<div><span>자료</span><b>' + loaded + '/1개 연결</b><p>행정동 ' + fmt(rows.length) + '곳 · ' + quarter + '분기 기준</p></div>';
 }
 
 function filteredRows(){
@@ -361,15 +313,15 @@ q.oninput = e => { state.q = e.target.value; state.picked = ''; render(); };
 Promise.all(Object.entries(FILES).map(([key, file]) =>
   loadJson(file).then(v => { DATA[key] = v; }).catch(() => {})
 )).then(() => {
-  if (!DATA.codes){
+  if (!DATA.view){
     alert.hidden = false;
-    alert.innerHTML = '<b>행정동 코드표가 없습니다.</b><br>먼저 <code>web/data/admin-dong-codes.json</code>을 생성해야 합니다.';
+    alert.innerHTML = '<b>상권 화면용 데이터가 없습니다.</b><br>먼저 <code>web/data/commercial-view-dong.json</code>을 생성해야 합니다.';
     return;
   }
   buildRows();
   render();
 });
 </script>
-<script src="dates.js?v=56"></script>
+<script src="dates.js?v=57"></script>
 </body>
 </html>
