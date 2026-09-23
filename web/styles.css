@@ -229,6 +229,10 @@ select.add-col{
 .commercial-summary span{display:block; color:var(--ink-3); font-size:13px; font-weight:700}
 .commercial-summary b{display:block; margin-top:2px; font-size:18px; color:var(--accent); word-break:keep-all}
 .commercial-summary p{margin:6px 0 0; color:var(--ink-2); font-size:13.5px; line-height:1.55; word-break:keep-all}
+.commercial-summary.compact{grid-template-columns:1fr 1.15fr; margin-bottom:12px}
+.commercial-summary.compact > div{padding:12px 14px}
+.commercial-summary.compact b{font-size:16px}
+.commercial-summary.compact p{font-size:13px}
 .commercial-alert{
   margin:10px 0 16px; border:1px solid #e7d9bc; background:#fff9ec; color:#634311;
   border-radius:10px; padding:13px 15px; font-size:13.5px; line-height:1.65;
@@ -300,6 +304,16 @@ select.add-col{
 .commercial-row .place b{display:block; font-size:15.5px; word-break:keep-all}
 .commercial-row .place small,.commercial-row span small{display:block; color:var(--ink-3); font-size:12px; font-weight:600}
 .commercial-row span b{font-size:15.5px; font-variant-numeric:tabular-nums}
+.detail-tabs{
+  display:flex; gap:0; margin:16px 0 0; border:1px solid var(--line); border-bottom:0;
+  border-radius:10px 10px 0 0; overflow:hidden; background:#fbfaf7; width:max-content; max-width:100%;
+}
+.detail-tabs button{
+  min-width:96px; border:0; border-right:1px solid var(--line); background:transparent;
+  padding:10px 14px; cursor:pointer; color:var(--ink-2); font-weight:800;
+}
+.detail-tabs button:last-child{border-right:0}
+.detail-tabs button[aria-pressed="true"]{background:var(--accent); color:#fff}
 .commercial-detail .dhead{margin-top:18px}
 .commercial-why{
   margin-top:12px; border:1px solid var(--line); border-radius:10px; background:#fbfaf7;
@@ -332,6 +346,7 @@ select.add-col{
 
 @media (max-width:900px){
   .commercial-summary{grid-template-columns:1fr}
+  .commercial-summary.compact{grid-template-columns:1fr}
   .insight-title{display:block}
   .insight-title span{display:block; margin-top:3px; text-align:left}
   .insight-grid{grid-template-columns:1fr}
@@ -340,6 +355,8 @@ select.add-col{
   .candidate-title span{display:block; margin-top:3px; text-align:left}
   .candidate-grid{grid-template-columns:1fr}
   .commercial-head{display:none}
+  .detail-tabs{width:100%}
+  .detail-tabs button{flex:1; min-width:0; padding:10px 8px; font-size:13px}
   .commercial-row{
     grid-template-columns:34px 1fr 1fr 1fr; gap:8px 12px; padding:12px 14px;
   }

@@ -5,10 +5,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=60">
+<link rel="stylesheet" href="styles.css?v=62">
 <script>
 (function(){
-  var PAGE_V = '60';
+  var PAGE_V = '62';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -64,12 +64,10 @@
       <details class="dates" data-dates><summary>자료 기준일</summary></details>
     </div>
 
-    <div class="commercial-summary" id="summary"></div>
+    <div class="commercial-summary compact" id="summary"></div>
     <div class="commercial-alert" id="alert" hidden></div>
-    <section class="commercial-insight" id="insight"></section>
-    <section class="metric-guide" id="metricGuide"></section>
-    <section class="candidate-cards" id="candidateCards"></section>
     <section class="commercial-table" id="table"></section>
+    <nav class="detail-tabs" id="detailTabs"></nav>
     <section class="detail commercial-detail" id="detail"></section>
 
     <p class="note">이 화면은 후보지를 좁히는 참고용입니다. 임대차 계약, 창업, 투자 판단은 현장 조사와 전문가 검토가 필요합니다.</p>
@@ -77,7 +75,7 @@
 </div>
 
 <script>
-const V = '60';
+const V = '62';
 const FILES = {
   view: 'commercial-view-dong.json'
 };
@@ -96,7 +94,7 @@ const BIZ = {
   },
   fitness: {
     label: '필라테스 · PT',
-    words: ['스포츠', '운동', '헬스', '체육'],
+    words: ['스포츠 강습', '스포츠클럽', '헬스', '체육'],
     demand: ['20~40대 상주·직장인', '저녁 유동', '여가·문화 소비'],
     caution: '건물 조건, 샤워실, 층고, 방음, 주차는 공공데이터로 판단할 수 없습니다.'
   },
@@ -114,15 +112,22 @@ const BIZ = {
   }
 };
 
-const state = {biz: new URLSearchParams(location.search).get('biz') || 'cafe', q: '', sort: 'score', limit: 30, picked: ''};
+const state = {biz: new URLSearchParams(location.search).get('biz') || 'cafe', q: '', sort: 'sales_per_store_month', limit: 30, picked: '', tab: 'summary'};
 const DATA = {};
 let ROWS = [];
 const SORTS = [
-  {k:'score', l:'종합', help:'매출, 수요, 소비, 경쟁 부담을 함께 섞은 추천 순서입니다.'},
-  {k:'sales', l:'매출', help:'선택한 업종 묶음의 분기 추정매출이 큰 순서입니다.'},
-  {k:'competition_score', l:'틈새', help:'매출과 수요가 있으면서 선택 업종 점포 부담이 낮은 순서입니다.'},
-  {k:'workers', l:'직장', help:'행정동 전체 직장인구가 많은 순서입니다. 평일 점심·퇴근 수요를 보는 축입니다.'},
-  {k:'residents', l:'상주', help:'행정동 전체 거주인구가 많은 순서입니다. 주거 기반 반복 수요를 보는 축입니다.'}
+  {k:'sales_per_store_month', l:'점포당 월매출', help:'선택 업종 월평균 매출을 점포 수로 나눈 값입니다.'},
+  {k:'sales_month', l:'월매출', help:'선택 업종 전체의 월평균 추정매출이 큰 순서입니다.'},
+  {k:'stores', l:'점포수', help:'선택 업종 점포가 많은 순서입니다. 많을수록 시장도 크지만 경쟁도 강합니다.'},
+  {k:'competition_score', l:'틈새', help:'매출과 수요는 있으면서 선택 업종 점포 부담이 낮은 순서입니다.'},
+  {k:'workers', l:'직장인구', help:'행정동 전체 직장인구가 많은 순서입니다.'},
+  {k:'residents', l:'상주인구', help:'행정동 전체 거주인구가 많은 순서입니다.'}
+];
+const TABS = [
+  {k:'summary', l:'요약'},
+  {k:'sales', l:'매출·경쟁'},
+  {k:'demand', l:'수요'},
+  {k:'checks', l:'확인사항'}
 ];
 
 const fmt = n => n === null || n === undefined ? '—' : n.toLocaleString('ko-KR');
@@ -208,10 +213,12 @@ function buildRows(){
       education_spending: src.education_spending || null,
       leisure_spending: src.leisure_spending || null,
       sales: biz.sales || null,
+      sales_month: biz.sales ? Math.round(biz.sales / 3) : null,
       sales_count: biz.sales_count || null,
       unit_price: unitPrice,
       stores: biz.stores || null,
       sales_per_store: biz.sales && biz.stores ? Math.round(biz.sales / biz.stores) : null,
+      sales_per_store_month: biz.sales && biz.stores ? Math.round(biz.sales / biz.stores / 3) : null,
       franchises: biz.franchises || null,
       open: biz.open || null,
       close: biz.close || null,
@@ -250,12 +257,10 @@ function dataAlert(){
 
 function renderSummary(rows){
   const b = BIZ[state.biz];
-  const loaded = Object.keys(DATA).filter(k => DATA[k]).length;
   const quarter = DATA.view && DATA.view.quarter ? DATA.view.quarter : '-';
   summary.innerHTML =
-    '<div><span>선택 업종 기준</span><b>' + b.label + '</b><p>매출, 점포, 개·폐업은 이 업종 묶음만 합산합니다.</p></div>' +
-    '<div><span>지역 수요 기준</span><b>' + b.demand.join(' · ') + '</b><p>유동인구, 직장인구, 상주인구, 소비지출은 행정동 전체 신호입니다.</p></div>' +
-    '<div><span>자료</span><b>' + loaded + '/1개 연결</b><p>행정동 ' + fmt(rows.length) + '곳 · ' + quarter + '분기 기준</p></div>';
+    '<div><span>현재 기준</span><b>' + b.label + ' · 월평균 추정</b><p>원자료는 ' + quarter + '분기 자료이고, 화면 매출은 월평균으로 환산했습니다.</p></div>' +
+    '<div><span>표 읽는 법</span><b>점포당 월매출 → 점포수 → 수요</b><p>먼저 점포 1곳당 매출을 보고, 그 다음 경쟁 점포 수와 직장·상주 수요를 봅니다.</p></div>';
 }
 
 function renderMetricGuide(){
@@ -357,8 +362,8 @@ function rowHtml(r, i){
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + (i + 1) + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b><small>' + r.code + ' · ' + storeLabel + '</small></span>' +
-    '<span><b>' + money(r.sales_per_store) + '</b><small>점포 1곳당</small></span>' +
-    '<span><b>' + money(r.sales) + '</b><small>전체 매출</small></span>' +
+    '<span><b>' + money(r.sales_per_store_month) + '</b><small>점포당 월매출</small></span>' +
+    '<span><b>' + money(r.sales_month) + '</b><small>월매출</small></span>' +
     '<span><b>' + fmt(r.stores) + '</b><small>점포 수</small></span>' +
     '<span><b>' + demandType(r) + '</b><small>수요 타입</small></span>' +
     '<span><b>' + fmt(r.score) + '</b><small>종합</small></span>' +
@@ -400,12 +405,43 @@ function renderDetail(rows){
   const topSales = r.sales_items.slice().sort((a, b) => (b.amount || 0) - (a.amount || 0)).slice(0, 5);
   const topStores = r.store_items.slice().sort((a, b) => (b.store_count || 0) - (a.store_count || 0)).slice(0, 5);
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
-  const item = r => '<li><b>' + r.business_name + '</b><span>' + (r.amount ? money(r.amount) : fmt(r.store_count) + '곳') + '</span></li>';
-  detail.innerHTML =
-    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">종합 <b>' + fmt(r.score) + '</b>점</span></div>' +
+  const item = r => '<li><b>' + r.business_name + '</b><span>' + (r.amount ? money(r.amount / 3) + '/월' : fmt(r.store_count) + '곳') + '</span></li>';
+  const summaryTab =
     explainRow(r, rows) +
-    '<div class="dbody">' +
-      '<div class="groups">' +
+    '<div class="groups">' +
+      '<div><p class="grp-title">한눈에 보기</p>' +
+        stat('점포당 월매출', money(r.sales_per_store_month), '분기 매출 ÷ 3개월 ÷ 점포 수') +
+        stat('월평균 매출', money(r.sales_month), '선택 업종 전체 합산') +
+        stat('점포 수', fmt(r.stores)) +
+        stat('수요 타입', demandType(r)) +
+      '</div>' +
+      '<div><p class="grp-title">판단</p>' +
+        stat('추천 점수', fmt(r.score)) +
+        stat('틈새 점수', fmt(r.competition_score), '높을수록 점포 부담이 낮음') +
+        stat('직장인구', fmt(r.workers)) +
+        stat('상주인구', fmt(r.residents)) +
+      '</div>' +
+    '</div>';
+  const salesTab =
+    '<div class="groups">' +
+      '<div><p class="grp-title">매출</p>' +
+        stat(BIZ[state.biz].label + ' 월평균 매출', money(r.sales_month), r.sales_count ? '분기 매출건수 ' + fmt(r.sales_count) + '건' : '') +
+        stat('점포 1곳당 월매출', money(r.sales_per_store_month)) +
+        stat('객단가', r.unit_price ? fmt(r.unit_price) + '원' : '—') +
+      '</div>' +
+      '<div><p class="grp-title">경쟁</p>' +
+        stat(BIZ[state.biz].label + ' 점포', fmt(r.stores)) +
+        stat('프랜차이즈', fmt(r.franchises)) +
+        stat('개업 점포', fmt(r.open)) +
+        stat('폐업 점포', fmt(r.close)) +
+      '</div>' +
+    '</div>' +
+    '<div class="commercial-lists">' +
+      '<div><p class="grp-title">매출 구성</p><ol>' + (topSales.length ? topSales.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
+      '<div><p class="grp-title">점포 구성</p><ol>' + (topStores.length ? topStores.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
+    '</div>';
+  const demandTab =
+    '<div class="groups">' +
         '<div><p class="grp-title">수요</p>' +
           stat('유동인구', fmt(r.floating)) +
           stat('점심 유동', fmt(r.lunch_flow)) +
@@ -413,28 +449,24 @@ function renderDetail(rows){
           stat('직장인구', fmt(r.workers)) +
           stat('상주인구', fmt(r.residents)) +
         '</div>' +
-        '<div><p class="grp-title">선택 업종 매출</p>' +
-          stat(BIZ[state.biz].label + ' 추정매출', money(r.sales), r.sales_count ? '매출건수 ' + fmt(r.sales_count) + '건' : '') +
-          stat('점포 1곳당 매출', money(r.sales_per_store), '선택 업종 매출 ÷ 선택 업종 점포 수') +
-          stat('선택 업종 객단가', r.unit_price ? fmt(r.unit_price) + '원' : '—') +
+        '<div><p class="grp-title">소비</p>' +
           stat('총 소비지출', money(r.spending)) +
           stat('음식 소비', money(r.food_spending)) +
           stat('교육 소비', money(r.education_spending)) +
         '</div>' +
-        '<div><p class="grp-title">선택 업종 경쟁</p>' +
-          stat(BIZ[state.biz].label + ' 점포', fmt(r.stores)) +
-          stat('프랜차이즈', fmt(r.franchises)) +
-          stat('개업 점포', fmt(r.open)) +
-          stat('폐업 점포', fmt(r.close)) +
-          stat('가구 수', fmt(r.households)) +
-        '</div>' +
+      '<div><p class="grp-title">가구</p>' +
+        stat('가구 수', fmt(r.households)) +
       '</div>' +
-      '<div class="commercial-lists">' +
-        '<div><p class="grp-title">선택 업종 매출 구성</p><ol>' + (topSales.length ? topSales.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
-        '<div><p class="grp-title">선택 업종 점포 구성</p><ol>' + (topStores.length ? topStores.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
-      '</div>' +
-      nextChecks(r) +
     '</div>';
+  const checksTab = nextChecks(r);
+  const content = {summary: summaryTab, sales: salesTab, demand: demandTab, checks: checksTab}[state.tab] || summaryTab;
+  detailTabs.innerHTML = TABS.map(t => '<button type="button" aria-pressed="' + (state.tab === t.k) + '" data-tab="' + t.k + '">' + t.l + '</button>').join('');
+  for (const el of detailTabs.querySelectorAll('button')){
+    el.onclick = () => { state.tab = el.dataset.tab; render(); };
+  }
+  detail.innerHTML =
+    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">점포당 월매출 <b>' + money(r.sales_per_store_month) + '</b></span></div>' +
+    '<div class="dbody">' + content + '</div>';
 }
 
 function render(){
@@ -442,14 +474,13 @@ function render(){
   biz.value = state.biz;
   q.value = state.q;
   const rows = filteredRows();
+  const currentSort = SORTS.find(it => it.k === state.sort) || SORTS[0];
+  sortHelp.textContent = currentSort.help;
   basis.textContent = '상권분석서비스 행정동 기준 · ' + BIZ[state.biz].label;
   renderSummary(rows);
   dataAlert();
-  renderInsight(rows);
-  renderMetricGuide();
-  renderCandidateCards(rows);
   const list = rows.slice(0, state.limit);
-  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>점포 1곳당</span><span>전체 매출</span><span>점포 수</span><span>수요 타입</span><span>종합</span></div>' +
+  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>점포당 월매출</span><span>월매출</span><span>점포 수</span><span>수요 타입</span><span>종합</span></div>' +
     (list.length ? list.map(rowHtml).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>');
   for (const el of table.querySelectorAll('.commercial-row')){
     el.onclick = () => { state.picked = el.dataset.code; render(); };
@@ -476,6 +507,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=60"></script>
+<script src="dates.js?v=62"></script>
 </body>
 </html>
