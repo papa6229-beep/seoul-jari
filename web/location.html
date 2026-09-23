@@ -1,0 +1,1592 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 새로 올린 게 바로 보이도록 페이지는 매번 확인하게 한다. -->
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>입지 · 상권 분석 — Chalkmap</title>
+<link rel="stylesheet" href="styles.css?v=51">
+<!-- 카카오맵 JavaScript 키. 등록된 도메인에서만 동작하도록 잠겨 있다. -->
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
+<script>
+// 브라우저가 옛 화면을 붙잡고 있으면 새 버전으로 한 번 다시 불러온다.
+// 올릴 때마다 이 숫자와 version.json 을 같이 올린다.
+(function(){
+  var PAGE_V = '51';
+  fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if (!d || d.v === PAGE_V) return;
+      var key = 'reloaded-' + d.v;
+      try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) { return; }
+      location.reload();
+    })
+    .catch(function(){});
+})();
+</script>
+</head>
+<body>
+<div class="app">
+
+  <aside class="side">
+    <a class="home-link" href="index.html">← 메뉴</a>
+    <h1>입지 · 상권 분석</h1>
+    <div class="field qfield">
+      <label for="q">지역 이름 검색</label>
+      <input class="search" id="q" type="search" placeholder="예: 대치동, 분당구" autocomplete="off">
+      <small class="qhint">검색 중에는 지역 범위 · 시장 유형 · 0곳 조건을 건너뛰고 전체에서 찾습니다.</small>
+    </div>
+    <button type="button" class="reset" id="reset" hidden>조건 모두 지우기</button>
+    <p class="where" id="basis"></p>
+
+    <div class="field gapf">
+      <span class="lbl">보기 방식</span>
+      <div class="seg" id="gapseg"></div>
+      <small class="fhint" id="gaphint"></small>
+    </div>
+
+    <p class="fgroup">어디를 볼까요</p>
+
+    <div class="field">
+      <span class="lbl">단위</span>
+      <div class="seg" id="unit"></div>
+    </div>
+
+    <div class="field skip-q">
+      <span class="lbl">지역</span>
+      <div class="seg" id="region"></div>
+    </div>
+
+    <div class="field skip-q" id="mktfield" style="display:none">
+      <label for="mkt">시장 유형 <small>동 단위 · 서울+인접 경기</small></label>
+      <select class="pick" id="mkt"></select>
+    </div>
+
+    <p class="fgroup normal-only">무엇을 볼까요</p>
+
+    <div class="field normal-only">
+      <label for="selA">무엇으로 순위를 매길까요</label>
+      <select class="pick" id="selA"></select>
+    </div>
+
+    <div class="field normal-only">
+      <span class="lbl">나란히 비교할 것</span>
+      <div class="cols" id="cols"></div>
+    </div>
+
+    <div class="field normal-only">
+      <span class="lbl">정렬</span>
+      <div class="seg" id="order"></div>
+    </div>
+
+    <div class="field normal-only skip-q">
+      <span class="lbl">0곳인 지역</span>
+      <div class="seg" id="zero"></div>
+    </div>
+
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h2 id="title"></h2>
+      <span class="basis">2026년 8월 기준 · 서울 + 경기</span>
+      <details class="dates" data-dates><summary>자료 기준일</summary></details>
+    </div>
+
+    <div class="chips" id="chips"></div>
+
+    <div class="explain" id="explain"></div>
+
+    <div class="meta">
+      <span id="count"></span>
+      <span id="sum"></span>
+      <span class="legend"><i></i>중앙값</span>
+    </div>
+
+    <section class="rows" id="rows"></section>
+    <div class="pager" id="pager"></div>
+
+    <section class="detail" id="detail"></section>
+
+    <p class="note" id="note"></p>
+  </main>
+</div>
+
+<script>
+// 지표 이름에서 '학원'이 두 뜻으로 쓰여 헷갈렸다. 하나는 영어 가르치는 곳
+// 전부를 부르는 말이고, 하나는 교습소와 구분되는 법적 종류다. 이름을 갈라 쓰고
+// sub 로 계층을 드러낸다. sub 는 들여쓰기 깊이다.
+const METRICS = [
+  {k:'eng_total',     g:'학원', l:'영어 학원·교습소 전체',   u:'곳',
+   d:'영어를 가르치는 곳을 <b>모두 합한 수</b>입니다. 아래 학원과 교습소를 더한 값입니다.'},
+  {k:'eng_academy',   g:'학원', l:'영어학원',               u:'곳', sub:1,
+   d:'법적으로 <b>학원</b>인 곳입니다. 등록제 · 한 번에 <b>10명 이상</b> 가능 · 여러 과목 가능 · 강사를 둘 수 있습니다.'},
+  {k:'eng_solo',      g:'학원', l:'영어만 가르치는 학원',    u:'곳', sub:2,
+   d:'영어 <b>하나만</b> 가르치는 학원입니다. 가장 직접적인 경쟁자입니다.'},
+  {k:'eng_combo',     g:'학원', l:'영어+다른 과목 학원',     u:'곳', sub:2,
+   d:'「○○영어수학학원」처럼 영어와 다른 과목을 같이 가르치는 학원입니다.'},
+  {k:'eng_institute', g:'학원', l:'영어 교습소',            u:'곳', sub:1,
+   d:'법적으로 <b>교습소</b>인 곳입니다. 신고제 · 한 번에 <b>9명 이하</b> · <b>한 과목만</b> · 강사를 둘 수 없습니다. 공부방에 가장 가깝습니다.'},
+  {k:'eng_new3y',     g:'학원', l:'최근 3년에 생긴 영어학원', u:'곳',
+   d:'<b>2023년 8월 말</b> 목록에 없다가 <b>2026년 8월 말</b> 목록에 새로 올라온 영어 학원·교습소입니다. ' +
+     '이전하면 개설일이 새 날짜로 바뀌어서, 개설일 대신 등록번호로 두 목록을 맞춰 셌습니다.'},
+  {k:'eng_closed3y',  g:'학원', l:'최근 3년에 사라진 영어학원', u:'곳',
+   d:'2023년 8월 말에 있던 영어 학원·교습소 가운데 <b>2026년 8월 말 목록에 없는 곳</b>입니다. 폐원이 대부분입니다. ' +
+     '같은 구에 같은 이름으로 다시 등록된 곳은 이전으로 보고 뺐습니다. 3년 전 주소의 동으로 셉니다.'},
+  {k:'all_total',     g:'학원', l:'모든 과목 학원·교습소',   u:'곳',
+   d:'영어만이 아니라 수학·국어 등 <b>모든 과목</b>을 합한 수입니다. 그 동네에 학원가가 있는지 보는 지표입니다.'},
+  {k:'fee_median',    g:'학원', l:'영어 월 수강료 (중간값)', u:'원', partial:true,
+   d:'영어학원 월 수강료의 중간값입니다. <span class="warn">공개한 곳만 집계돼 전체의 약 21%뿐입니다.</span>'},
+  {k:'sch_total',     g:'학교', l:'초 · 중학교 수',         u:'곳',
+   d:'초등학교와 중학교를 합한 수입니다.'},
+  {k:'sch_elem',      g:'학교', l:'초등학교 수',            u:'곳', sub:1, d:'초등학교 수입니다.'},
+  {k:'sch_mid',       g:'학교', l:'중학교 수',              u:'곳', sub:1,
+   d:'중학교 수입니다. 내신 대비 수요가 여기서 나옵니다.'},
+  {k:'stu_target',    g:'학교', l:'학교 재학생 (초4~중3)', u:'명',
+   d:'그 지역 학교에 <b>다니는</b> 초등학교 4~6학년과 중학교 1~3학년 수입니다(학교알리미 2026 공시). ' +
+     '사는 아이 수(인구)와 달리 다른 동에서 통학하는 아이도 들어갑니다.'},
+  {k:'mv_net',        g:'학교', l:'학교 전입 − 전출', u:'명', keepZero:true,
+   d:'그 지역 초·중학교로 <b>옮겨 온 학생에서 옮겨 간 학생을 뺀 수</b>입니다(학교알리미 2026 공시). ' +
+     '크면 이사 와서 보내는 집이 많다는 뜻입니다. 새로 연 학교나 새 아파트 입주가 있으면 크게 나옵니다.'},
+  {k:'pop_target',    g:'인구', l:'초4~중3 인구',           u:'명',
+   d:'그 지역에 <b>사는</b> 만 9~14세 인구입니다. <b>이번 사업의 대상</b>입니다.'},
+  {k:'pop_elem',      g:'인구', l:'초등학생 나이 인구',      u:'명', sub:1, d:'만 6~11세 인구입니다.'},
+  {k:'pop_mid',       g:'인구', l:'중학생 나이 인구',        u:'명', sub:1, d:'만 12~14세 인구입니다.'},
+  {k:'hub_km',        g:'입지', l:'큰 학원가까지 거리', u:'km', partial:true, dec:1, keepZero:true,
+   d:'대치·목동·중계·평촌·분당·일산(조사 문서)과 다산·동탄·부천(영어학원 100곳 이상, 우리 데이터) 가운데 ' +
+     '<b>가장 가까운 큰 학원가</b>까지의 직선거리입니다. ' +
+     '멀수록 아이들이 원정을 가기 번거로운 곳입니다. 학원가 중심은 그 동 영어학원들의 가운데, ' +
+     '지역 위치는 그 지역 학원·학교들의 가운데로 잡았습니다.'},
+];
+
+// 목록에서만 계층을 보여준다. 그래프 제목이나 열 이름에는 붙이지 않는다.
+// 학원 종류: 자료의 값 -> 화면 이름과 핀
+const ACA_KIND = {
+  '영어 전문':    {label: '영어만',          pin: 'a1'},
+  '영어+타 과목': {label: '영어+다른 과목',  pin: 'a2'},
+  '교습소':       {label: '교습소',          pin: 'a3'},
+};
+const kindLabel = k => (ACA_KIND[k] && ACA_KIND[k].label) || k;
+
+const indent = m => m.sub ? '  '.repeat(m.sub) + '└ ' : '';
+// 자료를 갱신하면 올린다. HTML의 styles.css?v= 도 같이 올릴 것.
+const V = '51';
+const PER_PAGE = 10;
+const MAX_COLS = 4;
+const BAR_COLORS = ['#2e7d68', '#6f93ab', '#a8906c', '#8f7f9c', '#7d9a6b'];
+const UNKNOWN_DONG = '(동 미상)';
+
+const state = {a:'', cols:[], unit:'dong', region:'서울',
+               desc:true, q:'', page:0, hideZero:true, gap:false, listKind:'all', listSort:'old', focus:null, mkt:'', picked:null, tab:'summary', rings:true,
+               show:{'초등학교':true, '중학교':true,
+                     '영어 전문':true, '영어+타 과목':true, '교습소':true,
+                     '아파트':false, '상가':false},
+               recentOnly:false};
+let DATA = null;
+let ESTATE = null;   // 부동산 요약. 늦게 와도 화면은 먼저 뜬다.
+let HUBS = null;     // 큰 학원가와의 거리. 거리는 사실, 유입 흐름은 통설.
+let MARKET = null;   // 개원시장 동별 분석(유형 추정). 동 단위만.
+let RENT = null;     // 소규모상가 임대 시세. 구·시 단위 추정치.
+
+const fmt = n => (n === null || n === undefined) ? '—' : n.toLocaleString('ko-KR');
+const metric = k => METRICS.find(m => m.k === k);
+const barColor = i => BAR_COLORS[i % BAR_COLORS.length];
+const keyOf = r => r.sido + '/' + (r.parent || '') + '/' + r.name;
+
+function fillSelect(el, items, selected, placeholder){
+  let html = placeholder ? '<option value="">' + placeholder + '</option>' : '';
+  let group = null;
+  for (const it of items){
+    if (it.g !== group){
+      if (group !== null) html += '</optgroup>';
+      group = it.g;
+      html += '<optgroup label="' + group + '">';
+    }
+    html += '<option value="' + it.k + '"' + (it.k === selected ? ' selected' : '') + '>' +
+            indent(it) + it.l + '</option>';
+  }
+  if (group !== null) html += '</optgroup>';
+  el.innerHTML = html;
+}
+
+function segment(host, items, get, set){
+  host.innerHTML = '';
+  for (const it of items){
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = it.l;
+    b.setAttribute('aria-pressed', String(get() === it.k));
+    b.onclick = () => { set(it.k); state.page = 0; render(); };
+    host.appendChild(b);
+  }
+}
+
+function renderCols(){
+  cols.innerHTML = '';
+  state.cols.forEach((k, i) => {
+    const tag = document.createElement('div');
+    tag.className = 'col-tag';
+    tag.innerHTML = '<i class="swatch" style="background:' + barColor(i + 1) + '"></i>' +
+                    '<span>' + metric(k).l + '</span>';
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'x'; x.textContent = '×'; x.title = '이 열 빼기';
+    x.onclick = () => { state.cols.splice(i, 1); render(); };
+    tag.appendChild(x);
+    cols.appendChild(tag);
+  });
+
+  if (state.cols.length < MAX_COLS){
+    const add = document.createElement('select');
+    add.className = 'add-col';
+    if (!state.a){
+      add.disabled = true;
+      add.innerHTML = '<option>순위 지표를 먼저 고르세요</option>';
+      cols.appendChild(add);
+      return;
+    }
+    const used = new Set([state.a, ...state.cols]);
+    fillSelect(add, METRICS.filter(m => !used.has(m.k)), '', '+ 지표 추가');
+    add.onchange = e => {
+      if (e.target.value){ state.cols.push(e.target.value); render(); }
+    };
+    cols.appendChild(add);
+  }
+}
+
+function median(values){
+  const v = values.filter(x => x !== null && x !== undefined).sort((a, b) => a - b);
+  if (!v.length) return null;
+  const m = v.length >> 1;
+  const mid = v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+  return Number.isInteger(v[m]) && (v.length % 2 || Number.isInteger(v[m - 1])) ? Math.round(mid) : Math.round(mid * 10) / 10;
+}
+
+// ---------- 학원가 단위 ----------
+// 큰 학원가를 이루는 동의 숫자를 더해 한 줄로 만든다. 수강료는 동별 중간값의 가운데.
+function buildHubRows(){
+  const byKey = Object.fromEntries(DATA.dong.map(r => [keyOf(r), r]));
+  DATA.hub = HUBS.hubs.map(h => {
+    const members = h.dongs.map(k => byKey[k]).filter(Boolean);
+    const row = {sido: members[0].sido, parent: [...new Set(members.map(r => r.parent))].join('·'),
+                 name: h.name, hub: h.id, members, hub_km: 0};
+    for (const m of METRICS){
+      if (m.k === 'hub_km') continue;
+      const vals = members.map(r => r[m.k]).filter(v => v !== null && v !== undefined);
+      row[m.k] = !vals.length ? null
+               : m.k === 'fee_median' ? median(vals)
+               : vals.reduce((a, b) => a + b, 0);
+    }
+    return row;
+  });
+}
+
+const hubOf = row => row.hub ? HUBS.hubs.find(h => h.id === row.hub) : null;
+
+// 학원가면 속한 동 파일을 모두 받아 합친다.
+function rowPlaces(row){
+  if (!row.hub) return getPlaces(placeFile(row));
+  const key = 'hub:' + row.hub;
+  if (PLACE_CACHE[key]) return Promise.resolve(PLACE_CACHE[key]);
+  return Promise.all(row.members.map(r => getPlaces(placeFile(r)))).then(all => {
+    const ok = all.filter(Boolean);
+    if (!ok.length) return null;
+    return (PLACE_CACHE[key] = {sido: ok[0].sido, gusi: ok[0].gusi, dong: row.name,
+                                items: ok.flatMap(d => d.items)});
+  });
+}
+
+// 학원가 시장 해석: 통설·데이터 설명, 속한 동의 유형, 중심 반경 숫자
+function hubMarket(row){
+  const h = hubOf(row);
+  const ring = h.ring;
+  const types = row.members.map(r => {
+    const m = MARKET && MARKET.dongs[keyOf(r)];
+    return '<div class="hrow"><span class="hk">' + r.name + '</span>' +
+      (m ? '<b><span class="mcode f' + m.code[0] + '">' + m.code + '</span> ' + MARKET.types[m.code].name + '</b>' +
+           '<span class="hv"><span class="mgrade ' + m.grade + '">' + MARKET.grades[m.grade].label + '</span></span>'
+         : '<b class="dim">시장 분석 대상 아님</b>') + '</div>';
+  }).join('');
+  const from = h.from_gu.length
+    ? '<p><b>학생이 온다고 알려진 곳</b> — ' + h.from_gu.map(g => g.split('/')[1]).join(' · ') +
+      (h.from_dong.length ? ' · ' + h.from_dong.map(k => k.split('/')[2]).join(' · ') : '') + '</p>' : '';
+  return '<section class="msec hub"><h4>' + h.name + '</h4>' +
+    (h.kind === 'data'
+      ? '<p class="hdata"><span class="tag data">데이터</span>조사 문서의 큰 학원가 목록에는 없지만, 우리 데이터로 영어학원이 ' +
+        fmt(h.eng) + '곳 모여 있어 큰 학원가로 넣었습니다.</p>'
+      : '<div class="hlore"><span class="tag">통설</span><p>' + h.lore + '</p>' + from + '</div>') +
+    '</section>' +
+    '<section class="msec"><h4>중심에서 반경 ' + HUBS.radius_km + 'km <small class="dim">동 경계와 상관없이</small></h4>' +
+      '<div class="ringgrid">' +
+        '<div><span>영어 학원·교습소</span><b>' + fmt(ring.eng) + '</b>곳</div>' +
+        '<div><span>그중 교습소</span><b>' + fmt(ring.inst) + '</b>곳</div>' +
+        '<div><span>초·중학교</span><b>' + fmt(ring.sch) + '</b>곳</div>' +
+        '<div><span>학교 재학생 (초4~중3)</span><b>' + fmt(ring.stu) + '</b>명</div>' +
+      '</div>' +
+      '<p class="mhint">학원가 중심은 속한 동 영어학원들의 가운데입니다. 목록의 숫자는 속한 동(' +
+        row.members.map(r => r.name).join(' · ') + ')을 더한 값이라 이 숫자와 다를 수 있습니다.</p>' +
+    '</section>' +
+    '<section class="msec"><h4>속한 동의 시장 유형</h4>' + types + '</section>' +
+    '<p class="msrc">출처: 학부모 조사 문서(2026.09)의 학원가·통설, 개원시장 동별 분석(2026.09), 나이스·학교알리미</p>';
+}
+
+// ---------- 시장 해석 ----------
+const mktOf = r => (MARKET && state.unit === 'dong' && MARKET.dongs[keyOf(r)]) || null;
+
+// 목록 거르기. 'type:B1' 이나 'group:1차 현장검증'
+function mktPass(r){
+  if (!state.mkt || !MARKET || state.unit !== 'dong') return true;
+  const m = mktOf(r);
+  if (!m) return false;
+  const [kind, val] = state.mkt.split(':');
+  return kind === 'type' ? m.code === val : m.group === val;
+}
+
+function mktTag(r){
+  const m = mktOf(r);
+  if (!m) return '';
+  const off = checkBase().fails[keyOf(r)];
+  return '<span class="mtag f' + m.code[0] + (off ? ' off' : '') + '" title="' + MARKET.types[m.code].name +
+         (off ? ' · 문서 판단과 데이터가 다릅니다' : '') + '">' + m.code + (off ? ' ⚠' : '') + '</span>';
+}
+
+function fillMarket(){
+  const box = document.getElementById('mktfield');
+  const sel = document.getElementById('mkt');
+  const on = MARKET && state.unit === 'dong';
+  box.style.display = on ? '' : 'none';
+  if (!on) return;
+  const all = Object.values(MARKET.dongs);
+  const nType = c => all.filter(m => m.code === c).length;
+  const family = {A: 'A 입시·상위권', B: 'B 가족형·내신', C: 'C 실용·지역', D: 'D 소규모·외곽'};
+  let html = '<option value="">전체</option><optgroup label="조사 문서의 분류">' +
+    MARKET.groups.map(g => '<option value="group:' + g.label + '"' +
+      (state.mkt === 'group:' + g.label ? ' selected' : '') + '>' + g.label + ' (' + g.dongs.length + ')</option>').join('') +
+    '</optgroup>';
+  for (const f of Object.keys(family)){
+    html += '<optgroup label="' + family[f] + '">' +
+      Object.keys(MARKET.types).filter(c => c[0] === f).map(c =>
+        '<option value="type:' + c + '"' + (state.mkt === 'type:' + c ? ' selected' : '') + '>' +
+        c + ' ' + MARKET.types[c].name + ' (' + nType(c) + ')</option>').join('') +
+      '</optgroup>';
+  }
+  sel.innerHTML = html;
+  sel.onchange = e => { state.mkt = e.target.value; state.page = 0; render(); };
+}
+
+// ---------- 문서 판단을 우리 데이터로 맞춰보기 ----------
+// 400개 동을 줄 세워 위 ⅓은 '많은 편', 아래 ⅓은 '적은 편', 가운데는 '보통'.
+// 점수를 매기지 않고, 문서가 주장한 쪽에 있는지만 본다. 보통은 틀렸다고 보지 않는다.
+const CHECK_METRIC = {
+  pop:   {l: '초4~중3 아이',           v: r => r.pop_target,                                   f: v => fmt(v) + '명'},
+  eng:   {l: '영어학원',               v: r => r.eng_total,                                    f: v => fmt(v) + '곳'},
+  per1k: {l: '아이 천 명당 영어학원',   v: r => r.pop_target ? r.eng_total / r.pop_target * 1000 : null,
+                                                                                              f: v => v.toFixed(1) + '곳'},
+  // 학원이 몇 곳 안 되면 비율이 한 곳에 휘둘린다.
+  new:   {l: '최근 3년에 생긴 학원 비율', v: r => r.eng_total >= 5 ? r.eng_new3y / r.eng_total : null,
+                                                                                              f: v => Math.round(v * 100) + '%',
+          none: '영어학원이 5곳 미만이라 비율로 보기 어렵습니다'},
+  apt:   {l: '아파트 평당 매매가',      v: r => { const e = ESTATE && ESTATE.dongs[keyOf(r)]; return e && e.apt ? e.apt.per_m2 * 3.3 : null; },
+                                                                                              f: v => fmt(Math.round(v / 10000)) + '만원',
+          none: '이 지역은 아파트 거래 자료가 없습니다', hi: '비싼 편', lo: '싼 편'},
+};
+
+// 유형마다 문서가 내세우는 성격 1~2개. want: hi(많은 편) lo(적은 편) nhi(많은 편은 아님) nlo(적은 편은 아님)
+const CLAIMS = {
+  A1: [{k: 'eng',   want: 'hi',  say: '영어학원이 몰린 학원가'},
+       {k: 'per1k', want: 'hi',  say: '아이 수에 비해서도 학원이 많다'}],
+  A2: [{k: 'apt',   want: 'hi',  say: '구매력이 높은 동네'},
+       {k: 'pop',   want: 'nlo', say: '아이 수요가 작지 않다'}],
+  A3: [{k: 'apt',   want: 'hi',  say: '구매력이 높은 동네'},
+       {k: 'per1k', want: 'nhi', say: '동네 학원은 얇다 (원정·과외로 빠져나감)'}],
+  B1: [{k: 'pop',   want: 'nlo', say: '아이가 많은 가족 동네'},
+       {k: 'new',   want: 'nlo', say: '학원이 새로 늘고 있는 시장'}],
+  B2: [{k: 'eng',   want: 'nlo', say: '학원가가 자리를 잡았다'},
+       {k: 'new',   want: 'nhi', say: '새로 생기기보다 이미 성숙했다'}],
+  B3: [{k: 'pop',   want: 'nlo', say: '아이 수요가 작지 않다'},
+       {k: 'lvl',                say: '비평준화 지역이다'}],
+  C1: [{k: 'per1k', want: 'nhi', say: '학원 경쟁이 과열되진 않았다'},
+       {k: 'apt',   want: 'nhi', say: '집값이 최상위권은 아니다'}],
+  C2: [{k: 'per1k', want: 'nhi', say: '학원 경쟁이 과열되진 않았다'},
+       {k: 'eng',   want: 'nhi', say: '큰 학원가는 아니다'}],
+  D1: [{k: 'eng',   want: 'nhi', say: '작은 학원 시장이다'},
+       {k: 'apt',   want: 'nhi', say: '집값이 최상위권은 아니다'}],
+  D2: [{k: 'pop',   want: 'lo',  say: '아이가 적은 외곽이다'},
+       {k: 'eng',   want: 'lo',  say: '영어학원이 거의 없다'}],
+  D3: [{k: 'new',   want: 'nlo', say: '새로 생기는 학원이 많다'},
+       {k: 'pop',   want: 'nhi', say: '아직 아이 수가 많지는 않다'}],
+};
+const WANT_OK = {hi: ['hi'], lo: ['lo'], nhi: ['lo', 'mid'], nlo: ['hi', 'mid']};
+
+let CHECK_CACHE = null;   // 부동산 자료가 늦게 오면 다시 만든다.
+function checkBase(){
+  const stamp = (MARKET ? 1 : 0) + (ESTATE ? 2 : 0);
+  if (CHECK_CACHE && CHECK_CACHE.stamp === stamp) return CHECK_CACHE;
+  const rows = DATA.dong.filter(r => MARKET && MARKET.dongs[keyOf(r)]);
+  const cuts = {};
+  for (const [k, m] of Object.entries(CHECK_METRIC)){
+    const v = rows.map(m.v).filter(x => x !== null && x !== undefined).sort((a, b) => a - b);
+    cuts[k] = v.length ? [v[Math.floor(v.length / 3)], v[Math.floor(v.length * 2 / 3)]] : null;
+  }
+  const byType = {};
+  for (const r of rows) (byType[MARKET.dongs[keyOf(r)].code] ||= []).push(r);
+  CHECK_CACHE = {stamp, rows, cuts, byType, fails: {}};
+  for (const r of rows){
+    const res = checksFor(r).filter(c => c.ok !== null);
+    if (res.length && res.every(c => !c.ok)) CHECK_CACHE.fails[keyOf(r)] = true;
+  }
+  return CHECK_CACHE;
+}
+
+function levelOf(value, cut){
+  if (value === null || value === undefined || !cut) return null;
+  return value >= cut[1] ? 'hi' : value <= cut[0] ? 'lo' : 'mid';
+}
+
+function checksFor(r){
+  const m = MARKET.dongs[keyOf(r)];
+  const base = CHECK_CACHE;
+  return (CLAIMS[m.code] || []).map(c => {
+    if (c.k === 'lvl'){
+      const ok = MARKET.non_leveled.includes(r.parent);
+      return {say: c.say, ok, detail: r.parent + (ok ? '는 비평준화 지역입니다' : '는 평준화 지역입니다')};
+    }
+    const M = CHECK_METRIC[c.k];
+    const v = M.v(r);
+    const lv = levelOf(v, base.cuts[c.k]);
+    if (lv === null) return {say: c.say, ok: null, detail: M.none || '자료가 없습니다'};
+    const word = lv === 'hi' ? (M.hi || '많은 편') : lv === 'lo' ? (M.lo || '적은 편') : '보통';
+    return {say: c.say, ok: WANT_OK[c.want].includes(lv),
+            detail: M.l + ' <b>' + M.f(v) + '</b> · 400개 동 중 <b>' + word + '</b>'};
+  });
+}
+
+// 큰 학원가와의 거리. 거리는 우리 좌표로 잰 사실, 어디서 오는지는 통설이다.
+function hubSection(row){
+  if (!HUBS) return '';
+  const key = keyOf(row);
+  const d = HUBS.dongs[key];
+  if (!d) return '';
+  const hub = id => HUBS.hubs.find(h => h.id === id);
+  const gu = row.sido + '/' + row.parent;
+  const own = HUBS.hubs.find(h => h.dongs.includes(key));
+  const lines = [];
+  if (own){
+    lines.push('<div class="hrow here"><span class="hk">이 동이 곧</span><b>' + own.name + '</b>' +
+               '<span class="hv">영어학원 ' + fmt(own.eng) + '곳</span></div>');
+    if (own.kind === 'data')
+      lines.push('<p class="hdata"><span class="tag data">데이터</span>조사 문서의 큰 학원가 목록에는 없지만, ' +
+                 '우리 데이터로 영어학원이 ' + fmt(own.eng) + '곳 모여 있어 큰 학원가로 넣었습니다.</p>');
+  } else {
+    lines.push('<div class="hrow"><span class="hk">가장 가까운 큰 학원가</span><b>' + hub(d.hub).name + '</b>' +
+               '<span class="hv">' + d.km.toFixed(1) + 'km</span></div>');
+    lines.push('<div class="hrow sub"><span class="hk">그다음</span><b>' + hub(d.hub2).name + '</b>' +
+               '<span class="hv">' + d.km2.toFixed(1) + 'km</span></div>');
+  }
+  // 통설상 이 지역 학생이 향한다는 학원가 (가장 가까운 곳과 다를 수 있다)
+  const lore = [];
+  for (const h of HUBS.hubs){
+    if (!h.lore) continue;
+    if (own && own.id === h.id){ lore.push('<b>' + h.name + '</b> — ' + h.lore); continue; }
+    if (h.from_gu.includes(gu) || h.from_dong.includes(key)){
+      const dist = h.id === d.hub ? d.km : h.id === d.hub2 ? d.km2 : null;
+      lore.push('<b>' + h.name + '</b>' + (dist !== null ? ' (' + dist.toFixed(1) + 'km)' : '') +
+                ' — ' + h.lore + ' <span class="lk">이 지역(' + row.parent + ')이 그 목록에 있습니다.</span>');
+    }
+  }
+  if (HUBS.local_lore[gu]) lore.push('<b>' + row.parent + '</b> — ' + HUBS.local_lore[gu]);
+  return '<section class="msec hub"><h4>큰 학원가와의 거리</h4>' + lines.join('') +
+    (lore.length ? '<div class="hlore"><span class="tag">통설</span>' +
+      lore.map(t => '<p>' + t + '</p>').join('') + '</div>' : '') +
+    '<p class="mhint">거리는 우리 좌표로 잰 직선거리입니다. 어디서 학생이 오는지는 위키·블로그에서 반복되는 통설이며 정량 통계가 아닙니다.</p>' +
+    '</section>';
+}
+
+function drawMarket(row){
+  const box = document.getElementById('mview');
+  if (!box) return;
+  if (state.unit === 'hub' && row.hub){ box.innerHTML = hubMarket(row); return; }
+  if (state.unit !== 'dong'){
+    box.innerHTML = '<div class="mapmsg">시장 해석은 <b>동 · 학원가 단위</b>에서 볼 수 있습니다.</div>';
+    return;
+  }
+  if (!MARKET){ box.innerHTML = '<div class="mapmsg">불러오는 중…</div>'; return; }
+  const m = MARKET.dongs[keyOf(row)];
+  if (!m){
+    box.innerHTML = '<div class="mapmsg">이 동은 시장 분석 대상이 아닙니다.' +
+                    '<br>분석은 서울과 서울에 맞닿은 경기 동 400곳만 다룹니다.</div>';
+    return;
+  }
+  const base = checkBase();
+  const t = MARKET.types[m.code];
+  const g = MARKET.grades[m.grade];
+  const group = m.group && MARKET.groups.find(x => x.label === m.group);
+  const leveled = MARKET.non_leveled.includes(row.parent);
+  const checks = checksFor(row);
+  const allFail = !!base.fails[keyOf(row)];
+
+  // ① 문서 판단 ↔ 데이터
+  const mark = c => c.ok === null ? '<span class="ck na">판단 보류</span>'
+                  : c.ok ? '<span class="ck ok">✓ 맞음</span>' : '<span class="ck no">✗ 다름</span>';
+  const checkHtml = checks.map(c =>
+    '<div class="crow">' + mark(c) +
+      '<div><div class="csay">“' + c.say + '”</div><div class="cdet">' + c.detail + '</div></div></div>').join('');
+
+  // ② 같은 유형 안에서
+  const peers = base.byType[m.code] || [];
+  const n = peers.length;
+  const posRow = (key, label, lowGood) => {
+    const M = CHECK_METRIC[key];
+    const v = M.v(row);
+    if (v === null || v === undefined) return '';
+    const vals = peers.map(M.v).filter(x => x !== null && x !== undefined).sort((a, b) => b - a);
+    const rank = vals.findIndex(x => x <= v) + 1;
+    const pct = vals.length > 1 ? (rank - 1) / (vals.length - 1) : 0;
+    const word = vals.length < 6 ? '' : pct <= 1 / 3 ? (M.hi || '많은 편') : pct >= 2 / 3 ? (M.lo || '적은 편') : '중간';
+    return '<div class="prow"><span class="pk">' + label + '</span>' +
+      '<span class="pv">' + M.f(v) + '</span>' +
+      '<span class="pbar"><i style="left:' + (100 - pct * 100) + '%"></i></span>' +
+      '<span class="pw' + (word && lowGood !== undefined ? ((word === '적은 편') === lowGood ? ' good' : '') : '') + '">' +
+        (word ? word + ' · ' : '') + vals.length + '곳 중 ' + rank + '위</span></div>';
+  };
+  const lvIn = key => {
+    const vals = peers.map(CHECK_METRIC[key].v).filter(x => x !== null && x !== undefined);
+    const v = CHECK_METRIC[key].v(row);
+    if (v === null || vals.length < 6) return null;
+    const higher = vals.filter(x => x > v).length / (vals.length - 1);
+    return higher <= 1 / 3 ? 'hi' : higher >= 2 / 3 ? 'lo' : 'mid';
+  };
+  const kid = lvIn('pop'), comp = lvIn('per1k');
+  box.innerHTML =
+    '<div class="mhead">' +
+      '<span class="mcode f' + m.code[0] + '">' + m.code + '</span>' +
+      '<b class="mname">' + t.name + '</b>' +
+      '<span class="mgrade ' + m.grade + '" title="' + g.text + '">' + g.label + '</span>' +
+    '</div>' +
+    (allFail ? '<div class="mflag">⚠ <b>조사 문서가 이 유형에 대해 내세운 성격이, 이 동의 데이터와 모두 다릅니다.</b> 아래 대조를 보세요.</div>' : '') +
+
+    '<section class="msec"><h4>문서 판단, 데이터로 맞춰보기</h4>' + checkHtml +
+      '<p class="mhint">400개 동을 줄 세워 위 ⅓을 많은 편, 아래 ⅓을 적은 편으로 봤습니다. 점수가 아니라 어느 쪽에 있는지만 봅니다.</p>' +
+    '</section>' +
+
+    '<section class="msec"><h4>같은 ' + m.code + ' 유형 ' + n + '곳 안에서</h4>' +
+      posRow('pop', '초4~중3 아이') +
+      posRow('eng', '영어학원') +
+      posRow('per1k', '아이 천 명당 영어학원', true) +
+      posRow('new', '최근 3년 신규 비율') +
+      '<button type="button" class="mpeer" data-code="' + m.code + '">' + m.code + ' 유형 ' + n + '곳만 목록으로 보기</button>' +
+    '</section>' +
+
+    hubSection(row) +
+    (m.own ? '<div class="mown"><span class="k">문서가 이 동에 대해 쓴 판단</span>' + m.own + '</div>' : '') +
+    (group ? '<div class="mnote grp"><b>조사 문서의 분류: ' + group.label + '</b> — ' + group.note + '</div>' : '') +
+    (leveled ? '<div class="mnote lvl"><b>비평준화 지역</b> — 중학교 내신이 고등학교 선택과 바로 이어져, ' +
+               '학교별 내신 대비 수요가 상대적으로 직접적입니다.</div>' : '') +
+
+    '<details class="mbody"><summary>조사 문서의 ' + m.code + ' 유형 설명과 권고 <small>같은 유형의 동은 모두 같은 내용 · 문서의 의견입니다</small></summary>' +
+      [['시장 성격', t.summary], ['부모가 보는 것', t.parent], ['영어를 배우는 이유', t.motive],
+       ['문서가 권한 운영 형태', t.form], ['문서가 권한 메시지', t.message], ['문서가 피하라고 한 것', t.caution]]
+        .filter(([, v]) => v)
+        .map(([k, v]) => '<div class="mrow"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>').join('') +
+    '</details>' +
+    '<div class="mwarn"><b>근거 등급: ' + g.label + '</b> — ' + g.text + '<br>' + MARKET.caution + '</div>' +
+    '<p class="msrc">출처: ' + MARKET.title + ' (' + MARKET.as_of.replace(/-/g, '.') + ' 기준) · 대조 데이터: 나이스 학원·학교, 행안부 인구, 국토부 실거래</p>';
+
+  const peer = box.querySelector('.mpeer');
+  if (peer) peer.onclick = () => {
+    state.mkt = 'type:' + peer.dataset.code; state.page = 0; render();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  };
+}
+
+function mktNote(){
+  const [kind, val] = state.mkt.split(':');
+  const what = kind === 'type' ? val + ' ' + MARKET.types[val].name : val;
+  return '조사 문서가 <b>「' + what + '」</b>로 분류한 동만 보입니다. 분류는 문서의 추정이며 동별 실측이 아닙니다.';
+}
+
+// '학원 적은 순' 기준.
+// 아이 1천 명당 영어학원, 학교 1곳당 영어학원을 각각 지금 보는 범위의 보통(중앙값)과
+// 견주고, 두 비율을 반반 평균해 '보통의 몇 %'로 낸다. 100%면 보통, 낮을수록 적다.
+// 가중치를 따로 매기지 않으려고 둘을 똑같이 친다.
+let FEW = null;
+
+function medianF(values){
+  const v = values.filter(x => x !== null && x !== undefined && isFinite(x)).sort((a, b) => a - b);
+  if (!v.length) return null;
+  const m = v.length >> 1;
+  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+}
+
+function fewRows(list){
+  // 학교가 없는 동은 학교 대비를 셀 수 없고, 인구가 없는 동은 아이 대비를 셀 수 없다.
+  const base = list.filter(r => r.sch_total > 0 && r.pop_target > 0);
+  const perKid = r => r.eng_total / r.pop_target * 1000;
+  const perSch = r => r.eng_total / r.sch_total;
+  const mk = medianF(base.map(perKid)), ms = medianF(base.map(perSch));
+  // 학교·아이가 적은 작은 동은 학원이 0곳이어도 자리로 볼 게 없다.
+  // 학교 수와 아이 수가 둘 다 보통(중앙값) 이상인 곳만 줄 세운다.
+  const minSch = medianF(base.map(r => r.sch_total));
+  const minPop = medianF(base.map(r => r.pop_target));
+  FEW = {kid: mk, sch: ms, minSch, minPop};
+  for (const r of base){
+    r._kid = perKid(r); r._sch = perSch(r);
+    r._few = (mk && ms) ? Math.round(((r._kid / mk) + (r._sch / ms)) / 2 * 100) : null;
+  }
+  return base.filter(r => r._few !== null && r.sch_total >= minSch && r.pop_target >= minPop)
+             .sort((x, y) => x._few - y._few || y.pop_target - x.pop_target);
+}
+
+// 단위 전체(동 이름을 못 가른 것 제외)
+function unitRows(){
+  return (DATA[state.unit] || []).filter(r => r.name !== UNKNOWN_DONG);
+}
+
+// 왼쪽 '지역'으로 고른 범위. 이 지역이 그 범위 밖이면 그 지역의 시·도로 잡는다.
+function scopeRows(row){
+  const sido = state.region === 'all' || !row || row.sido === state.region ? state.region : row.sido;
+  const list = unitRows();
+  return sido === 'all' ? list : list.filter(r => r.sido === sido);
+}
+
+const qMatch = r => {
+  const hay = r.name + ' ' + (r.parent || '');
+  return state.q.trim().split(/\s+/).every(w => hay.includes(w));
+};
+
+function rowsFor(){
+  const q = state.q.trim();
+  // 학원 적은 순은 검색어·시장 유형과 상관없이 단위·지역 전체로 보통을 잡는다.
+  if (state.gap){
+    const few = fewRows(scopeRows());
+    return q ? few.filter(qMatch) : few.filter(mktPass);
+  }
+  // 검색은 '이 지역을 찾아 달라'는 뜻이라 지역 범위·시장 유형·0곳 거르기를 건너뛴다.
+  // 값이 없는 지역도 보이게 하고 맨 뒤로 보낸다.
+  if (q){
+    const k = state.a || 'eng_total';
+    const val = r => (r[k] === null || r[k] === undefined) ? null : r[k];
+    return unitRows().filter(qMatch).sort((x, y) => {
+      const vx = val(x), vy = val(y);
+      if (vx === null || vy === null) return (vx === null) - (vy === null);
+      return state.desc ? vy - vx : vx - vy;
+    });
+  }
+  let list = scopeRows().filter(mktPass);
+  list = list.filter(r => r[state.a] !== null && r[state.a] !== undefined);
+  // 거리처럼 0이 뜻있는 지표(학원가 한가운데)는 빼지 않는다.
+  if (state.hideZero && !metric(state.a).keepZero) list = list.filter(r => r[state.a] > 0);
+  list.sort((x, y) => state.desc ? y[state.a] - x[state.a] : x[state.a] - y[state.a]);
+  return list;
+}
+
+// ---------- 그래프 움직임 ----------
+// 같은 자리(몇 번째 줄 · 몇 번째 열)에 있던 값에서 새 값으로 막대가 움직이고 숫자가 굴러간다.
+// 줄의 지역이 바뀌어도 자리 기준이라, 조건을 바꾸면 목록 전체가 한 번에 흘러간다.
+const PREV = {};
+const CALM = matchMedia('(prefers-reduced-motion: reduce)');
+
+function animNum(to, slot, fmtKind){
+  // 처음 그리는 칸은 이전 값이 없다. 0에서 출발한다.
+  const from = (PREV[slot] && Number.isFinite(PREV[slot].v)) ? PREV[slot].v : 0;
+  PREV[slot] = Object.assign(PREV[slot] || {}, {v: to});
+  return '<span class="anum" data-from="' + from + '" data-to="' + to + '"' +
+         (fmtKind ? ' data-f="' + fmtKind + '"' : '') + '>' + fmtAnim(from, fmtKind) + '</span>';
+}
+
+function fmtAnim(v, kind){
+  if (kind === 'pct') return Math.round(v) + '%';
+  if (kind === 'dec1') return (Math.round(v * 10) / 10).toLocaleString('ko-KR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+  return fmt(Math.round(v));
+}
+
+function cell(value, max, med, color, slot, kind){
+  // 막대 오른쪽에 값 라벨이 들어갈 자리를 남겨둔다
+  const pct = v => Math.max(0.8, ((v || 0) / max) * 84);
+  const r2 = x => Math.round(x * 100) / 100;
+  const w = r2(pct(value)), m = med === null ? null : r2(pct(med));
+  const was = PREV[slot] || {w: 0.8, m};
+  PREV[slot] = {w, m, v: was.v};
+  const line = m === null ? '' :
+    '<span class="med" style="left:' + (was.m ?? m) + '%" data-m="' + m + '"></span>';
+  const num = (value === null || value === undefined) ? '—' : animNum(value, slot, kind);
+  return '<div class="cell">' +
+           '<div class="track"><span class="fill" style="width:' + was.w + '%;background:' + color +
+           '" data-w="' + w + '"></span>' + line + '</div>' +
+           '<span class="val">' + num + '</span>' +
+         '</div>';
+}
+
+// 새로 그린 표에서 막대와 숫자를 목표값까지 움직인다.
+let animTimer = 0;
+function animateChart(root){
+  const bars = root.querySelectorAll('[data-w]');
+  const meds = root.querySelectorAll('[data-m]');
+  const nums = root.querySelectorAll('.anum');
+  const settle = () => {
+    for (const el of bars) el.style.width = el.dataset.w + '%';
+    for (const el of meds) el.style.left = el.dataset.m + '%';
+  };
+  cancelAnimationFrame(animTimer);
+  if (CALM.matches){
+    root.classList.add('still');
+    settle();
+    for (const el of nums) el.textContent = fmtAnim(+el.dataset.to, el.dataset.f);
+    return;
+  }
+  void root.offsetWidth;          // 이전 폭을 먼저 그려야 움직임이 보인다
+  settle();
+  const t0 = performance.now(), dur = 650;
+  const draw = k => {
+    const e = 1 - Math.pow(1 - k, 3);
+    for (const el of nums){
+      const a = +el.dataset.from, b = +el.dataset.to;
+      el.textContent = fmtAnim(a + (b - a) * e, el.dataset.f);
+    }
+  };
+  const tick = now => {
+    const k = Math.min(1, (now - t0) / dur);
+    draw(k);
+    if (k < 1) animTimer = requestAnimationFrame(tick);
+  };
+  animTimer = requestAnimationFrame(tick);
+  // 탭이 뒤에 있으면 프레임이 멈춘다. 그래도 끝값은 반드시 맞춘다.
+  clearTimeout(animChart.done);
+  animChart.done = setTimeout(() => { cancelAnimationFrame(animTimer); draw(1); }, dur + 60);
+}
+const animChart = {done: 0};
+
+// 목록에서 지역을 누르면 아래 상세로 내려가 보여준다.
+function showDetail(){
+  const top = detail.getBoundingClientRect().top + window.scrollY - 16;
+  const goal = Math.min(top, document.documentElement.scrollHeight - window.innerHeight);
+  window.scrollTo({top, behavior: 'smooth'});
+  // 부드러운 스크롤을 건너뛰는 환경이 있다. 안 움직였으면 바로 옮긴다.
+  setTimeout(() => { if (Math.abs(window.scrollY - goal) > 40) window.scrollTo(0, top); }, 700);
+}
+
+function renderDetail(list){
+  const row = list.find(r => keyOf(r) === state.picked);
+  if (!row){
+    detail.innerHTML = '<div class="dempty">목록에서 지역을 누르면 요약 · 학원 목록 · 지도 · 시장 해석을 볼 수 있습니다.</div>';
+    return;
+  }
+  state.picked = keyOf(row);
+  // 학원 목록·지도·시장 해석은 동과 학원가에만 있다.
+  const fine = state.unit !== 'gu';
+  if (!fine) state.tab = 'summary';
+
+  // 이 지역이 전체에서 몇 번째인지 — 지표마다 따로 센다.
+  // 검색어·시장 유형·0곳 거르기로 줄어든 목록이 아니라, 지역 범위 전체에서 센다.
+  const rankBase = scopeRows(row);
+  const rankOf = k => {
+    const v = row[k];
+    if (v === null || v === undefined) return null;
+    return rankBase.filter(r => r[k] !== null && r[k] !== undefined && r[k] > v).length + 1;
+  };
+  const rankScope = (rankBase.length && rankBase.every(r => r.sido === rankBase[0].sido) ? rankBase[0].sido : '서울+경기') +
+    ' ' + {dong: '동', gu: '구·시', hub: '학원가'}[state.unit] + ' ' + fmt(rankBase.length) + '곳 중 순위';
+
+  const won = v => v >= 100_000_000
+    ? (v / 100_000_000).toFixed(1).replace(/\.0$/, '') + '억'
+    : Math.round(v / 10_000).toLocaleString('ko-KR') + '만원';
+
+  /** 부동산은 따로 받은 자료라 있을 때만 칸을 만든다. */
+  // 학원가면 속한 동의 부동산을 합친다. 매매가는 동별 중간값의 가운데.
+  function estateOf(){
+    if (!ESTATE) return null;
+    if (!row.hub) return ESTATE.dongs[row.sido + '/' + (row.parent || '') + '/' + row.name];
+    const es = row.members.map(r => ESTATE.dongs[keyOf(r)]).filter(Boolean);
+    const apts = es.map(x => x.apt).filter(Boolean), nrgs = es.map(x => x.nrg).filter(Boolean);
+    const sum = (arr, f) => arr.reduce((a, x) => a + x[f], 0);
+    if (!apts.length && !nrgs.length) return null;
+    return {
+      apt: apts.length ? {price: median(apts.map(a => a.price)), area: median(apts.map(a => a.area)),
+                          n: sum(apts, 'n'), complexes: sum(apts, 'complexes')} : null,
+      nrg: nrgs.length ? {n: sum(nrgs, 'n'), n_academy_ok: sum(nrgs, 'n_academy_ok')} : null,
+    };
+  }
+
+  function estateBlock(){
+    const e = estateOf();
+    if (!e) return '';
+    const stat = (k, v, extra) =>
+      '<div class="stat"><span class="k">' + k + '</span>' +
+      '<span class="v">' + v + '</span>' +
+      (extra ? '<span class="sub-note">' + extra + '</span>' : '') + '</div>';
+    // 아파트는 학부모 지갑을 보는 것이라 매매가를 쓰고,
+    // 상가는 빌릴 자리라 매매가 대신 '얼마에 빌리나'만 본다.
+    let out = '<div><p class="grp-title">부동산</p>';
+    if (e.apt)
+      out += stat('아파트 중간 매매가', won(e.apt.price), Math.round(e.apt.area / 3.3) + '평 기준') +
+             stat('매매 건수', e.apt.n.toLocaleString('ko-KR') + '건', e.apt.complexes + '개 단지');
+
+    // 임대 시세는 상권 표본 조사라 구·시 단위까지만 있다.
+    const r = RENT && RENT.gusi[row.sido + '/' + (row.parent || row.name)];
+    if (r){
+      out += '<div class="sep">상가 빌리기 <small>' + RENT.quarter + ' · 구 평균 어림값</small></div>' +
+             stat('20평이면 월세', Math.round(r.rent * 1000 * 66 / 10_000).toLocaleString('ko-KR') + '만원',
+                  '보증금까지 월세로 친 값') +
+             stat('비어 있는 가게', r.vacancy + '%', '높으면 자리는 많고 장사는 어렵다');
+    }
+    if (e.nrg)
+      out += stat('학원 가능 건물', e.nrg.n_academy_ok.toLocaleString('ko-KR') + '곳',
+                  '최근 2년 거래된 ' + e.nrg.n.toLocaleString('ko-KR') + '곳 중');
+    return out + '</div>';
+  }
+
+  const statRows = g => METRICS.filter(m => m.g === g).map(m => {
+    const rank = rankOf(m.k);
+    return '<div class="stat' + (m.sub ? ' sub sub' + m.sub : '') + '">' +
+             '<span class="k">' + m.l + '</span>' +
+             '<span class="v">' + fmt(row[m.k]) + '</span>' +
+             '<span class="r">' + (rank ? rank + '위' : '') + '</span>' +
+           '</div>';
+  }).join('');
+  // 학교와 인구는 항목이 적어 한 칸에 같이 둔다.
+  const hubRing = (() => {
+    const h = row.hub && HUBS && hubOf(row);
+    if (!h) return '';
+    const st = (k, v) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + fmt(v) + '</span></div>';
+    return '<div class="sep">중심에서 반경 ' + HUBS.radius_km + 'km <small>동 경계와 상관없이</small></div>' +
+      st('영어 학원·교습소', h.ring.eng) + st('초·중학교', h.ring.sch) + st('학교 재학생 (초4~중3)', h.ring.stu);
+  })();
+  const groups =
+    '<div><p class="grp-title">학원</p>' + statRows('학원') + hubRing + '</div>' +
+    '<div><p class="grp-title">학교 · 인구</p>' + statRows('학교') +
+      '<div class="sep">인구</div>' + statRows('인구') + '</div>' +
+    estateBlock();
+
+  // '학원 적은 순'으로 볼 때는 이 지역이 보통의 몇 %인지 풀어 쓴다.
+  const derived = (!state.gap || row._few == null || !FEW) ? '' :
+    '<div class="derived">학교·아이 수에 비해 영어학원이 <b>보통의 ' + row._few + '%</b>' +
+    '<br>아이 1,000명당 <b>' + row._kid.toFixed(1) + '곳</b> <small>(보통 ' + FEW.kid.toFixed(1) + '곳)</small>' +
+    ' · 학교 1곳당 <b>' + row._sch.toFixed(1) + '곳</b> <small>(보통 ' + FEW.sch.toFixed(1) + '곳)</small></div>';
+
+  const tab = (k, label, on) =>
+    '<button type="button" data-tab="' + k + '"' + (on ? '' : ' disabled') +
+    ' aria-selected="' + (state.tab === k) + '">' + label + '</button>';
+
+  const body = state.tab === 'map'
+    ? '<div class="maparea"><div id="map"></div>' +
+      '<div class="maplegend">' +
+        [['초등학교', 'e'], ['중학교', 'm'],
+         ['영어 전문', 'a1'], ['영어+타 과목', 'a2'], ['교습소', 'a3'],
+         ['아파트', 'p3'], ['상가', 'g3']]
+          .map(([k, c]) => '<button type="button" class="tg ' + c + '" data-show="' + k + '"' +
+               ' aria-pressed="' + state.show[k] + '"><i class="pin ' + c + '"></i>' +
+               kindLabel(k) + '</button>').join('') +
+        '<label class="opt"><input type="checkbox" id="ringOn"' +
+          (state.rings ? ' checked' : '') + '> 학교 반경 700m</label>' +
+        '<label class="opt"><input type="checkbox" id="recentOn"' +
+          (state.recentOnly ? ' checked' : '') + '> 최근 3년에 생긴 곳만</label>' +
+        '<span class="hint" id="mapcount"></span>' +
+      '</div></div>'
+    : state.tab === 'list' ? '<div class="alist" id="alist"><div class="mapmsg">불러오는 중…</div></div>'
+    : state.tab === 'market' ? '<div class="mview" id="mview"></div>'
+    : '<p class="rscope">오른쪽 숫자는 ' + rankScope + '입니다. 많은 쪽이 1위.</p>' +
+      '<div class="groups">' + groups + '</div>' + derived;
+
+  detail.innerHTML =
+    '<div class="dhead"><h3>' + row.name + '</h3>' +
+      (row.hub ? '<span class="p">' + row.parent + ' ' + row.members.map(r => r.name).join(' · ') + '</span>'
+               : row.parent ? '<span class="p">' + row.parent + '</span>' : '') +
+      '<span class="lead">영어학원 <b>' + fmt(row.eng_total) + '</b>곳</span></div>' +
+    '<div class="tabs">' + tab('summary', '요약', true) +
+      tab('list', '학원 목록', fine) + tab('map', '지도', fine) + tab('market', '시장 해석', fine) + '</div>' +
+      (fine ? '' : '<p class="tabnote">학원 목록 · 지도 · 시장 해석은 단위를 <b>동</b>이나 <b>학원가</b>로 바꾸면 볼 수 있습니다.</p>') +
+    '<div class="dbody">' + body + '</div>';
+
+  for (const b of detail.querySelectorAll('.tabs button[data-tab]'))
+    b.onclick = () => { state.tab = b.dataset.tab; render(); };
+  if (state.tab === 'list') drawList(row);
+  if (state.tab === 'market') drawMarket(row);
+  if (state.tab === 'map'){
+    const ring = document.getElementById('ringOn');
+    if (ring) ring.onchange = () => { state.rings = ring.checked; drawMap(row, true); };
+    const recent = document.getElementById('recentOn');
+    if (recent) recent.onchange = () => { state.recentOnly = recent.checked; render(); };
+    for (const b of detail.querySelectorAll('.tg[data-show]'))
+      b.onclick = () => { state.show[b.dataset.show] = !state.show[b.dataset.show]; render(); };
+    drawMap(row);
+  }
+}
+
+// ---------- 지도 ----------
+const PLACE_CACHE = {};
+let kakaoReady = false, mapObj = null, overlays = [];
+let MAP_REGION = {sido: '', gusi: ''};
+
+function placeFile(row){
+  // 파일 이름은 prep_places.py 의 slug() 와 같은 규칙으로 만든다.
+  const clean = t => (t || '').replace(/[^0-9A-Za-z가-힣]+/g, '');
+  return clean(row.sido) + '_' + clean(row.parent) + '_' + clean(row.name) + '.json';
+}
+
+function loadKakao(){
+  return new Promise((resolve, reject) => {
+    if (kakaoReady) return resolve();
+    if (!window.kakao || !window.kakao.maps) return reject(new Error('sdk'));
+    kakao.maps.load(() => { kakaoReady = true; resolve(); });
+  });
+}
+
+// ㎡당 거래가 구간. 전체 데이터를 3등분한 값이라 동네가 달라도 같은 잣대가 된다.
+const PRICE_BANDS = [12_000_000, 20_000_000];
+const priceLevel = m2 => m2 >= PRICE_BANDS[1] ? 3 : (m2 >= PRICE_BANDS[0] ? 2 : 1);
+// 건축법상 학원·교습소가 들어갈 수 있는 건물인지. 전문용어 대신 결론만 쓴다.
+// 제2종근린생활(500㎡ 미만)과 교육연구시설이 학원 자리다. 제1종은 학원이 빠져 있지만
+// 같은 근린생활시설군이라 건축물대장 기재변경으로 바꿀 수 있다.
+function shopUse(kind){
+  const k = kind || '';
+  if (k.startsWith('제2종근린생활') || k.startsWith('교육연구'))
+    return {text: '학원 가능', level: 3};
+  if (k.startsWith('제1종근린생활'))
+    return {text: '용도 바꾸면 가능', level: 2};
+  return {text: '학원은 어려움', level: 1};
+}
+
+const manwon = v => Math.round(v / 10_000).toLocaleString('ko-KR') + '만원';
+const eok = v => v >= 100_000_000
+  ? (v / 100_000_000).toFixed(1).replace(/\.0$/, '') + '억' : manwon(v);
+
+const SCHOOL_RADIUS = 700;
+const NEARBY_RADIUS = 500;   // 그 건물 주변 시세를 볼 범위   // 도보 10분 남짓. 학교 반경 원과 같은 값.
+
+function metersBetween(a, b){
+  // 동네 범위라 평면으로 봐도 오차가 무시할 만하다.
+  const dLat = (a.lat - b.lat) * 111_320;
+  const dLng = (a.lng - b.lng) * 111_320 * Math.cos(a.lat * Math.PI / 180);
+  return Math.round(Math.hypot(dLat, dLng));
+}
+
+/** 같은 좌표에 겹친 지점을 하나로 묶는다. 한 건물에 학원 30곳이 있기도 하다. */
+function groupBySpot(pts){
+  const spots = new Map();
+  for (const p of pts){
+    const key = p.t + '@' + p.lat.toFixed(5) + ',' + p.lng.toFixed(5);
+    if (!spots.has(key)) spots.set(key, []);
+    spots.get(key).push(p);
+  }
+  return [...spots.values()];
+}
+
+/** 핀을 눌렀을 때 뜨는 말풍선 내용 */
+function cardFor(p, all){
+  const line = [];
+  if (p.t === 's'){
+    line.push([p.k, p.e, p.g && p.g !== '남여공학' ? p.g + '학교' : null]
+              .filter(Boolean).join(' · '));
+    if (p.st != null){
+      const grade = p.k === '중학교' ? '' : ' · 4~6학년 ' + fmt(p.tg) + '명';
+      line.push('재학생 <b>' + fmt(p.st) + '명</b>' + grade);
+      line.push('전입 <b>' + fmt(p.mi) + '</b> · 전출 <b>' + fmt(p.mo) + '</b> <small>학교알리미 2026</small>');
+    }
+    const near = all.filter(x => x.t === 'a' && metersBetween(p, x) <= SCHOOL_RADIUS);
+    if (near.length){
+      const by = k => near.filter(x => x.k === k).length;
+      line.push('<u>반경 ' + SCHOOL_RADIUS + 'm 안 영어학원 ' + near.length + '곳</u>');
+      line.push(['영어 전문', '영어+타 과목', '교습소']
+                .filter(k => by(k)).map(k => kindLabel(k) + ' ' + by(k)).join(' · '));
+    } else {
+      line.push('<u>반경 ' + SCHOOL_RADIUS + 'm 안에 영어학원이 없습니다</u>');
+    }
+  } else if (p.t === 'g'){
+    // 상가는 빌리는 것이지 사는 게 아니다. 매매가 대신 '얼마에 빌리나'만 남긴다.
+    const pyeong = Math.round(p.ar / 3.3);
+    line.push('<u>' + shopUse(p.k).text + '</u>');
+
+    // 임대료 표본은 330㎡ 이하 소규모상가다. 그보다 큰 건물엔 갖다 붙이지 않는다.
+    const r = p.ar <= 330 && RENT && RENT.gusi[MAP_REGION.sido + '/' + MAP_REGION.gusi];
+    if (r){
+      // ㎡당 값은 와닿지 않는다. 거래된 호실 넓이를 곱해 월 얼마인지로 바꾼다.
+      const monthly = Math.round(r.rent * 1000 * p.ar / 10_000);
+      line.push(pyeong + '평에 월세 <b>' + monthly.toLocaleString('ko-KR') + '만원</b>쯤' +
+                ' <small>여기서 거래된 호실 크기</small>');
+      line.push('<small>' + MAP_REGION.gusi + ' 평균으로 어림한 값. 보증금까지 월세로 쳤습니다.</small>');
+    } else {
+      line.push(pyeong + '평 <small>여기서 거래된 호실 크기</small>');
+    }
+    line.push('<hr><small>' + (p.y ? p.y + '년에 지은 건물 · ' : '') +
+              '최근 2년 거래 ' + p.c + '건</small>');
+  } else if (p.t === 'p'){
+    // 아파트는 매매가가 곧 학부모 지갑이라 그대로 둔다.
+    line.push([p.y ? p.y + '년' : null, Math.round(p.ar / 3.3) + '평'].filter(Boolean).join(' · '));
+    line.push('<u>중간 매매가 ' + eok(p.p) + '</u>');
+
+    // 한 단지만 보면 몇 건에 휘둘린다. 주변 실거래를 같이 세어 시세를 잡는다.
+    const near = all.filter(x => x.t === 'p' && metersBetween(p, x) <= NEARBY_RADIUS);
+    if (near.length >= 5){
+      const mid = near.map(x => x.m2).sort((a, b) => a - b)[near.length >> 1];
+      line.push('<small>주변 ' + NEARBY_RADIUS + 'm 시세는 평당 ' +
+                Math.round(mid * 3.3 / 10_000).toLocaleString('ko-KR') + '만원 · ' +
+                near.length + '개 단지</small>');
+    }
+    line.push('<small>최근 2년 매매 ' + p.c + '건</small>');
+  } else {
+    const age = p.y ? (new Date().getFullYear() - p.y + 1) : null;
+    line.push([kindLabel(p.k), age ? age + '년차' : null].filter(Boolean).join(' · '));
+    if (p.c) line.push(p.c);
+    if (p.f) line.push('월 ' + Math.round(p.f / 10000) + '만원 <small>(신고 공개분)</small>');
+    const schools = all.filter(x => x.t === 's')
+      .map(x => ({n: x.n, d: metersBetween(p, x)}))
+      .sort((a, b) => a.d - b.d).slice(0, 2);
+    if (schools.length)
+      line.push('가까운 학교 ' + schools.map(x => x.n.replace(/^서울|초등학교$|학교$/g, m => m === '서울' ? '' : (m === '초등학교' ? '초' : '')) + ' ' + x.d + 'm').join(' · '));
+  }
+  return '<b>' + p.n + '</b>' + line.filter(Boolean).map(t => '<span>' + t + '</span>').join('');
+}
+
+/** 한 건물에 여러 곳이 있을 때의 말풍선. 이름을 누르면 그 곳 상세로 들어간다. */
+const SPOT_PREVIEW = 6;
+
+function cardForSpot(group, all, expanded){
+  if (group.length === 1) return cardFor(group[0], all);
+  const kinds = {};
+  for (const g of group) kinds[g.k] = (kinds[g.k] || 0) + 1;
+  const head = '<b>이 건물에 ' + group.length + '곳</b>' +
+               '<span>' + Object.entries(kinds).map(([k, n]) => kindLabel(k) + ' ' + n).join(' · ') + '</span>';
+  const limit = expanded ? group.length : SPOT_PREVIEW;
+  const shown = group.slice(0, limit).map((g, i) => {
+    const age = g.y ? (new Date().getFullYear() - g.y + 1) + '년차' : '';
+    return '<span class="li pick" data-i="' + i + '">' + g.n +
+           (age ? ' <small>' + age + '</small>' : '') + '</span>';
+  }).join('');
+  const rest = group.length > limit
+    ? '<span class="li more" data-all="1">외 ' + (group.length - limit) + '곳 모두 보기</span>' : '';
+  return head + shown + rest;
+}
+
+/** 바탕 타일만 채도를 낮춘다.
+ *  카카오 바탕에 주황·파랑 POI 아이콘이 깔려 있어 우리 핀이 묻힌다.
+ *  타일 레이어와 핀 레이어가 따로라 바탕만 눌러도 핀은 그대로 선명하다. */
+function muteBasemap(box){
+  const pane = box.children[0] && box.children[0].children[0];
+  if (!pane) return;
+  for (const layer of pane.children){
+    if (layer.querySelector('img')) layer.style.filter = 'grayscale(.9) brightness(1.06) contrast(.92)';
+  }
+}
+
+function clearOverlays(){
+  for (const o of overlays) o.setMap(null);
+  overlays = [];
+}
+
+let lastDong = null;
+
+function getPlaces(file){
+  if (PLACE_CACHE[file]) return Promise.resolve(PLACE_CACHE[file]);
+  return fetch('data/places/' + encodeURIComponent(file) + '?v=' + V)
+    .then(r => r.ok ? r.json() : null)
+    .then(d => (PLACE_CACHE[file] = d))
+    .catch(() => null);
+}
+
+// ---------- 학원 목록 ----------
+const LIST_SORT = {
+  old:  {l: '오래된 순',   f: (a, b) => (a.y || 9999) - (b.y || 9999)},
+  new:  {l: '최근 생긴 순', f: (a, b) => (b.y || 0) - (a.y || 0)},
+  fee:  {l: '수강료 높은 순', f: (a, b) => (b.f || 0) - (a.f || 0)},
+  name: {l: '이름 순',     f: (a, b) => a.n.localeCompare(b.n, 'ko')},
+};
+
+function drawList(row){
+  const box = document.getElementById('alist');
+  if (!box) return;
+  if (state.unit === 'gu'){
+    box.innerHTML = '<div class="mapmsg">학원 목록은 <b>동 · 학원가 단위</b>에서 볼 수 있습니다.' +
+                    '<br>왼쪽 단위를 바꿔주세요.</div>';
+    return;
+  }
+  rowPlaces(row).then(data => {
+    const academies = data ? data.items.filter(p => p.t === 'a') : [];
+    if (!academies.length){
+      box.innerHTML = '<div class="mapmsg">이 동에는 목록에 올릴 영어학원이 없습니다.</div>';
+      return;
+    }
+    const schools = data.items.filter(p => p.t === 's');
+    const now = new Date().getFullYear();
+    const count = k => academies.filter(a => a.k === k).length;
+
+    const chips = [['all', '전체', academies.length],
+                   ...Object.keys(ACA_KIND).map(k => [k, kindLabel(k), count(k)])]
+      .filter(([k, , n]) => k === 'all' || n)
+      .map(([k, l, n]) => '<button type="button" class="chip ' + (k === 'all' ? '' : ACA_KIND[k].pin) +
+           '" data-kind="' + k + '" aria-pressed="' + (state.listKind === k) + '">' +
+           (k === 'all' ? '' : '<i class="pin ' + ACA_KIND[k].pin + '"></i>') + l + ' <b>' + n + '</b></button>')
+      .join('');
+    const sorts = Object.entries(LIST_SORT)
+      .map(([k, v]) => '<option value="' + k + '"' + (state.listSort === k ? ' selected' : '') + '>' + v.l + '</option>')
+      .join('');
+
+    const shown = academies
+      .filter(a => state.listKind === 'all' || a.k === state.listKind)
+      .sort(LIST_SORT[state.listSort].f);
+
+    const shortSchool = n => n.replace(/^서울|^경기/, '').replace(/초등학교$/, '초').replace(/중학교$/, '중');
+    const body = shown.map(a => {
+      const near = schools.map(s => ({n: s.n, d: metersBetween(a, s)})).sort((x, y) => x.d - y.d)[0];
+      const kind = ACA_KIND[a.k] || ACA_KIND['영어 전문'];
+      return '<tr data-name="' + a.n.replace(/"/g, '&quot;') + '" data-lat="' + a.lat + '" data-lng="' + a.lng + '">' +
+        '<td class="an"><b>' + a.n + '</b><span class="kd ' + kind.pin + '">' + kind.label + '</span></td>' +
+        '<td class="ay">' + (a.y ? a.y + '<small>' + (now - a.y + 1) + '년차</small>' : '—') + '</td>' +
+        '<td class="ac">' + (a.c ? a.c.replace(/[,\s]+$/, '') : '<span class="dim">—</span>') + '</td>' +
+        '<td class="af">' + (a.f ? '월 <b>' + Math.round(a.f / 10000) + '</b>만원' : '<span class="dim">비공개</span>') + '</td>' +
+        '<td class="as">' + (near ? shortSchool(near.n) + ' <small>' + near.d.toLocaleString('ko-KR') + 'm</small>' : '—') + '</td>' +
+      '</tr>';
+    }).join('');
+
+    box.innerHTML =
+      '<div class="lbar"><div class="chips">' + chips + '</div>' +
+        '<select class="lsort" aria-label="정렬">' + sorts + '</select></div>' +
+      '<div class="ltable"><table>' +
+        '<thead><tr><th>학원</th><th>문 연 해</th><th>가르치는 과정</th><th>수강료</th><th>가까운 학교</th></tr></thead>' +
+        '<tbody>' + body + '</tbody></table></div>' +
+      '<p class="lnote">줄을 누르면 지도에서 그 학원을 보여줍니다. ' +
+        '수강료는 학원이 교육청에 공개한 곳만 나옵니다.</p>';
+
+    for (const b of box.querySelectorAll('.chip'))
+      b.onclick = () => { state.listKind = b.dataset.kind; drawList(row); };
+    box.querySelector('.lsort').onchange = e => { state.listSort = e.target.value; drawList(row); };
+    for (const tr of box.querySelectorAll('tbody tr'))
+      tr.onclick = () => {
+        state.focus = {n: tr.dataset.name, lat: +tr.dataset.lat, lng: +tr.dataset.lng};
+        state.tab = 'map';
+        render();
+      };
+  });
+}
+
+function drawMap(row, keepView){
+  const box = document.getElementById('map');
+  if (!box) return;
+  if (state.unit === 'gu'){
+    box.innerHTML = '<div class="mapmsg">지도는 <b>동 · 학원가 단위</b>에서 볼 수 있습니다.' +
+                    '<br>왼쪽 단위를 바꿔주세요.</div>';
+    return;
+  }
+  const file = row.hub ? 'hub:' + row.hub : placeFile(row);
+  const paint = data => {
+    if (!data || !data.items.length){
+      box.innerHTML = '<div class="mapmsg">이 동에는 지도에 찍을 학원·학교가 없습니다.</div>';
+      return;
+    }
+    loadKakao().then(() => {
+      MAP_REGION = {sido: data.sido, gusi: data.gusi};
+      const cutoff = new Date().getFullYear() - 3;
+      const showKey = p => p.t === 'p' ? '아파트' : (p.t === 'g' ? '상가' : p.k);
+      if (state.focus){
+        const it = data.items.find(p => p.t === 'a' && p.n === state.focus.n);
+        if (it){ state.show[it.k] = true; state.recentOnly = false; }
+      }
+      const pts = data.items.filter(p =>
+        state.show[showKey(p)] !== false &&
+        !(state.recentOnly && p.t === 'a' && (!p.y || p.y < cutoff)));
+      if (!pts.length){
+        const c = document.getElementById('mapcount');
+        if (c) c.textContent = '조건에 맞는 지점이 없습니다';
+        clearOverlays();
+        return;
+      }
+      const lat = pts.reduce((s, p) => s + p.lat, 0) / pts.length;
+      const lng = pts.reduce((s, p) => s + p.lng, 0) / pts.length;
+      if (!mapObj || box.dataset.built !== '1'){
+        box.innerHTML = '';
+        mapObj = new kakao.maps.Map(box, {center: new kakao.maps.LatLng(lat, lng), level: 5});
+        mapObj.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+        // 빈 곳을 누르면 열려 있던 말풍선을 닫는다.
+        kakao.maps.event.addListener(mapObj, 'click', () => {
+          for (const o of box.querySelectorAll('.mk.open')) o.classList.remove('open');
+        });
+        box.dataset.built = '1';
+      }
+      muteBasemap(box);
+      clearOverlays();
+
+      const bounds = new kakao.maps.LatLngBounds();
+      let focusPos = null;
+      for (const group of groupBySpot(pts)){
+        const p = group[0];
+        const pos = new kakao.maps.LatLng(p.lat, p.lng);
+        bounds.extend(pos);
+        const school = p.t === 's';
+        if (school && state.rings){
+          const tint = p.k === '중학교' ? '#8a2be2' : '#0a5cff';
+          const ring = new kakao.maps.Circle({
+            center: pos, radius: 700, strokeWeight: 1, strokeColor: tint,
+            strokeOpacity: .45, strokeStyle: 'shortdash',
+            fillColor: tint, fillOpacity: .05,
+          });
+          ring.setMap(mapObj); overlays.push(ring);
+        }
+        const el = document.createElement('div');
+        const shape = p.t === 'p' ? 'p' + priceLevel(p.m2)
+                    : p.t === 'g' ? 'g' + shopUse(p.k).level
+                    : !school ? 'a ' + ((ACA_KIND[p.k] || ACA_KIND['영어 전문']).pin)
+                    : (p.k === '중학교' ? 'm' : 'e');
+        el.className = 'mk ' + shape;
+        if (group.length > 1) el.dataset.n = group.length;
+        el.innerHTML = '<div class="card">' + cardForSpot(group, pts) + '</div>';
+
+        // 목록에서 이름을 누르면 그 곳 상세로, '목록'을 누르면 되돌아온다.
+        const card = el.querySelector('.card');
+        const paintCard = (idx, expanded) => {
+          card.innerHTML = idx === null
+            ? cardForSpot(group, pts, expanded)
+            : '<button type="button" class="back">← 목록 ' + group.length + '곳</button>' +
+              cardFor(group[idx], pts);
+          bindCard();
+        };
+        const bindCard = () => {
+          for (const li of card.querySelectorAll('.li.pick'))
+            li.onclick = ev => { ev.stopPropagation(); paintCard(+li.dataset.i); };
+          const more = card.querySelector('.li.more');
+          if (more) more.onclick = ev => { ev.stopPropagation(); paintCard(null, true); };
+          const back = card.querySelector('.back');
+          if (back) back.onclick = ev => { ev.stopPropagation(); paintCard(null); };
+        };
+        if (group.length > 1) bindCard();
+        const base = school ? 3 : 2;
+        const mk = new kakao.maps.CustomOverlay({
+          position: pos, content: el, yAnchor: 1, clickable: true, zIndex: base,
+        });
+        mk.setMap(mapObj); overlays.push(mk);
+        el.onclick = () => {
+          for (const o of box.querySelectorAll('.mk.open')) o.classList.remove('open');
+          for (const o of overlays) if (o.setZIndex) o.setZIndex(o === mk ? 999 : base);
+          el.classList.add('open');
+        };
+        const f = state.focus;
+        const hit = f ? group.findIndex(g => g.t === 'a' && g.n === f.n && g.lat === f.lat && g.lng === f.lng) : -1;
+        if (hit >= 0){
+          el.onclick();
+          if (group.length > 1) paintCard(hit);
+          focusPos = pos;
+        }
+      }
+      // 동을 바꿨을 때만 화면을 맞춘다. 필터를 누를 때마다 튀면 어지럽다.
+      const dongKey = data.sido + '/' + data.gusi + '/' + data.dong;
+      if (focusPos){ mapObj.setLevel(3); mapObj.setCenter(focusPos); }
+      else if (!keepView && dongKey !== lastDong){ mapObj.setBounds(bounds, 40, 40, 40, 40); }
+      state.focus = null;
+      lastDong = dongKey;
+
+      const c = document.getElementById('mapcount');
+      const n = t => pts.filter(p => p.t === t).length;
+      const shown = [['학교', n('s')], ['학원', n('a')], ['아파트', n('p')], ['상가', n('g')]]
+        .filter(([, v]) => v).map(([k, v]) => k + ' ' + v).join(' · ');
+      const all = data.items.length;
+      if (c) c.textContent = pts.length === all ? shown : shown + ' (전체 ' + all + '개 중)';
+    }).catch(() => {
+      box.innerHTML = '<div class="mapmsg">지도를 불러오지 못했습니다.' +
+                      '<br>카카오 지도 키 또는 등록된 도메인을 확인해주세요.</div>';
+    });
+  };
+
+  if (PLACE_CACHE[file]) return paint(PLACE_CACHE[file]);
+  box.innerHTML = '<div class="mapmsg">불러오는 중…</div>';
+  rowPlaces(row).then(paint);
+}
+
+function render(){
+  fillSelect(selA, METRICS, state.a, '지표를 고르세요');
+  renderCols();
+
+  segment(unit,   [{k:'dong', l:'동'}, {k:'gu', l:'구 · 시'}, {k:'hub', l:'학원가'}], () => state.unit, k => state.unit = k);
+  segment(region, [{k:'서울', l:'서울'}, {k:'경기', l:'경기'}, {k:'all', l:'서울+경기'}],
+          () => state.region, k => state.region = k);
+  segment(order,  [{k:'desc', l:'많은 순'}, {k:'asc', l:'적은 순'}],
+          () => state.desc ? 'desc' : 'asc', k => state.desc = (k === 'desc'));
+  segment(document.getElementById('gapseg'),
+          [{k:'off', l:'지표별 순위'}, {k:'on', l:'학원 적은 곳'}],
+          () => state.gap ? 'on' : 'off', k => state.gap = (k === 'on'));
+  document.getElementById('gaphint').textContent = state.gap
+    ? '학교·아이 수에 비해 영어학원이 적은 지역부터 나열합니다.'
+    : '고른 지표로 지역을 줄 세웁니다.';
+  document.body.classList.toggle('few-mode', state.gap);
+  // 학원 적은 순에서는 지역 범위가 보통의 기준이라 검색 중에도 쓴다.
+  document.body.classList.toggle('searching', !!state.q.trim() && !state.gap);
+  fillMarket();
+  segment(zero,   [{k:'hide', l:'빼기'}, {k:'show', l:'넣기'}],
+          () => state.hideZero ? 'hide' : 'show', k => state.hideZero = (k === 'hide'));
+
+  const touched = state.a || state.gap || state.mkt || state.q || state.region !== '서울' ||
+                  state.unit !== 'dong' || !state.desc || !state.hideZero;
+  document.getElementById('reset').hidden = !touched;
+  renderChips();
+
+  if (state.gap){ document.body.classList.remove('blank-mode'); renderFew(); return; }
+  if (!state.a && !state.q.trim()){ renderBlank(); return; }
+  document.body.classList.remove('blank-mode');
+  const ak = state.a || 'eng_total';   // 지표 없이 검색하면 영어학원 수로 보여준다
+  const mA = metric(ak);
+
+  const shown = state.a ? state.cols.map(metric) : ['sch_total', 'pop_target'].map(metric);
+  const columns = [mA, ...shown];
+  title.textContent = state.q.trim()
+    ? '「' + state.q.trim() + '」 검색 결과'
+    : mA.l + (state.desc ? ' — 많은 순' : ' — 적은 순');
+  explain.innerHTML = columns.map(m => '<b>' + m.l + '</b> — ' + m.d).join('<br>');
+
+  const list = rowsFor();
+  const stats = columns.map(m => ({
+    m,
+    max: Math.max(1, ...list.map(r => r[m.k] || 0)),
+    med: median(list.map(r => r[m.k])),
+  }));
+
+  const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+  if (state.page >= pages) state.page = 0;
+  const slice = list.slice(state.page * PER_PAGE, (state.page + 1) * PER_PAGE);
+
+  count.innerHTML = '지역 <b>' + fmt(list.length) + '</b>개';
+  const medA = stats[0].med;
+  sum.innerHTML = mA.partial
+    ? (medA !== null ? '중앙값 <b>' + fmt(medA) + '</b>' + mA.u : '')
+    : '합계 <b>' + fmt(list.reduce((s, r) => s + (r[ak] || 0), 0)) + '</b>' + mA.u +
+      (medA !== null ? ' · 중앙값 <b>' + fmt(medA) + '</b>' + mA.u : '');
+
+  rows.style.setProperty('--cols', columns.length);
+  let html = '<div class="head"><span>지역</span>' +
+             stats.map((s, i) => '<span><i class="swatch" style="background:' + barColor(i) + '"></i>' +
+                                 '<b>' + s.m.l + '</b> ' + s.m.u + '</span>').join('') + '</div>';
+
+  if (!slice.length){
+    html += '<div class="none">해당하는 지역이 없습니다.<br>검색어를 지우거나 지역 범위를 넓혀보세요.</div>';
+  } else {
+    slice.forEach((r, i) => {
+      const where = r.parent ? '<span class="p">' + r.parent + '</span>' : '';
+      html += '<div class="row" data-key="' + keyOf(r) + '" aria-selected="' + (keyOf(r) === state.picked) + '">' +
+                '<div class="nm"><span class="rank">' + (state.page * PER_PAGE + i + 1) + '</span>' +
+                r.name + mktTag(r) + where + '</div>' +
+                stats.map((s, ci) => cell(r[s.m.k], s.max, s.med, barColor(ci), 'n' + i + ':' + ci, s.m.dec ? 'dec1' : '')).join('') +
+              '</div>';
+    });
+  }
+  rows.innerHTML = html;
+  animateChart(rows);
+  for (const el of rows.querySelectorAll('.row'))
+    el.onclick = () => { state.picked = el.dataset.key; render(); showDetail(); };
+
+  pager.innerHTML = list.length <= PER_PAGE ? '' :
+    '<button type="button" id="prev"' + (state.page === 0 ? ' disabled' : '') + '>‹ 이전</button>' +
+    '<span class="at">' + (state.page + 1) + ' / ' + pages + '</span>' +
+    '<button type="button" id="next"' + (state.page >= pages - 1 ? ' disabled' : '') + '>다음 ›</button>';
+  const prev = document.getElementById('prev'), next = document.getElementById('next');
+  if (prev) prev.onclick = () => { state.page--; render(); };
+  if (next) next.onclick = () => { state.page++; render(); };
+
+  renderDetail(list);
+
+  const notes = [];
+  if (state.q.trim())
+    notes.push('검색 중이라 <b>지역 범위 · 시장 유형 · 0곳 거르기를 적용하지 않았습니다.</b>' +
+               (state.a ? '' : ' 지표를 고르지 않아 영어학원 수 순으로 보여줍니다.'));
+  else {
+    if (state.hideZero && !mA.keepZero)
+      notes.push('순위 지표가 <b>0인 지역은 빼고</b> 셌습니다. 왼쪽에서 넣을 수 있습니다.');
+    if (state.mkt && MARKET && state.unit === 'dong') notes.push(mktNote());
+  }
+  if (state.unit === 'hub')
+    notes.push('<b>학원가</b>는 속한 동의 숫자를 더한 값입니다(수강료·매매가는 동별 중간값의 가운데). ' +
+               '동 경계 밖 학원은 빠지니, 요약의 <b>중심 반경 ' + (HUBS ? HUBS.radius_km : 1.5) + 'km</b> 숫자를 같이 보세요.');
+  if (state.unit === 'dong')
+    notes.push('동은 <b>법정동</b>입니다. 주소에 동이 없는 학원 ' +
+               fmt(DATA.counts.rows - DATA.counts.dong_parsed) + '건은 목록에서 뺐고, ' +
+               '인구가 붙지 않은 동도 일부 있습니다(영어학원 기준 4.7%).');
+  notes.push('영어 여부는 학원명·교습과정·수강료 내역으로 판별했습니다. 완전하지 않습니다.');
+  note.innerHTML = notes.join('<br>');
+}
+
+// 지금 걸린 조건을 표 위에 한 줄로 보여준다. ×를 누르면 그 조건만 기본값으로 돌린다.
+// 검색 중에는 적용하지 않는 조건을 흐리게 둔다.
+function renderChips(){
+  const box = document.getElementById('chips');
+  const q = state.q.trim();
+  const skip = !!q && !state.gap;
+  const unitName = {dong: '동', gu: '구·시', hub: '학원가'};
+  const regionName = {'서울': '서울', '경기': '경기', all: '서울+경기'};
+  const list = [];
+  const add = (text, clear, off) => list.push({text, clear, off});
+  if (q) add('검색 「' + q + '」', () => { state.q = ''; document.getElementById('q').value = ''; });
+  if (state.gap) add('학원 적은 곳', () => { state.gap = false; });
+  add(unitName[state.unit], state.unit === 'dong' ? null : () => { state.unit = 'dong'; });
+  add(regionName[state.region], state.region === '서울' ? null : () => { state.region = '서울'; }, skip);
+  if (state.mkt && MARKET && state.unit === 'dong'){
+    const [kind, val] = state.mkt.split(':');
+    add('시장 유형 ' + (kind === 'type' ? val + ' ' + MARKET.types[val].name : val),
+        () => { state.mkt = ''; }, state.gap ? !!q : skip);
+  }
+  if (!state.gap){
+    if (state.a) add('순위 ' + metric(state.a).l, () => { state.a = ''; state.cols = []; });
+    for (const k of state.cols)
+      add('비교 ' + metric(k).l, () => { state.cols = state.cols.filter(x => x !== k); });
+    if (state.a || q) add(state.desc ? '많은 순' : '적은 순', state.desc ? null : () => { state.desc = true; });
+    if (state.a && !metric(state.a).keepZero && state.hideZero)
+      add('0곳 빼기', () => { state.hideZero = false; }, skip);
+  }
+  box.innerHTML = '<span class="chl">적용 중</span>' + list.map((c, i) =>
+    '<span class="chip' + (c.off ? ' off' : '') + '"' + (c.off ? ' title="검색 중에는 적용하지 않습니다"' : '') + '>' +
+      c.text + (c.clear ? '<button type="button" data-i="' + i + '" aria-label="' + c.text + ' 풀기">×</button>' : '') +
+    '</span>').join('');
+  for (const b of box.querySelectorAll('button[data-i]'))
+    b.onclick = () => { list[+b.dataset.i].clear(); state.page = 0; render(); };
+}
+
+/** 아무 지표도 고르지 않은 첫 화면. 표의 틀은 그대로 두고 내용만 비워 둔다. */
+function renderBlank(){
+  document.body.classList.add('blank-mode');
+  title.textContent = '무엇을 볼지 골라주세요';
+  const quick = ['eng_total', 'pop_target', 'sch_total', 'eng_new3y'].map(metric);
+  explain.innerHTML = '왼쪽 <b>「무엇으로 순위를 매길까요」</b>에서 지표를 고르면 아래 표에 지역별 그래프가 채워집니다.' +
+    '<div class="quick"><span>바로 시작</span>' + quick.map(m =>
+      '<button type="button" data-k="' + m.k + '">' + m.l + '</button>').join('') + '</div>';
+  for (const b of explain.querySelectorAll('.quick button'))
+    b.onclick = () => { state.a = b.dataset.k; state.page = 0; render(); };
+
+  count.innerHTML = '지역 <b>—</b>개';
+  sum.innerHTML = '합계 <b>—</b> · 중앙값 <b>—</b>';
+
+  rows.style.setProperty('--cols', 3);
+  let html = '<div class="head"><span>지역</span>' +
+    ['순위 지표', '비교 지표', '비교 지표'].map(t => '<span class="ghost-h">' + t + '</span>').join('') + '</div>';
+  for (let i = 0; i < PER_PAGE; i++){
+    html += '<div class="row ghost"><div class="nm"><span class="rank">' + (i + 1) + '</span><i class="gname"></i></div>' +
+      '<div class="cell"><div class="track"><span class="gfill"></span></div></div>'.repeat(3) + '</div>';
+  }
+  rows.innerHTML = html;
+  pager.innerHTML = '<button type="button" disabled>‹ 이전</button><span class="at">– / –</span>' +
+                    '<button type="button" disabled>다음 ›</button>';
+  detail.innerHTML = '<div class="dempty">지표를 고른 뒤 목록에서 지역을 누르면 요약 · 학원 목록 · 지도 · 시장 해석을 볼 수 있습니다.</div>';
+  note.innerHTML = '';
+  // 빈 칸에서 막대가 차오르도록 이전 값을 비워 둔다.
+  for (const k of Object.keys(PREV)) delete PREV[k];
+}
+
+/** '학원 적은 순' 단독 화면. 다른 지표는 내리고 이 기준 하나만 나열한다. */
+function renderFew(){
+  const list = rowsFor();
+  const where = (state.region === 'all' ? '서울+경기' : state.region) + ' ' +
+                {dong: '동', gu: '구·시', hub: '학원가'}[state.unit];
+  title.textContent = '학교·아이 수에 비해 영어학원이 적은 순';
+  explain.innerHTML =
+    '학교와 초4~중3 아이가 <b>보통 이상으로 많은 지역</b> 가운데, 그에 비해 <b>영어 학원·교습소가 적은 곳</b>부터 나열합니다.<br>' +
+    '<b>보통 대비</b> — 아이 1,000명당 영어학원 수와 학교 1곳당 영어학원 수를 각각 ' + where +
+    '의 보통(중앙값)과 견준 뒤 반반 평균한 값입니다. <b>100%면 보통</b>, 낮을수록 학원이 적습니다.';
+
+  count.innerHTML = '지역 <b>' + fmt(list.length) + '</b>개';
+  sum.innerHTML = (FEW && FEW.kid !== null)
+    ? '보통 = 아이 1,000명당 <b>' + FEW.kid.toFixed(1) + '곳</b> · 학교 1곳당 <b>' + FEW.sch.toFixed(1) + '곳</b>'
+    : '';
+
+  const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+  if (state.page >= pages) state.page = 0;
+  const slice = list.slice(state.page * PER_PAGE, (state.page + 1) * PER_PAGE);
+
+  let html = '<div class="few">' +
+    '<div class="head"><span>지역</span><span>학교</span><span>초4~중3</span>' +
+    '<span>영어학원</span><span><b>보통 대비</b>&nbsp;<small>가운데 선 = 100%</small></span></div>';
+  if (!slice.length){
+    html += '<div class="none">' + (state.q.trim()
+      ? '「' + state.q.trim() + '」은(는) 이 목록에 없습니다.<br>' + where + ' 안에서 학교 수와 아이 수가 둘 다 보통 이상인 지역만 줄 세우기 때문입니다.<br>지역 범위를 바꾸거나 「지표별 순위」에서 검색해 보세요.'
+      : '해당하는 지역이 없습니다.<br>지역 범위를 넓혀보세요.') + '</div>';
+  } else {
+    slice.forEach((r, i) => {
+      const w = Math.round(Math.min(r._few, 200) / 2 * 100) / 100;
+      const slot = 'f' + i;
+      const was = PREV[slot] || {w: 0};
+      PREV[slot] = Object.assign(PREV[slot] || {}, {w});
+      html += '<div class="row" data-key="' + keyOf(r) + '" aria-selected="' + (keyOf(r) === state.picked) + '">' +
+        '<div class="nm"><span class="rank">' + (state.page * PER_PAGE + i + 1) + '</span>' + r.name + mktTag(r) +
+          (r.parent ? '<span class="p">' + r.parent + '</span>' : '') + '</div>' +
+        '<div class="n">' + animNum(r.sch_total, slot + ':s') + '<small>개</small></div>' +
+        '<div class="n">' + animNum(r.pop_target, slot + ':p') + '<small>명</small></div>' +
+        '<div class="n">' + animNum(r.eng_total, slot + ':e') + '<small>곳</small></div>' +
+        '<div class="pct"><div class="bar"><span class="' + (r._few < 100 ? 'lo' : 'hi') +
+          '" style="width:' + was.w + '%" data-w="' + w + '"></span><i></i></div><b>' +
+          animNum(r._few, slot + ':x', 'pct') + '</b></div>' +
+      '</div>';
+    });
+  }
+  rows.innerHTML = html + '</div>';
+  animateChart(rows);
+  for (const el of rows.querySelectorAll('.row'))
+    el.onclick = () => { state.picked = el.dataset.key; render(); showDetail(); };
+
+  pager.innerHTML = list.length <= PER_PAGE ? '' :
+    '<button type="button" id="prev"' + (state.page === 0 ? ' disabled' : '') + '>‹ 이전</button>' +
+    '<span class="at">' + (state.page + 1) + ' / ' + pages + '</span>' +
+    '<button type="button" id="next"' + (state.page >= pages - 1 ? ' disabled' : '') + '>다음 ›</button>';
+  const prev = document.getElementById('prev'), next = document.getElementById('next');
+  if (prev) prev.onclick = () => { state.page--; render(); };
+  if (next) next.onclick = () => { state.page++; render(); };
+
+  renderDetail(list);
+
+  const notes = [];
+  if (FEW && FEW.minSch !== null)
+    notes.push('<b>학교 ' + fmt(Math.ceil(FEW.minSch)) + '개 이상 · 아이 ' + fmt(Math.ceil(FEW.minPop)) +
+               '명 이상</b>인 지역만 줄 세웠습니다. 둘 다 ' + where + '의 보통(중앙값)입니다. ' +
+               '학교나 아이가 적은 작은 동은 학원이 없어도 자리로 보기 어려워서입니다.');
+  if (state.q.trim()) notes.push('검색 중이라 <b>시장 유형 거르기를 적용하지 않았습니다.</b> 지역 범위는 보통을 잡는 기준이라 그대로 씁니다.');
+  else if (state.mkt && MARKET && state.unit === 'dong') notes.push(mktNote());
+  notes.push('아이 수는 학교 재학생이 아니라 그 지역에 <b>사는</b> 만 9~14세 인구입니다.');
+  notes.push('영어학원이 한두 곳뿐인 작은 동은 한 곳만 늘어도 순위가 크게 바뀝니다. 옆 숫자를 같이 보세요.');
+  note.innerHTML = notes.join('<br>');
+}
+
+selA.onchange = e => {
+  state.a = e.target.value;
+  state.cols = state.a ? state.cols.filter(k => k !== state.a) : [];
+  state.page = 0;
+  render();
+};
+q.oninput = e => { state.q = e.target.value; state.page = 0; render(); };
+q.value = '';
+document.getElementById('reset').onclick = () => {
+  Object.assign(state, {a: '', cols: [], unit: 'dong', region: '서울', desc: true, q: '', page: 0,
+                        hideZero: true, gap: false, mkt: '', picked: null, tab: 'summary'});
+  q.value = '';
+  render();
+  window.scrollTo(0, 0);
+};
+window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
+
+fetch('data/regions.json?v=' + V)
+  .then(r => r.json())
+  .then(d => {
+    DATA = d;
+    basis.textContent = '영어학원 ' + fmt(d.counts.english) + '곳 · 초중학교 ' +
+                        fmt(d.counts.schools) + '개교';
+    render();
+    // 부동산은 곁들이는 자료라 따로 받고, 오면 다시 그린다.
+    fetch('data/realestate.json?v=' + V)
+      .then(r => r.ok ? r.json() : null)
+      .then(e => { if (e){ ESTATE = e; render(); } })
+      .catch(() => {});
+    fetch('data/rent.json?v=' + V)
+      .then(r => r.ok ? r.json() : null)
+      .then(e => { if (e){ RENT = e; render(); } })
+      .catch(() => {});
+    fetch('data/hubs.json?v=' + V)
+      .then(r => r.ok ? r.json() : null)
+      .then(e => {
+        if (!e) return;
+        HUBS = e;
+        for (const r of DATA.dong){ const h = e.dongs[keyOf(r)]; r.hub_km = h ? h.km : null; }
+        for (const r of DATA.gu){ const h = e.gus[r.sido + '/' + r.name]; r.hub_km = h ? h.km : null; }
+        buildHubRows();
+        render();
+      })
+      .catch(() => {});
+    fetch('data/market.json?v=' + V)
+      .then(r => r.ok ? r.json() : null)
+      .then(e => { if (e){ MARKET = e; render(); } })
+      .catch(() => {});
+  })
+  .catch(() => { rows.innerHTML = '<div class="none">데이터를 불러오지 못했습니다.</div>'; });
+</script>
+<script src="dates.js?v=51"></script>
+</body>
+</html>
+
