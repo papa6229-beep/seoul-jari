@@ -76,6 +76,10 @@
 - 상권분석 자동 갱신 대상: `VwsmAdstrdFlpopW` 서울시 상권분석서비스 행정동 유동인구
 - 상권분석 저장 파일: `web/data/commercial-floating-population-dong.json`
 - 상권분석 지표: 행정동명, 성별, 연령대, 시간대, 요일별 유동인구
+- 행정동 추정매출 대상: `VwsmAdstrdSelngW`
+- 행정동 추정매출 저장 파일: `web/data/commercial-sales-dong.json`
+- 행정동 점포 대상: `VwsmAdstrdStorW`
+- 행정동 점포 저장 파일: `web/data/commercial-stores-dong.json`
 - 받은 파일: `[내국인] 행정동별 서울 생활인구(250m)` 2026-04~2026-08 zip
 - 저장 파일: `web/data/living-population.json`
 - 요약 단위: 서울 25개 구, 427개 행정동 코드

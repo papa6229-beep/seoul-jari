@@ -14,7 +14,7 @@
 */
 const fs = require('fs');
 const path = require('path');
-const {fetchSeoulOpenApi} = require('./fetch_seoul_openapi');
+const {fetchPagedRows, latestOnly, normalizeNumber} = require('./commercial_api_common');
 
 const ROOT = path.resolve(__dirname, '..');
 const SERVICE = 'VwsmAdstrdFlpopW';
@@ -30,11 +30,6 @@ function getKey(){
   const key = process.env.SEOUL_OPENAPI_KEY || '';
   if (!key) throw new Error('SEOUL_OPENAPI_KEY 환경변수가 필요합니다.');
   return key;
-}
-
-function normalizeNumber(value){
-  const n = Number(value);
-  return Number.isFinite(n) ? Math.round(n) : null;
 }
 
 function normalizeRows(rows){
@@ -71,39 +66,14 @@ function normalizeRows(rows){
   });
 }
 
-function latestOnly(rows){
-  const latest = rows.reduce((max, row) => String(row.quarter || '') > max ? String(row.quarter) : max, '');
-  return rows.filter(row => String(row.quarter) === latest);
-}
-
 async function fetchCommercialFloatingPopulation({
   key,
   quarter = '',
   pageSize = 1000,
   fetchImpl = fetch
 }){
-  const rows = [];
-  let start = 1;
-  let total = null;
-
-  while (total === null || start <= total){
-    const end = start + pageSize - 1;
-    const data = await fetchSeoulOpenApi({
-      key,
-      service: SERVICE,
-      start,
-      end,
-      args: quarter ? [quarter] : [],
-      fetchImpl
-    });
-    const payload = data.payload || {};
-    total = Number(payload.list_total_count || 0);
-    rows.push(...(payload.row || []));
-    if (!payload.row || payload.row.length === 0) break;
-    start = end + 1;
-  }
-
-  const normalized = normalizeRows(rows);
+  const fetched = await fetchPagedRows({key, service: SERVICE, quarter, pageSize, fetchImpl});
+  const normalized = normalizeRows(fetched.rows);
   const dong = quarter ? normalized : latestOnly(normalized);
   return {
     title: '서울시 상권분석서비스 행정동 유동인구',
@@ -111,7 +81,7 @@ async function fetchCommercialFloatingPopulation({
     service: SERVICE,
     requested_quarter: quarter || null,
     quarter: dong[0] ? dong[0].quarter : null,
-    total_count: total,
+    total_count: fetched.total,
     metrics: {
       total: '총 유동인구',
       male: '남성 유동인구',
