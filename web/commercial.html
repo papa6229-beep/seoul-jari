@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=71">
+<link rel="stylesheet" href="styles.css?v=72">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '71';
+  var PAGE_V = '72';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -33,10 +33,6 @@
       <label for="biz">업종</label>
       <select class="pick" id="biz">
         <option value="cafe">개인 카페</option>
-        <option value="food">분식 · 김밥 · 식사</option>
-        <option value="fitness">필라테스 · PT</option>
-        <option value="academy">학원 · 교습소</option>
-        <option value="unmanned">무인점포</option>
       </select>
     </div>
 
@@ -73,7 +69,7 @@
 </div>
 
 <script>
-const V = '71';
+const V = '72';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -135,6 +131,10 @@ const TABS = [
   {k:'checks', l:'확인사항'}
 ];
 
+function escapeHtml(v){
+  return String(v || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
 const fmt = n => n === null || n === undefined ? '—' : n.toLocaleString('ko-KR');
 const pct = n => n === null || n === undefined ? '—' : Math.round(n) + '%';
 const money = n => {
@@ -149,6 +149,40 @@ const quarterLabel = q => {
 
 function syncSegments(){
   sortPick.value = state.sort;
+}
+
+function serviceCaution(label){
+  return label + ' 세부 업종 기준으로 매출·점포·수요를 봅니다. 지도 핀은 현재 좌표가 연결된 추천 업종에서 먼저 제공됩니다.';
+}
+
+function applyBusinessTypes(){
+  const types = Array.isArray(DATA.view && DATA.view.business_types) ? DATA.view.business_types : [];
+  for (const item of types){
+    if (BIZ[item.id]) continue;
+    BIZ[item.id] = {
+      label: item.label,
+      words: item.words || [item.label],
+      demand: ['유동인구', '직장인구', '상주인구', '소비지출'],
+      caution: serviceCaution(item.label),
+      kind: item.kind,
+      code: item.code
+    };
+  }
+  const groupOrder = ['추천 업종', '전체 업종'];
+  const byGroup = new Map();
+  for (const item of types){
+    const group = item.group || (item.kind === 'service' ? '전체 업종' : '추천 업종');
+    if (!byGroup.has(group)) byGroup.set(group, []);
+    byGroup.get(group).push(item);
+  }
+  if (!types.length){
+    byGroup.set('추천 업종', Object.keys(BIZ).map(id => ({id, label: BIZ[id].label})));
+  }
+  biz.innerHTML = groupOrder.concat([...byGroup.keys()].filter(g => !groupOrder.includes(g))).filter(g => byGroup.has(g)).map(group => {
+    const options = byGroup.get(group).map(item => '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.label) + '</option>').join('');
+    return '<optgroup label="' + escapeHtml(group) + '">' + options + '</optgroup>';
+  }).join('');
+  if (!BIZ[state.biz]) state.biz = 'cafe';
 }
 
 async function loadJson(name){
@@ -454,6 +488,7 @@ function markerCard(p){
 }
 
 function businessPoints(row){
+  if (BIZ[state.biz] && BIZ[state.biz].kind === 'service') return [];
   const all = DATA.stores && DATA.stores.points ? DATA.stores.points : {};
   for (const key of storeDongKeys(row)){
     const bucket = all[key] && all[key][state.biz];
@@ -548,10 +583,11 @@ function drawCommercialMap(row, keepView){
       const count = document.getElementById('mapcount');
       if (count){
         const n = t => pts.filter(p => p.t === t).length;
-        const bizLabel = BIZ[state.biz].label + ' 좌표 ' + n('b') + '곳' +
+        const isService = BIZ[state.biz] && BIZ[state.biz].kind === 'service';
+        const bizLabel = isService ? BIZ[state.biz].label + ' 세부 업종 좌표는 아직 연결 전' : BIZ[state.biz].label + ' 좌표 ' + n('b') + '곳' +
           (row.stores ? ' / 집계 ' + fmt(row.stores) + '곳' : '') +
           (bizRawPts.length && bizRawPts.length !== n('b') ? ' · 실제 점포 ' + bizRawPts.length + '곳' : '');
-        const missingBiz = bizPts.length ? '' : ' · 선택 업종 좌표 갱신 필요';
+        const missingBiz = isService || bizPts.length ? '' : ' · 선택 업종 좌표 갱신 필요';
         count.textContent = [
           bizLabel,
           state.biz === 'academy' ? '학원참고 ' + n('a') : '',
@@ -708,10 +744,11 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
     alert.innerHTML = '<b>상권 화면용 데이터가 없습니다.</b><br>먼저 <code>web/data/commercial-view-dong.json</code>을 생성해야 합니다.';
     return;
   }
+  applyBusinessTypes();
   buildRows();
   render();
 });
 </script>
-<script src="dates.js?v=71"></script>
+<script src="dates.js?v=72"></script>
 </body>
 </html>
