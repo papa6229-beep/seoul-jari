@@ -1,5 +1,5 @@
 const assert = require('assert');
-const {detectDelimiter, processCsvText, finalizeAgg} = require('./prep_living_population');
+const {detectDelimiter, processCsvText, summarizeState, finalizeAgg} = require('./prep_living_population');
 
 const semicolonText = [
   '"기준일";"시간";"행정동코드";"생활인구합계"',
@@ -30,5 +30,14 @@ processCsvText([
 ].join('\n'), commaState);
 assert.equal(commaState.rows, 1);
 assert.equal(finalizeAgg(commaState.gu.get('11680').agg).daytime, 120);
+
+const named = summarizeState(commaState, new Map([['11680545', {
+  code: '11680545',
+  gu: '강남구',
+  name: '압구정동',
+  full_name: '서울특별시 강남구 압구정동'
+}]]));
+assert.equal(named.dong[0].name, '압구정동');
+assert.equal(named.dong[0].full_name, '서울특별시 강남구 압구정동');
 
 console.log('prep_living_population test ok');

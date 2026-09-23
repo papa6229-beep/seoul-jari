@@ -14,6 +14,7 @@ const {spawnSync} = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_OUT = path.join(ROOT, 'web', 'data', 'living-population.json');
+const DEFAULT_ADMIN_CODES = path.join(ROOT, 'web', 'data', 'admin-dong-codes.json');
 const DECODER = new TextDecoder('euc-kr');
 
 const SEOUL_GU = {
@@ -100,6 +101,12 @@ function finalizeAgg(agg){
   };
 }
 
+function loadAdminDongCodes(filePath = DEFAULT_ADMIN_CODES){
+  if (!fs.existsSync(filePath)) return new Map();
+  const payload = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  return new Map((payload.dongs || []).map(row => [String(row.code), row]));
+}
+
 function zipList(zipPath){
   const r = spawnSync('tar', ['-tf', zipPath], {encoding: 'utf8'});
   if (r.status !== 0) throw new Error(`zip 목록 읽기 실패: ${zipPath}\n${r.stderr}`);
@@ -137,15 +144,7 @@ function processCsvText(text, state){
   }
 }
 
-function summarizeZipFiles(zipPaths){
-  const state = {gu: new Map(), dong: new Map(), rows: 0, minDate: '', maxDate: '', headers: null, files: []};
-  for (const zipPath of zipPaths){
-    const members = zipList(zipPath);
-    state.files.push({zip: path.basename(zipPath), csv_files: members.length});
-    for (const member of members){
-      processCsvText(zipRead(zipPath, member), state);
-    }
-  }
+function summarizeState(state, adminCodes = new Map()){
   return {
     title: '행정동별 서울 생활인구(250m) 요약',
     source: '[내국인] 행정동별 서울 생활인구(250m)',
@@ -164,16 +163,39 @@ function summarizeZipFiles(zipPaths){
     },
     gu: [...state.gu.values()].map(x => ({code: x.code, name: x.name, ...finalizeAgg(x.agg)}))
       .sort((a, b) => a.code.localeCompare(b.code)),
-    dong: [...state.dong.values()].map(x => ({code: x.code, gu_code: x.gu_code, gu: x.gu, ...finalizeAgg(x.agg)}))
+    dong: [...state.dong.values()].map(x => {
+      const meta = adminCodes.get(x.code);
+      return {
+        code: x.code,
+        gu_code: x.gu_code,
+        gu: meta ? meta.gu : x.gu,
+        name: meta ? meta.name : null,
+        full_name: meta ? meta.full_name : null,
+        ...finalizeAgg(x.agg)
+      };
+    })
       .sort((a, b) => a.code.localeCompare(b.code))
   };
 }
 
+function summarizeZipFiles(zipPaths, adminCodes = new Map()){
+  const state = {gu: new Map(), dong: new Map(), rows: 0, minDate: '', maxDate: '', headers: null, files: []};
+  for (const zipPath of zipPaths){
+    const members = zipList(zipPath);
+    state.files.push({zip: path.basename(zipPath), csv_files: members.length});
+    for (const member of members){
+      processCsvText(zipRead(zipPath, member), state);
+    }
+  }
+  return summarizeState(state, adminCodes);
+}
+
 function main(){
   const out = path.resolve(getArg('out', DEFAULT_OUT));
+  const adminCodesPath = path.resolve(getArg('admin-codes', DEFAULT_ADMIN_CODES));
   const zipPaths = process.argv.slice(2).filter(a => !a.startsWith('--')).map(p => path.resolve(p));
   if (!zipPaths.length) throw new Error('생활인구 zip 파일 경로를 하나 이상 넣어주세요.');
-  const summary = summarizeZipFiles(zipPaths);
+  const summary = summarizeZipFiles(zipPaths, loadAdminDongCodes(adminCodesPath));
   fs.mkdirSync(path.dirname(out), {recursive: true});
   fs.writeFileSync(out, JSON.stringify(summary, null, 2) + '\n', 'utf8');
   console.log(`저장: ${path.relative(ROOT, out)}  ${summary.date_from}~${summary.date_to}  ${summary.source_rows.toLocaleString('ko-KR')}행`);
@@ -184,4 +206,4 @@ if (require.main === module){
   catch (err){ console.error(err.message); process.exit(1); }
 }
 
-module.exports = {detectDelimiter, parseDelimitedLine, processCsvText, summarizeZipFiles, finalizeAgg};
+module.exports = {detectDelimiter, parseDelimitedLine, processCsvText, summarizeState, summarizeZipFiles, finalizeAgg, loadAdminDongCodes};

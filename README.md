@@ -83,6 +83,9 @@ node build/fetch_living_population_daily.js --date=20260918
 node build/fetch_commercial_floating_population.test.js
 node build/fetch_commercial_floating_population.js --quarter=20251
                                                    # -> web/data/commercial-floating-population-dong.json (상권분석 행정동 유동인구)
+node build/prep_admin_dong_codes.test.js
+node build/prep_admin_dong_codes.js C:\Users\BNN\Downloads\전국_행정동_코드정보.zip
+                                                   # -> web/data/admin-dong-codes.json (서울 행정동 코드·이름)
 node build/prep_living_population.test.js          # 생활인구 zip 집계 테스트
 node build/prep_living_population.js C:\Users\BNN\Downloads\250_LOCAL_RESD_ADMDONG_202604.zip C:\Users\BNN\Downloads\250_LOCAL_RESD_ADMDONG_202605.zip
                                                    # -> web/data/living-population.json (서울 생활인구 구·행정동 요약)
@@ -117,6 +120,10 @@ SEOUL_OPENAPI_KEY
 서울시 상권분석서비스 행정동 유동인구는 `VwsmAdstrdFlpopW` 서비스를 쓴다.
 `fetch_commercial_floating_population.js`가 최신 또는 지정 분기의 행정동별 연령·시간대·요일별
 유동인구를 `web/data/commercial-floating-population-dong.json`으로 저장한다.
+
+서울 생활인구의 행정구역 코드정보 zip은 `prep_admin_dong_codes.js`로 서울 427개 행정동
+코드·이름만 추출해 `web/data/admin-dong-codes.json`으로 저장한다. 이 파일이 있으면
+`prep_living_population.js`가 행정동 생활인구 요약에 `name`, `full_name`을 함께 붙인다.
 
 현재는 서울 열린데이터광장의 `[내국인] 행정동별 서울 생활인구(250m)` 내려받기 파일을
 `prep_living_population.js`로 먼저 요약한다. 원본 zip은 용량이 커서 저장소에 담지 않고,
