@@ -1,0 +1,215 @@
+{
+  "title": "서울 상가업소 업종 요약",
+  "as_of": "2026-09-23",
+  "source_rows": 0,
+  "categories": [
+    {
+      "id": "cafe",
+      "label": "개인 카페"
+    },
+    {
+      "id": "food",
+      "label": "분식 · 김밥 · 샌드위치"
+    },
+    {
+      "id": "fitness",
+      "label": "필라테스 · PT"
+    },
+    {
+      "id": "unmanned",
+      "label": "무인점포"
+    },
+    {
+      "id": "academy",
+      "label": "학원 · 교습소"
+    }
+  ],
+  "totals": {
+    "cafe": 0,
+    "food": 0,
+    "fitness": 0,
+    "unmanned": 0,
+    "academy": 0
+  },
+  "gu": [],
+  "dong": [],
+  "points": {},
+  "fetch": {
+    "endpoint": "https://apis.data.go.kr/B553077/api/open/sdsc2/storeListInDong",
+    "divId": "signguCd",
+    "fetched": [
+      {
+        "guCode": "11110",
+        "guName": "종로구",
+        "totalCount": 21616,
+        "rows": 21616
+      },
+      {
+        "guCode": "11140",
+        "guName": "중구",
+        "totalCount": 24801,
+        "rows": 24801
+      },
+      {
+        "guCode": "11170",
+        "guName": "용산구",
+        "totalCount": 16301,
+        "rows": 16301
+      },
+      {
+        "guCode": "11200",
+        "guName": "성동구",
+        "totalCount": 17782,
+        "rows": 17782
+      },
+      {
+        "guCode": "11215",
+        "guName": "광진구",
+        "totalCount": 18877,
+        "rows": 18877
+      },
+      {
+        "guCode": "11230",
+        "guName": "동대문구",
+        "totalCount": 17303,
+        "rows": 17303
+      },
+      {
+        "guCode": "11260",
+        "guName": "중랑구",
+        "totalCount": 15052,
+        "rows": 15052
+      },
+      {
+        "guCode": "11290",
+        "guName": "성북구",
+        "totalCount": 15888,
+        "rows": 15888
+      },
+      {
+        "guCode": "11305",
+        "guName": "강북구",
+        "totalCount": 12604,
+        "rows": 12604
+      },
+      {
+        "guCode": "11320",
+        "guName": "도봉구",
+        "totalCount": 10610,
+        "rows": 10610
+      },
+      {
+        "guCode": "11350",
+        "guName": "노원구",
+        "totalCount": 15686,
+        "rows": 15686
+      },
+      {
+        "guCode": "11380",
+        "guName": "은평구",
+        "totalCount": 16363,
+        "rows": 16363
+      },
+      {
+        "guCode": "11410",
+        "guName": "서대문구",
+        "totalCount": 14152,
+        "rows": 14152
+      },
+      {
+        "guCode": "11440",
+        "guName": "마포구",
+        "totalCount": 32102,
+        "rows": 32102
+      },
+      {
+        "guCode": "11470",
+        "guName": "양천구",
+        "totalCount": 16015,
+        "rows": 16015
+      },
+      {
+        "guCode": "11500",
+        "guName": "강서구",
+        "totalCount": 27098,
+        "rows": 27098
+      },
+      {
+        "guCode": "11530",
+        "guName": "구로구",
+        "totalCount": 18559,
+        "rows": 18559
+      },
+      {
+        "guCode": "11545",
+        "guName": "금천구",
+        "totalCount": 18353,
+        "rows": 18353
+      },
+      {
+        "guCode": "11560",
+        "guName": "영등포구",
+        "totalCount": 29425,
+        "rows": 29425
+      },
+      {
+        "guCode": "11590",
+        "guName": "동작구",
+        "totalCount": 14187,
+        "rows": 14187
+      },
+      {
+        "guCode": "11620",
+        "guName": "관악구",
+        "totalCount": 20325,
+        "rows": 20325
+      },
+      {
+        "guCode": "11650",
+        "guName": "서초구",
+        "totalCount": 40115,
+        "rows": 40115
+      },
+      {
+        "guCode": "11680",
+        "guName": "강남구",
+        "totalCount": 66269,
+        "rows": 66269
+      },
+      {
+        "guCode": "11710",
+        "guName": "송파구",
+        "totalCount": 34860,
+        "rows": 34860
+      },
+      {
+        "guCode": "11740",
+        "guName": "강동구",
+        "totalCount": 19748,
+        "rows": 19748
+      }
+    ],
+    "categories": [
+      {
+        "id": "cafe",
+        "label": "개인 카페"
+      },
+      {
+        "id": "food",
+        "label": "분식 · 김밥 · 샌드위치"
+      },
+      {
+        "id": "fitness",
+        "label": "필라테스 · PT"
+      },
+      {
+        "id": "unmanned",
+        "label": "무인점포"
+      },
+      {
+        "id": "academy",
+        "label": "학원 · 교습소"
+      }
+    ]
+  }
+}
