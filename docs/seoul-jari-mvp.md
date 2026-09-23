@@ -83,3 +83,6 @@
 - 행정동 코드정보: `전국_행정동_코드정보.zip` 안의 `SEOUL_ADMI/ADMI_202608.csv`
 - 코드정보 저장 파일: `web/data/admin-dong-codes.json`
 - 생활인구 행정동 이름 매칭: 427개 중 427개 매칭
+- 250m 격자정보: `서울생활인구_250m격자정보_EPSG5179.zip`
+- 격자정보 저장 파일: `web/data/living-population-grid.json`
+- 격자정보 용도: 후보지 반경 분석, 격자 ID-중심 좌표 연결
