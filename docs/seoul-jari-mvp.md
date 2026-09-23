@@ -73,6 +73,9 @@
 - 1차 자동 갱신 대상: `SPOP_DAILYSUM_JACHI_250` 자치구별 서울 생활인구(250m) 일별집계
 - 자동 갱신 저장 파일: `web/data/living-population-daily-gu.json`
 - 자동 갱신 지표: 총생활인구, 내국인, 외국인, 일최대, 일최소, 주간, 야간, 서울외부유입, 자치구간이동
+- 상권분석 자동 갱신 대상: `VwsmAdstrdFlpopW` 서울시 상권분석서비스 행정동 유동인구
+- 상권분석 저장 파일: `web/data/commercial-floating-population-dong.json`
+- 상권분석 지표: 행정동명, 성별, 연령대, 시간대, 요일별 유동인구
 - 받은 파일: `[내국인] 행정동별 서울 생활인구(250m)` 2026-04~2026-08 zip
 - 저장 파일: `web/data/living-population.json`
 - 요약 단위: 서울 25개 구, 427개 행정동 코드
