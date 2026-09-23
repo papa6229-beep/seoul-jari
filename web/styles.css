@@ -219,6 +219,49 @@ select.add-col{
 .note{margin-top:18px; font-size:13.5px; color:var(--ink-3); line-height:1.85}
 .note b{color:var(--warn); font-weight:600}
 
+/* ---------- 상권 데이터 ---------- */
+.commercial-summary{
+  display:grid; grid-template-columns:1.1fr 1.5fr .9fr; gap:12px; margin:8px 0 16px;
+}
+.commercial-summary > div{
+  border:1px solid var(--line); border-radius:10px; background:var(--surface); padding:14px 16px;
+}
+.commercial-summary span{display:block; color:var(--ink-3); font-size:13px; font-weight:700}
+.commercial-summary b{display:block; margin-top:2px; font-size:18px; color:var(--accent); word-break:keep-all}
+.commercial-summary p{margin:6px 0 0; color:var(--ink-2); font-size:13.5px; line-height:1.55; word-break:keep-all}
+.commercial-alert{
+  margin:10px 0 16px; border:1px solid #e7d9bc; background:#fff9ec; color:#634311;
+  border-radius:10px; padding:13px 15px; font-size:13.5px; line-height:1.65;
+}
+.commercial-alert small{display:block; margin-top:4px; color:#806332; word-break:break-all}
+.commercial-table{
+  border:1px solid var(--line); border-radius:12px; background:var(--surface); overflow:hidden;
+}
+.commercial-head,.commercial-row{
+  display:grid; grid-template-columns:42px minmax(160px,1.4fr) .65fr .9fr .65fr .75fr .75fr;
+  gap:10px; align-items:center; padding:0 14px;
+}
+.commercial-head{
+  min-height:42px; color:var(--ink-3); font-size:12.5px; font-weight:800; background:#fbfaf7;
+  border-bottom:1px solid var(--line);
+}
+.commercial-row{
+  width:100%; min-height:62px; border:0; border-bottom:1px solid #efede8; background:transparent;
+  color:var(--ink); text-align:left; cursor:pointer;
+}
+.commercial-row:hover,.commercial-row.active{background:var(--accent-soft)}
+.commercial-row:last-child{border-bottom:0}
+.commercial-row .rank{color:var(--ink-3); font-size:13px; font-weight:800; text-align:center}
+.commercial-row .place b{display:block; font-size:15.5px; word-break:keep-all}
+.commercial-row .place small,.commercial-row span small{display:block; color:var(--ink-3); font-size:12px; font-weight:600}
+.commercial-row span b{font-size:15.5px; font-variant-numeric:tabular-nums}
+.commercial-detail .dhead{margin-top:18px}
+.commercial-lists{display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:22px}
+.commercial-lists ol{margin:0; padding-left:20px}
+.commercial-lists li{padding:6px 0; border-bottom:1px dashed #e4e1da}
+.commercial-lists li b{font-weight:700}
+.commercial-lists li span{float:right; color:var(--accent); font-weight:800; font-variant-numeric:tabular-nums}
+
 @media (max-width:1000px){
   .app{grid-template-columns:1fr}
   .side{position:static; height:auto; border-right:0; border-bottom:1px solid var(--line)}
@@ -228,6 +271,16 @@ select.add-col{
   .head,.row{grid-template-columns:110px repeat(var(--cols,1),1fr); column-gap:12px}
   .nm{font-size:14.5px}
   .val{font-size:15px}
+}
+
+@media (max-width:900px){
+  .commercial-summary{grid-template-columns:1fr}
+  .commercial-head{display:none}
+  .commercial-row{
+    grid-template-columns:34px 1fr 1fr 1fr; gap:8px 12px; padding:12px 14px;
+  }
+  .commercial-row .place{grid-column:2 / -1}
+  .commercial-lists{grid-template-columns:1fr}
 }
 
 

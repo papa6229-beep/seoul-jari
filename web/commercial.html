@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>상권 데이터 — 서울자리</title>
+<link rel="stylesheet" href="styles.css?v=55">
+<script>
+(function(){
+  var PAGE_V = '55';
+  fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if (!d || d.v === PAGE_V) return;
+      var key = 'reloaded-' + d.v;
+      try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) { return; }
+      location.reload();
+    })
+    .catch(function(){});
+})();
+</script>
+</head>
+<body>
+<div class="app commercial-app">
+  <aside class="side">
+    <a class="home-link" href="index.html">← 메뉴</a>
+    <h1>상권 데이터</h1>
+    <p class="where">행정동 기준 · 상권분석서비스 자동갱신 데이터</p>
+
+    <div class="field">
+      <label for="biz">업종</label>
+      <select class="pick" id="biz">
+        <option value="cafe">개인 카페</option>
+        <option value="food">분식 · 김밥 · 식사</option>
+        <option value="fitness">필라테스 · PT</option>
+        <option value="academy">학원 · 교습소</option>
+        <option value="unmanned">무인점포</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="q">행정동 검색</label>
+      <input class="search" id="q" type="search" placeholder="예: 성수, 잠실7동, 강남구">
+      <small class="qhint">행정동 자료라 기존 입지 분석의 법정동 화면과 따로 봅니다.</small>
+    </div>
+
+    <div class="field">
+      <span class="lbl">정렬</span>
+      <div class="seg" id="sort"></div>
+    </div>
+
+    <div class="field">
+      <span class="lbl">표시</span>
+      <div class="seg" id="limit"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h2 id="title">행정동 상권 신호</h2>
+      <span class="basis" id="basis">공공데이터 기반 참고 정보</span>
+      <details class="dates" data-dates><summary>자료 기준일</summary></details>
+    </div>
+
+    <div class="commercial-summary" id="summary"></div>
+    <div class="commercial-alert" id="alert" hidden></div>
+    <section class="commercial-table" id="table"></section>
+    <section class="detail commercial-detail" id="detail"></section>
+
+    <p class="note">이 화면은 후보지를 좁히는 참고용입니다. 임대차 계약, 창업, 투자 판단은 현장 조사와 전문가 검토가 필요합니다.</p>
+  </main>
+</div>
+
+<script>
+const V = '55';
+const FILES = {
+  codes: 'admin-dong-codes.json',
+  floating: 'commercial-floating-population-dong.json',
+  sales: 'commercial-sales-dong.json',
+  stores: 'commercial-stores-dong.json',
+  workers: 'commercial-worker-population-dong.json',
+  residents: 'commercial-resident-population-dong.json',
+  income: 'commercial-income-consumption-dong.json'
+};
+const BIZ = {
+  cafe: {
+    label: '개인 카페',
+    words: ['커피', '음료', '제과', '패스트푸드'],
+    demand: ['유동인구', '20~40대 상주·직장인', '식료품·음식 소비'],
+    caution: '카페는 임대료와 체류 동선 영향이 큽니다. 매출이 높아도 경쟁 점포 수를 같이 봅니다.'
+  },
+  food: {
+    label: '분식 · 김밥 · 식사',
+    words: ['한식', '분식', '김밥', '패스트푸드', '중식', '일식', '양식'],
+    demand: ['점심 유동', '직장인구', '음식 소비'],
+    caution: '점심형 업종은 11~14시 신호와 직장인구가 중요합니다. 배달 플랫폼 노출은 별도 확인이 필요합니다.'
+  },
+  fitness: {
+    label: '필라테스 · PT',
+    words: ['스포츠', '운동', '헬스', '체육'],
+    demand: ['20~40대 상주·직장인', '저녁 유동', '여가·문화 소비'],
+    caution: '건물 조건, 샤워실, 층고, 방음, 주차는 공공데이터로 판단할 수 없습니다.'
+  },
+  academy: {
+    label: '학원 · 교습소',
+    words: ['학원', '교습', '교육', '예술학원', '외국어'],
+    demand: ['10대 상주인구', '교육 소비', '기존 교육업 점포'],
+    caution: '행정동 상권자료와 학원 인허가 자료는 기준이 다릅니다. 최종 판단은 기존 입지 분석 화면과 함께 봅니다.'
+  },
+  unmanned: {
+    label: '무인점포',
+    words: ['편의점', '슈퍼', '문구', '세탁', '생활용품'],
+    demand: ['상주인구', '야간·저녁 유동', '가구 수'],
+    caution: '무인 운영 리스크, 민원, 치안, 관리 거리는 현장 확인이 필요합니다.'
+  }
+};
+
+const state = {biz: new URLSearchParams(location.search).get('biz') || 'cafe', q: '', sort: 'score', limit: 30, picked: ''};
+const DATA = {};
+let ROWS = [];
+
+const fmt = n => n === null || n === undefined ? '—' : n.toLocaleString('ko-KR');
+const pct = n => n === null || n === undefined ? '—' : Math.round(n) + '%';
+const money = n => {
+  if (!n) return '—';
+  if (n >= 100000000) return (n / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
+  return Math.round(n / 10000).toLocaleString('ko-KR') + '만원';
+};
+
+function segment(host, items, get, set){
+  host.innerHTML = '';
+  items.forEach(it => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = it.l;
+    b.setAttribute('aria-pressed', String(get() === it.k));
+    b.onclick = () => { set(it.k); render(); };
+    host.appendChild(b);
+  });
+}
+
+async function loadJson(name){
+  const res = await fetch('data/' + name + '?v=' + V, {cache:'no-store'});
+  if (!res.ok) throw new Error(name);
+  return res.json();
+}
+
+function latestRows(payload){
+  return payload && Array.isArray(payload.rows) ? payload.rows : [];
+}
+
+function indexBy(rows, key){
+  return Object.fromEntries((rows || []).map(r => [r[key], r]));
+}
+
+function addByCode(rows, codeKey, filter){
+  const map = {};
+  for (const r of rows || []){
+    if (filter && !filter(r)) continue;
+    const k = r[codeKey];
+    if (!k) continue;
+    const t = map[k] || (map[k] = {amount:0, count:0, stores:0, franchise:0, open:0, close:0, items:[]});
+    t.amount += r.amount || 0;
+    t.count += r.count || 0;
+    t.stores += r.store_count || 0;
+    t.franchise += r.franchise_store_count || 0;
+    t.open += r.open_store_count || 0;
+    t.close += r.close_store_count || 0;
+    t.items.push(r);
+  }
+  return map;
+}
+
+function bizFilter(biz){
+  const words = BIZ[biz].words;
+  return r => words.some(w => String(r.business_name || '').includes(w));
+}
+
+function norm(v, min, max, inverse){
+  if (v === null || v === undefined || !Number.isFinite(v)) return 0;
+  if (max <= min) return 50;
+  const p = Math.max(0, Math.min(100, ((v - min) / (max - min)) * 100));
+  return inverse ? 100 - p : p;
+}
+
+function buildRows(){
+  const codes = DATA.codes && DATA.codes.dongs ? DATA.codes.dongs : [];
+  const floating = indexBy(latestRows(DATA.floating), 'dong_code');
+  const workers = indexBy(latestRows(DATA.workers), 'dong_code');
+  const residents = indexBy(latestRows(DATA.residents), 'dong_code');
+  const income = indexBy(latestRows(DATA.income), 'dong_code');
+  const sales = addByCode(latestRows(DATA.sales), 'dong_code', bizFilter(state.biz));
+  const stores = addByCode(latestRows(DATA.stores), 'dong_code', bizFilter(state.biz));
+
+  const base = codes.map(c => {
+    const f = floating[c.code] || {};
+    const w = workers[c.code] || {};
+    const r = residents[c.code] || {};
+    const inc = income[c.code] || {};
+    const s = sales[c.code] || {};
+    const st = stores[c.code] || {};
+    const core = (r.age_20 || 0) + (r.age_30 || 0) + (r.age_40 || 0) + (w.age_20 || 0) + (w.age_30 || 0) + (w.age_40 || 0);
+    const demand = (f.total || 0) + (w.total || 0) * 800 + (r.total || 0) * 250;
+    return {
+      code: c.code, gu: c.gu, name: c.name, full_name: c.full_name,
+      floating: f.total || null,
+      lunch_flow: f.t_11_14 || null,
+      evening_flow: f.t_17_21 || null,
+      workers: w.total || null,
+      residents: r.total || null,
+      households: r.households || null,
+      core_people: core || null,
+      spending: inc.total_spending || null,
+      food_spending: inc.food_spending || null,
+      education_spending: inc.education_spending || null,
+      leisure_spending: inc.leisure_culture_spending || null,
+      sales: s.amount || null,
+      sales_count: s.count || null,
+      unit_price: s.amount && s.count ? Math.round(s.amount / s.count) : null,
+      stores: st.stores || null,
+      franchises: st.franchise || null,
+      open: st.open || null,
+      close: st.close || null,
+      demand_raw: demand,
+      sales_items: s.items || [],
+      store_items: st.items || []
+    };
+  });
+
+  const ranges = {};
+  ['demand_raw','sales','stores','spending','core_people','workers','residents'].forEach(k => {
+    const vals = base.map(r => r[k]).filter(v => Number.isFinite(v));
+    ranges[k] = {min: Math.min(...vals), max: Math.max(...vals)};
+  });
+  base.forEach(r => {
+    const demand = norm(r.demand_raw, ranges.demand_raw.min, ranges.demand_raw.max);
+    const revenue = norm(r.sales || 0, ranges.sales.min, ranges.sales.max);
+    const spending = norm(r.spending || 0, ranges.spending.min, ranges.spending.max);
+    const competition = norm(r.stores || 0, ranges.stores.min, ranges.stores.max, true);
+    r.score = Math.round(demand * .32 + revenue * .28 + spending * .18 + competition * .22);
+  });
+  ROWS = base;
+}
+
+function dataAlert(){
+  const missing = Object.entries(FILES)
+    .filter(([k]) => k !== 'codes' && (!DATA[k] || !latestRows(DATA[k]).length))
+    .map(([k, f]) => f);
+  if (!missing.length){ alert.hidden = true; return; }
+  alert.hidden = false;
+  alert.innerHTML = '<b>아직 생성되지 않은 자동갱신 파일이 있습니다.</b><br>' +
+    'GitHub Actions의 <b>Update Living Population</b>을 실행하면 채워집니다. 현재 화면은 이미 있는 데이터만으로 보여줍니다.<br>' +
+    '<small>' + missing.join(' · ') + '</small>';
+}
+
+function renderSummary(rows){
+  const b = BIZ[state.biz];
+  const loaded = Object.keys(DATA).filter(k => DATA[k]).length;
+  summary.innerHTML =
+    '<div><span>업종</span><b>' + b.label + '</b><p>' + b.caution + '</p></div>' +
+    '<div><span>판단축</span><b>' + b.demand.join(' · ') + '</b><p>점수는 수요, 매출, 소비, 경쟁을 섞은 참고 순위입니다.</p></div>' +
+    '<div><span>자료</span><b>' + loaded + '/7개 연결</b><p>행정동 ' + fmt(rows.length) + '곳 기준</p></div>';
+}
+
+function filteredRows(){
+  const q = state.q.trim();
+  let out = ROWS;
+  if (q) out = out.filter(r => (r.full_name + ' ' + r.gu + ' ' + r.name).includes(q));
+  out = out.filter(r => r.score || r.sales || r.stores || r.floating || r.workers || r.residents);
+  const key = state.sort;
+  out = out.slice().sort((a, b) => (b[key] || 0) - (a[key] || 0) || a.code.localeCompare(b.code));
+  return out;
+}
+
+function rowHtml(r, i){
+  const active = state.picked === r.code ? ' active' : '';
+  return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
+    '<span class="rank">' + (i + 1) + '</span>' +
+    '<span class="place"><b>' + r.gu + ' ' + r.name + '</b><small>' + r.code + '</small></span>' +
+    '<span><b>' + fmt(r.score) + '</b><small>종합</small></span>' +
+    '<span><b>' + money(r.sales) + '</b><small>업종 매출</small></span>' +
+    '<span><b>' + fmt(r.stores) + '</b><small>경쟁 점포</small></span>' +
+    '<span><b>' + fmt(r.workers) + '</b><small>직장인구</small></span>' +
+    '<span><b>' + fmt(r.residents) + '</b><small>상주인구</small></span>' +
+  '</button>';
+}
+
+function renderDetail(rows){
+  const r = rows.find(x => x.code === state.picked) || rows[0];
+  if (!r){
+    detail.innerHTML = '<div class="dempty">표에서 행정동을 선택하면 상권 신호를 볼 수 있습니다.</div>';
+    return;
+  }
+  state.picked = r.code;
+  const topSales = r.sales_items.slice().sort((a, b) => (b.amount || 0) - (a.amount || 0)).slice(0, 5);
+  const topStores = r.store_items.slice().sort((a, b) => (b.store_count || 0) - (a.store_count || 0)).slice(0, 5);
+  const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
+  const item = r => '<li><b>' + r.business_name + '</b><span>' + (r.amount ? money(r.amount) : fmt(r.store_count) + '곳') + '</span></li>';
+  detail.innerHTML =
+    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동</span><span class="lead">종합 <b>' + fmt(r.score) + '</b>점</span></div>' +
+    '<div class="dbody">' +
+      '<div class="groups">' +
+        '<div><p class="grp-title">수요</p>' +
+          stat('유동인구', fmt(r.floating)) +
+          stat('점심 유동', fmt(r.lunch_flow)) +
+          stat('저녁 유동', fmt(r.evening_flow)) +
+          stat('직장인구', fmt(r.workers)) +
+          stat('상주인구', fmt(r.residents)) +
+        '</div>' +
+        '<div><p class="grp-title">돈이 도는 신호</p>' +
+          stat('업종 추정매출', money(r.sales), r.sales_count ? '매출건수 ' + fmt(r.sales_count) + '건' : '') +
+          stat('객단가', r.unit_price ? fmt(r.unit_price) + '원' : '—') +
+          stat('총 소비지출', money(r.spending)) +
+          stat('음식 소비', money(r.food_spending)) +
+          stat('교육 소비', money(r.education_spending)) +
+        '</div>' +
+        '<div><p class="grp-title">경쟁 · 위험</p>' +
+          stat('업종 점포', fmt(r.stores)) +
+          stat('프랜차이즈', fmt(r.franchises)) +
+          stat('개업 점포', fmt(r.open)) +
+          stat('폐업 점포', fmt(r.close)) +
+          stat('가구 수', fmt(r.households)) +
+        '</div>' +
+      '</div>' +
+      '<div class="commercial-lists">' +
+        '<div><p class="grp-title">매출 상위 업종</p><ol>' + (topSales.length ? topSales.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
+        '<div><p class="grp-title">점포 많은 업종</p><ol>' + (topStores.length ? topStores.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
+      '</div>' +
+    '</div>';
+}
+
+function render(){
+  biz.value = state.biz;
+  q.value = state.q;
+  const rows = filteredRows();
+  basis.textContent = '상권분석서비스 행정동 기준 · ' + BIZ[state.biz].label;
+  renderSummary(rows);
+  dataAlert();
+  const list = rows.slice(0, state.limit);
+  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>종합</span><span>매출</span><span>경쟁</span><span>직장</span><span>상주</span></div>' +
+    (list.length ? list.map(rowHtml).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>');
+  for (const el of table.querySelectorAll('.commercial-row')){
+    el.onclick = () => { state.picked = el.dataset.code; render(); };
+  }
+  renderDetail(rows);
+}
+
+segment(sort, [
+  {k:'score', l:'종합'}, {k:'sales', l:'매출'}, {k:'stores', l:'경쟁'}, {k:'workers', l:'직장'}, {k:'residents', l:'상주'}
+], () => state.sort, k => state.sort = k);
+segment(limit, [
+  {k:20, l:'20'}, {k:30, l:'30'}, {k:50, l:'50'}
+], () => state.limit, k => state.limit = k);
+biz.onchange = e => { state.biz = e.target.value; state.picked = ''; render(); };
+q.oninput = e => { state.q = e.target.value; state.picked = ''; render(); };
+
+Promise.all(Object.entries(FILES).map(([key, file]) =>
+  loadJson(file).then(v => { DATA[key] = v; }).catch(() => {})
+)).then(() => {
+  if (!DATA.codes){
+    alert.hidden = false;
+    alert.innerHTML = '<b>행정동 코드표가 없습니다.</b><br>먼저 <code>web/data/admin-dong-codes.json</code>을 생성해야 합니다.';
+    return;
+  }
+  buildRows();
+  render();
+});
+</script>
+<script src="dates.js?v=55"></script>
+</body>
+</html>

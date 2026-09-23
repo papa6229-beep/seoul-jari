@@ -6,12 +6,12 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>서울자리 — 서울 창업 입지 분석</title>
-<link rel="stylesheet" href="styles.css?v=54">
+<link rel="stylesheet" href="styles.css?v=55">
 <script>
 // 브라우저가 옛 화면을 붙잡고 있으면 새 버전으로 한 번 다시 불러온다.
 // 올릴 때마다 이 숫자와 version.json 을 같이 올린다.
 (function(){
-  var PAGE_V = '54';
+  var PAGE_V = '55';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -62,10 +62,10 @@
       <span class="t">업종별 기준</span>
       <span class="d"><span>개인 카페 · 필라테스 · 무인점포</span><span>업종마다 다르게 봐야 할 지표</span></span>
     </a>
-    <a class="tile live" href="curriculum.html">
+    <a class="tile live" href="commercial.html">
       <span class="no">03</span>
-      <span class="t">서울 지역 보기</span>
-      <span class="d"><span>자치구와 동네별 상권 신호</span><span>후보지를 넓게 훑어보기</span></span>
+      <span class="t">상권 데이터</span>
+      <span class="d"><span>행정동별 수요 · 매출 · 경쟁</span><span>후보지를 넓게 훑어보기</span></span>
     </a>
     <a class="tile live" href="highschool.html">
       <span class="no">04</span>
@@ -95,6 +95,6 @@
   syncStart();
 })();
 </script>
-<script src="dates.js?v=54"></script>
+<script src="dates.js?v=55"></script>
 </body>
 </html>
