@@ -5,10 +5,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=55">
+<link rel="stylesheet" href="styles.css?v=56">
 <script>
 (function(){
-  var PAGE_V = '55';
+  var PAGE_V = '56';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '55';
+const V = '56';
 const FILES = {
   codes: 'admin-dong-codes.json',
   floating: 'commercial-floating-population-dong.json',
@@ -147,7 +147,10 @@ async function loadJson(name){
 }
 
 function latestRows(payload){
-  return payload && Array.isArray(payload.rows) ? payload.rows : [];
+  if (!payload) return [];
+  if (Array.isArray(payload.rows)) return payload.rows;
+  if (Array.isArray(payload.dong)) return payload.dong;
+  return [];
 }
 
 function indexBy(rows, key){
@@ -367,6 +370,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=55"></script>
+<script src="dates.js?v=56"></script>
 </body>
 </html>
