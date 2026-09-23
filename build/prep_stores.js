@@ -75,6 +75,11 @@ function classify(rowText){
   }).map(c => c.id);
 }
 
+function isSeoulName(name){
+  const v = (name || '').trim();
+  return v === '서울' || v === '서울특별시';
+}
+
 function summarizeRecords(records, asOf){
   const byDong = new Map();
   const byGu = new Map();
@@ -83,7 +88,7 @@ function summarizeRecords(records, asOf){
   let sourceRows = 0;
 
   for (const r of records){
-    if ((r.sido || '').trim() !== '서울') continue;
+    if (!isSeoulName(r.sido)) continue;
     sourceRows++;
     const gu = (r.gu || '').trim();
     const dong = (r.dong || '').trim() || '(동 미상)';
