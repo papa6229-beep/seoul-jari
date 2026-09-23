@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=70">
+<link rel="stylesheet" href="styles.css?v=71">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '70';
+  var PAGE_V = '71';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '70';
+const V = '71';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -122,7 +122,7 @@ let ROWS = [];
 const SORTS = [
   {k:'sales_per_store_month', l:'평균 월매출', help:'동네 안에서 선택 업종 점포 1곳이 한 달에 올린 평균 매출 추정치입니다.'},
   {k:'stores', l:'점포수', help:'선택 업종 점포가 많은 순서입니다. 많을수록 시장도 크지만 경쟁도 강합니다.'},
-  {k:'competition_score', l:'틈새', help:'매출과 수요는 있으면서 선택 업종 점포 부담이 낮은 순서입니다.'},
+  {k:'competition_score', l:'경쟁 낮은 순', help:'선택 업종 점포 수가 상대적으로 적은 동네부터 봅니다. 매출이 높다는 뜻은 아니어서 평균 월매출과 같이 확인해야 합니다.'},
   {k:'workers', l:'직장인구', help:'행정동 전체 직장인구가 많은 순서입니다.'},
   {k:'residents', l:'상주인구', help:'행정동 전체 거주인구가 많은 순서입니다.'}
 ];
@@ -249,10 +249,30 @@ function dataAlert(){
 
 function renderSummary(rows){
   const b = BIZ[state.biz];
-  const quarter = DATA.view && DATA.view.quarter ? DATA.view.quarter : '-';
+  const period = quarterLabel(DATA.view && DATA.view.quarter);
+  document.querySelectorAll('.commercial-insight').forEach(el => el.remove());
+  const best = rows[0];
+  const lowComp = rows.slice().sort((a, z) => (z.competition_score || 0) - (a.competition_score || 0) || (z.sales_per_store_month || 0) - (a.sales_per_store_month || 0))[0];
+  const highDemand = rows.slice().sort((a, z) => ((z.residents || 0) + (z.workers || 0)) - ((a.residents || 0) + (a.workers || 0)))[0];
+  const card = (title, row, desc, cls) => row ? '<button type="button" class="insight-card ' + (cls || '') + '" data-pick="' + row.code + '">' +
+    '<span>' + title + '</span><b>' + row.gu + ' ' + row.name + '</b><p>' + desc + '</p>' +
+    '<small>평균 월매출 ' + money(row.sales_per_store_month) + ' · 점포 ' + fmt(row.stores) + '곳</small></button>' : '';
   summary.innerHTML =
-    '<div><span>현재 기준</span><b>' + b.label + ' 평균 월매출</b><p>원자료는 ' + quarter + '분기 자료이고, 화면의 매출은 3개월로 나눈 월평균 추정치입니다.</p></div>' +
-    '<div><span>표 읽는 법</span><b>평균 월매출 → 점포수 → 지도</b><p>처음에는 점포 1곳 평균 월매출만 보고, 마음에 드는 동네는 아래 지도와 상세 탭에서 확인합니다.</p></div>';
+    '<div><span>현재 기준</span><b>' + b.label + ' 입지 후보 보기</b><p>' + period + ' 상권분석서비스 자료입니다. 매출은 분기 자료를 3개월로 나눈 월평균 추정치입니다.</p></div>' +
+    '<div><span>읽는 순서</span><b>평균 월매출 → 경쟁 → 지도</b><p>먼저 점포 1곳 매출을 보고, 점포 수와 지도 핀으로 실제 경쟁 위치를 확인하세요.</p></div>';
+  const insight = document.createElement('section');
+  insight.className = 'commercial-insight';
+  insight.innerHTML =
+    '<div class="insight-title"><b>먼저 볼 후보</b><span>카드를 누르면 아래 상세가 바뀝니다.</span></div>' +
+    '<div class="insight-grid">' +
+      card('매출 우선', best, '점포 1곳 평균 월매출이 가장 높은 후보입니다.', '') +
+      card('경쟁 낮은 곳', lowComp, '같은 업종 점포 부담이 상대적으로 낮은 후보입니다.', 'niche') +
+      card('수요 기반', highDemand, '상주·직장 기반 수요가 큰 후보입니다.', 'risk') +
+    '</div>';
+  summary.insertAdjacentElement('afterend', insight);
+  for (const el of insight.querySelectorAll('[data-pick]')){
+    el.onclick = () => { state.picked = el.dataset.pick; render(); };
+  }
 }
 
 function demandType(r){
@@ -278,7 +298,7 @@ function scoreGuide(r){
 
 function competitionGuide(r){
   if (!r.stores) return '선택 업종 점포 수가 낮게 잡혀 실제 영업점 확인이 필요합니다.';
-  if (r.competition_score >= 70) return '선택 업종 점포 부담이 낮은 편이라 틈새 후보로 볼 수 있습니다.';
+  if (r.competition_score >= 70) return '선택 업종 점포 부담이 낮은 편입니다. 단, 수요가 충분한지 같이 봐야 합니다.';
   if (r.competition_score >= 35) return '경쟁은 보통 수준입니다. 상권 안쪽 위치 차이가 결과를 크게 가를 수 있습니다.';
   return '선택 업종 점포가 많은 편입니다. 가격·콘셉트·노출 위치로 이길 수 있는지 먼저 봐야 합니다.';
 }
@@ -316,7 +336,7 @@ function explainRow(r, rows){
   const caution = r.stores
     ? b.label + ' 관련 점포가 ' + fmt(r.stores) + '곳이라 경쟁 강도는 별도 확인이 필요합니다.'
     : b.label + ' 관련 점포 수가 낮게 잡혀 현장 확인이 필요합니다.';
-  return '<div class="commercial-why"><b>왜 이 순위인가</b><p>' + bits.join(' · ') + '.</p><p class="warn">' + caution + '</p></div>';
+  return '<div class="commercial-why"><b>왜 이 후보인가</b><p>' + bits.join(' · ') + '.</p><p class="warn">' + caution + '</p></div>';
 }
 
 function nextChecks(r){
@@ -557,8 +577,11 @@ function renderDetail(rows){
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
   const item = r => '<li><b>' + r.business_name + '</b><span>' + (r.amount ? money(r.amount / 3) + '/월' : fmt(r.store_count) + '곳') + '</span></li>';
   const period = quarterLabel(DATA.view && DATA.view.quarter);
-  const scoreBasis = '추천 점수는 서울 행정동 안에서 선택 업종 매출, 지역 수요, 소비지출, 점포 부담을 0~100점으로 상대 비교한 값입니다.';
-  const gapBasis = '틈새 점수는 점포 수가 적을수록 높게 잡히는 보조 점수입니다. 높다고 무조건 좋다는 뜻은 아니고, 들어갈 자리가 있는지 먼저 보는 신호입니다.';
+  const marketHypothesis = demandType(r) === '주거 수요형'
+    ? '주거 반복 방문형 후보입니다. 단골·근거리 방문이 살아야 하는 업종에 더 맞습니다.'
+    : demandType(r) === '직장 수요형'
+      ? '평일 시간대 장사 후보입니다. 점심·퇴근 피크를 잡는 운영이 중요합니다.'
+      : '혼합 수요 후보입니다. 낮과 저녁의 상품 구성을 다르게 볼 만합니다.';
   const summaryTab =
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 판단</p>' +
@@ -577,7 +600,6 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">매출</p><p class="basis-note">' + period + ' 카드매출 자료를 월평균으로 바꿔 보여줍니다.</p>' +
         stat(BIZ[state.biz].label + ' 평균 월매출', money(r.sales_per_store_month), '동네 업종 총매출 ÷ 3개월 ÷ 점포 수') +
-        stat('동네 업종 총 월매출', money(r.sales_month), r.sales_count ? '분기 총매출 ÷ 3개월 · 결제건수 ' + fmt(r.sales_count) + '건' : '이 동네 선택 업종 전체 합산') +
         stat('객단가', r.unit_price ? fmt(r.unit_price) + '원' : '—', '분기 총매출 ÷ 결제건수') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p><p class="basis-note">점포·프랜차이즈·개업·폐업은 ' + period + ' 상권분석서비스 집계 기준입니다.</p>' +
@@ -613,15 +635,15 @@ function renderDetail(rows){
   const analysisTab =
     explainRow(r, rows) +
     '<div class="groups">' +
-      '<div><p class="grp-title">점수 기준</p>' +
-        stat('추천 점수', fmt(r.score), scoreBasis) +
-        stat('틈새 점수', fmt(r.competition_score), gapBasis) +
-        stat('수요 타입', demandType(r), '직장인구와 상주인구의 비율로 나눈 간단 분류') +
+      '<div><p class="grp-title">입지 가설</p>' +
+        stat('운영 타입', demandType(r), marketHypothesis) +
+        stat('매출 가설', r.sales_per_store_month ? '월 ' + money(r.sales_per_store_month) : '자료 없음', '이 수준을 내려면 실제 후보 점포가 지도 핀의 중심 동선에 붙어 있어야 합니다.') +
+        stat('경쟁 가설', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '점포 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
       '</div>' +
-      '<div><p class="grp-title">전문가 메모</p>' +
-        stat('매출 해석', r.sales_per_store_month ? '월 ' + money(r.sales_per_store_month) : '자료 없음', '점포 1곳 평균입니다. 임대료·권리금이 높으면 실제 수익성은 달라집니다.') +
-        stat('경쟁 해석', r.stores ? fmt(r.stores) + '곳' : '자료 없음', competitionGuide(r)) +
-        stat('수요 해석', demandType(r), demandTone(r)) +
+      '<div><p class="grp-title">현장 검증</p>' +
+        stat('첫 번째', '지도 확인', '선택 업종 핀이 어디에 몰리는지 보고, 빈 구간이 실제로 비어 있는지 확인합니다.') +
+        stat('두 번째', '임대료 확인', '평균 월매출이 높아도 임대료·권리금이 높으면 후보에서 제외될 수 있습니다.') +
+        stat('세 번째', '시간대 확인', demandTone(r)) +
       '</div>' +
     '</div>';
   const mapTab =
@@ -690,6 +712,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=70"></script>
+<script src="dates.js?v=71"></script>
 </body>
 </html>
