@@ -77,6 +77,9 @@ node build/fetch_stores_api.js                    # 서울 25개 구 전체 수�
 set SEOUL_OPENAPI_KEY=서울_열린데이터광장_일반_인증키
 node build/fetch_seoul_openapi.js --service=서비스명 --start=1 --end=1000
                                                    # 서울 열린데이터광장 API 공통 호출
+node build/fetch_living_population_daily.test.js   # 자치구 생활인구 API 테스트
+node build/fetch_living_population_daily.js --date=20260918
+                                                   # -> web/data/living-population-daily-gu.json (최신 자치구 생활인구)
 node build/prep_living_population.test.js          # 생활인구 zip 집계 테스트
 node build/prep_living_population.js C:\Users\BNN\Downloads\250_LOCAL_RESD_ADMDONG_202604.zip C:\Users\BNN\Downloads\250_LOCAL_RESD_ADMDONG_202605.zip
                                                    # -> web/data/living-population.json (서울 생활인구 구·행정동 요약)
@@ -104,7 +107,9 @@ GitHub Actions secret 이름:
 SEOUL_OPENAPI_KEY
 ```
 
-생활인구 데이터는 데이터셋 상세 페이지의 `OpenAPI 호출서비스명`이 필요하다. 서비스명을 확인하면 `fetch_seoul_openapi.js`로 샘플 응답을 받은 뒤, 동·구 단위 요약 파일로 가공한다.
+자치구별 서울 생활인구(250m) 일별집계는 `SPOP_DAILYSUM_JACHI_250` 서비스를 쓴다.
+`fetch_living_population_daily.js`가 최신 또는 지정 기준일의 구 단위 생활인구를
+`web/data/living-population-daily-gu.json`으로 저장한다.
 
 현재는 서울 열린데이터광장의 `[내국인] 행정동별 서울 생활인구(250m)` 내려받기 파일을
 `prep_living_population.js`로 먼저 요약한다. 원본 zip은 용량이 커서 저장소에 담지 않고,
