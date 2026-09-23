@@ -5,10 +5,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=58">
+<link rel="stylesheet" href="styles.css?v=59">
 <script>
 (function(){
-  var PAGE_V = '58';
+  var PAGE_V = '59';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -65,6 +65,7 @@
 
     <div class="commercial-summary" id="summary"></div>
     <div class="commercial-alert" id="alert" hidden></div>
+    <section class="commercial-insight" id="insight"></section>
     <section class="commercial-table" id="table"></section>
     <section class="detail commercial-detail" id="detail"></section>
 
@@ -73,7 +74,7 @@
 </div>
 
 <script>
-const V = '58';
+const V = '59';
 const FILES = {
   view: 'commercial-view-dong.json'
 };
@@ -162,6 +163,12 @@ function level(value, rows, key, high, mid, low){
   return low;
 }
 
+function median(rows, key){
+  const vals = rows.map(r => r[key]).filter(v => Number.isFinite(v)).sort((a, b) => a - b);
+  if (!vals.length) return 0;
+  return vals[Math.floor(vals.length / 2)];
+}
+
 function buildRows(){
   const base = latestRows(DATA.view).map(src => {
     const biz = (src.biz && src.biz[state.biz]) || {};
@@ -230,6 +237,41 @@ function renderSummary(rows){
     '<div><span>자료</span><b>' + loaded + '/1개 연결</b><p>행정동 ' + fmt(rows.length) + '곳 · ' + quarter + '분기 기준</p></div>';
 }
 
+function insightCard(kind, label, row, body){
+  if (!row) return '';
+  return '<button type="button" class="insight-card ' + kind + '" data-code="' + row.code + '">' +
+    '<span>' + label + '</span>' +
+    '<b>' + row.gu + ' ' + row.name + '</b>' +
+    '<p>' + body + '</p>' +
+    '<small>종합 ' + fmt(row.score) + ' · 매출 ' + money(row.sales) + ' · 점포 ' + fmt(row.stores) + '곳</small>' +
+  '</button>';
+}
+
+function renderInsight(rows){
+  const b = BIZ[state.biz];
+  const top = rows[0];
+  const salesMid = median(rows, 'sales');
+  const workerMid = median(rows, 'workers');
+  const niche = rows
+    .filter(r => (r.sales || 0) >= salesMid && (r.workers || 0) >= workerMid)
+    .slice()
+    .sort((a, b) => (b.competition_score || 0) - (a.competition_score || 0) || (b.score || 0) - (a.score || 0))[0];
+  const crowded = rows
+    .filter(r => r.stores && r.sales)
+    .slice()
+    .sort((a, b) => (b.stores || 0) - (a.stores || 0))[0];
+  insight.innerHTML =
+    '<div class="insight-title"><b>' + b.label + ' 후보 요약</b><span>순위는 선택 업종 기준, 수요는 행정동 전체 기준입니다.</span></div>' +
+    '<div class="insight-grid">' +
+      insightCard('best', '추천 1순위', top, '매출과 지역 수요를 함께 봤을 때 가장 앞에 있는 후보입니다.') +
+      insightCard('niche', '틈새 후보', niche, '매출과 직장 수요는 살아 있으면서 선택 업종 점포 부담이 상대적으로 낮은 후보입니다.') +
+      insightCard('risk', '경쟁 확인', crowded, '선택 업종 점포가 많아 임대료와 차별화 조건을 먼저 봐야 하는 후보입니다.') +
+    '</div>';
+  for (const el of insight.querySelectorAll('.insight-card')){
+    el.onclick = () => { state.picked = el.dataset.code; render(); };
+  }
+}
+
 function filteredRows(){
   const q = state.q.trim();
   let out = ROWS;
@@ -265,6 +307,18 @@ function explainRow(r, rows){
     ? b.label + ' 관련 점포가 ' + fmt(r.stores) + '곳이라 경쟁 강도는 별도 확인이 필요합니다.'
     : b.label + ' 관련 점포 수가 낮게 잡혀 현장 확인이 필요합니다.';
   return '<div class="commercial-why"><b>왜 이 순위인가</b><p>' + bits.join(' · ') + '.</p><p class="warn">' + caution + '</p></div>';
+}
+
+function nextChecks(r){
+  const checks = [
+    '역 출구, 횡단보도, 버스정류장 기준 실제 보행 동선을 확인',
+    '1층 가시성, 전면 폭, 권리금, 월세를 같은 기준으로 비교',
+    '네이버지도와 현장 방문으로 동일 업종 체감 밀도를 확인'
+  ];
+  if ((r.stores || 0) > 100) checks.unshift('선택 업종 점포가 많으므로 가격, 콘셉트, 회전율 차별화 가능성을 먼저 확인');
+  if ((r.workers || 0) > (r.residents || 0) * 2) checks.unshift('평일 점심·퇴근 수요형인지, 주말 공백을 버틸 수 있는지 확인');
+  if ((r.residents || 0) > (r.workers || 0) * 2) checks.unshift('주거 수요형인지, 야간·주말 운영 시간과 객단가가 맞는지 확인');
+  return '<div class="commercial-checks"><p class="grp-title">다음 확인사항</p><ul>' + checks.slice(0, 5).map(v => '<li>' + v + '</li>').join('') + '</ul></div>';
 }
 
 function renderDetail(rows){
@@ -309,6 +363,7 @@ function renderDetail(rows){
         '<div><p class="grp-title">선택 업종 매출 구성</p><ol>' + (topSales.length ? topSales.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
         '<div><p class="grp-title">선택 업종 점포 구성</p><ol>' + (topStores.length ? topStores.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
       '</div>' +
+      nextChecks(r) +
     '</div>';
 }
 
@@ -319,6 +374,7 @@ function render(){
   basis.textContent = '상권분석서비스 행정동 기준 · ' + BIZ[state.biz].label;
   renderSummary(rows);
   dataAlert();
+  renderInsight(rows);
   const list = rows.slice(0, state.limit);
   table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>종합</span><span>선택업종 매출</span><span>선택업종 점포</span><span>직장</span><span>상주</span></div>' +
     (list.length ? list.map(rowHtml).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>');
@@ -349,6 +405,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=58"></script>
+<script src="dates.js?v=59"></script>
 </body>
 </html>
