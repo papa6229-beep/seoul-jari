@@ -77,6 +77,9 @@ node build/fetch_stores_api.js                    # 서울 25개 구 전체 수�
 set SEOUL_OPENAPI_KEY=서울_열린데이터광장_일반_인증키
 node build/fetch_seoul_openapi.js --service=서비스명 --start=1 --end=1000
                                                    # 서울 열린데이터광장 API 공통 호출
+node build/prep_living_population.test.js          # 생활인구 zip 집계 테스트
+node build/prep_living_population.js C:\Users\BNN\Downloads\250_LOCAL_RESD_ADMDONG_202604.zip C:\Users\BNN\Downloads\250_LOCAL_RESD_ADMDONG_202605.zip
+                                                   # -> web/data/living-population.json (서울 생활인구 구·행정동 요약)
 ```
 
 ### 상가(상권)정보 API 자동 갱신
@@ -102,6 +105,10 @@ SEOUL_OPENAPI_KEY
 ```
 
 생활인구 데이터는 데이터셋 상세 페이지의 `OpenAPI 호출서비스명`이 필요하다. 서비스명을 확인하면 `fetch_seoul_openapi.js`로 샘플 응답을 받은 뒤, 동·구 단위 요약 파일로 가공한다.
+
+현재는 서울 열린데이터광장의 `[내국인] 행정동별 서울 생활인구(250m)` 내려받기 파일을
+`prep_living_population.js`로 먼저 요약한다. 원본 zip은 용량이 커서 저장소에 담지 않고,
+`web/data/living-population.json`만 배포한다.
 
 `data/raw/aca_*.csv`, `school_*.csv`는 커서 저장소에 담지 않는다. 위 스크립트로 받는다.
 법정동 연계정보 원본은 공공데이터포털 로그인이 필요해 추출본(`dongmap.csv`)만 담았다.
