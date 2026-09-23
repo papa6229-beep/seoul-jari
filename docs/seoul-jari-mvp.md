@@ -64,3 +64,11 @@
 - 조회 단위: `divId=signguCd`, `key=서울 자치구 코드`
 - 저장 파일: `web/data/store-summary.json`
 - 인증키 저장 위치: 로컬 환경변수 또는 GitHub Actions secret `DATA_GO_KR_SERVICE_KEY`
+
+## 서울 열린데이터광장 수집 방식
+
+- 기본 엔드포인트: `https://openapi.seoul.go.kr:8088`
+- URL 형식: `/인증키/json/서비스명/시작/끝/추가인자`
+- 인증키 저장 위치: 로컬 환경변수 또는 GitHub Actions secret `SEOUL_OPENAPI_KEY`
+- 1차 대상: 서울 생활인구 API
+- 아직 필요한 것: 생활인구 데이터셋 상세 페이지의 OpenAPI 서비스명

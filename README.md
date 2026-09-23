@@ -74,6 +74,9 @@ set DATA_GO_KR_SERVICE_KEY=발급받은_일반_인증키
 node build/fetch_stores_api.js --limit-gu=강남구 --max-pages=1
                                                    # 상가(상권)정보 API 빠른 점검
 node build/fetch_stores_api.js                    # 서울 25개 구 전체 수집
+set SEOUL_OPENAPI_KEY=서울_열린데이터광장_일반_인증키
+node build/fetch_seoul_openapi.js --service=서비스명 --start=1 --end=1000
+                                                   # 서울 열린데이터광장 API 공통 호출
 ```
 
 ### 상가(상권)정보 API 자동 갱신
@@ -87,6 +90,18 @@ DATA_GO_KR_SERVICE_KEY
 ```
 
 그 다음 `Actions → Update Store Data → Run workflow`에서 수동 실행한다. 처음에는 `limit_gu=강남구`, `max_pages=1`로 테스트하고, 응답이 맞으면 입력값을 비워 서울 25개 구 전체를 갱신한다.
+
+### 서울 열린데이터광장 API
+
+서울 열린데이터광장 인증키도 코드에 넣지 않는다.
+
+GitHub Actions secret 이름:
+
+```
+SEOUL_OPENAPI_KEY
+```
+
+생활인구 데이터는 데이터셋 상세 페이지의 `OpenAPI 호출서비스명`이 필요하다. 서비스명을 확인하면 `fetch_seoul_openapi.js`로 샘플 응답을 받은 뒤, 동·구 단위 요약 파일로 가공한다.
 
 `data/raw/aca_*.csv`, `school_*.csv`는 커서 저장소에 담지 않는다. 위 스크립트로 받는다.
 법정동 연계정보 원본은 공공데이터포털 로그인이 필요해 추출본(`dongmap.csv`)만 담았다.
