@@ -5,10 +5,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=62">
+<link rel="stylesheet" href="styles.css?v=63">
 <script>
 (function(){
-  var PAGE_V = '62';
+  var PAGE_V = '63';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -46,15 +46,12 @@
     </div>
 
     <div class="field">
-      <span class="lbl">정렬</span>
-      <div class="seg" id="sort"></div>
+      <label for="sortPick">정렬</label>
+      <select class="pick" id="sortPick"></select>
       <small class="qhint" id="sortHelp"></small>
     </div>
 
-    <div class="field">
-      <span class="lbl">표시</span>
-      <div class="seg" id="limit"></div>
-    </div>
+    <p class="side-note">상위 10개 후보만 보여줍니다. 행을 누르면 아래 탭에서 자세히 볼 수 있습니다.</p>
   </aside>
 
   <main class="main">
@@ -75,7 +72,7 @@
 </div>
 
 <script>
-const V = '62';
+const V = '63';
 const FILES = {
   view: 'commercial-view-dong.json'
 };
@@ -112,7 +109,7 @@ const BIZ = {
   }
 };
 
-const state = {biz: new URLSearchParams(location.search).get('biz') || 'cafe', q: '', sort: 'sales_per_store_month', limit: 30, picked: '', tab: 'summary'};
+const state = {biz: new URLSearchParams(location.search).get('biz') || 'cafe', q: '', sort: 'sales_per_store_month', picked: '', tab: 'summary'};
 const DATA = {};
 let ROWS = [];
 const SORTS = [
@@ -127,6 +124,7 @@ const TABS = [
   {k:'summary', l:'요약'},
   {k:'sales', l:'매출·경쟁'},
   {k:'demand', l:'수요'},
+  {k:'map', l:'지도'},
   {k:'checks', l:'확인사항'}
 ];
 
@@ -138,26 +136,8 @@ const money = n => {
   return Math.round(n / 10000).toLocaleString('ko-KR') + '만원';
 };
 
-function segment(host, items, get, set){
-  host.innerHTML = '';
-  items.forEach(it => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.textContent = it.l;
-    b.setAttribute('aria-pressed', String(get() === it.k));
-    b.onclick = () => { set(it.k); render(); };
-    host.appendChild(b);
-  });
-}
-
 function syncSegments(){
-  for (const b of sort.querySelectorAll('button')){
-    const item = SORTS.find(it => it.l === b.textContent);
-    if (item) b.setAttribute('aria-pressed', String(state.sort === item.k));
-  }
-  for (const b of limit.querySelectorAll('button')){
-    b.setAttribute('aria-pressed', String(state.limit === Number(b.textContent)));
-  }
+  sortPick.value = state.sort;
 }
 
 async function loadJson(name){
@@ -260,17 +240,7 @@ function renderSummary(rows){
   const quarter = DATA.view && DATA.view.quarter ? DATA.view.quarter : '-';
   summary.innerHTML =
     '<div><span>현재 기준</span><b>' + b.label + ' · 월평균 추정</b><p>원자료는 ' + quarter + '분기 자료이고, 화면 매출은 월평균으로 환산했습니다.</p></div>' +
-    '<div><span>표 읽는 법</span><b>점포당 월매출 → 점포수 → 수요</b><p>먼저 점포 1곳당 매출을 보고, 그 다음 경쟁 점포 수와 직장·상주 수요를 봅니다.</p></div>';
-}
-
-function renderMetricGuide(){
-  const current = SORTS.find(it => it.k === state.sort) || SORTS[0];
-  sortHelp.textContent = current.help;
-  metricGuide.innerHTML =
-    '<div><b>종합</b><span>추천 점수</span><p>선택 업종 매출, 지역 수요, 소비지출, 점포 부담을 함께 본 값입니다.</p></div>' +
-    '<div><b>선택업종 매출</b><span>분기 추정매출</span><p>현재 고른 업종 묶음만 합산합니다. 필라테스를 고르면 스포츠/운동 계열만 봅니다.</p></div>' +
-    '<div><b>선택업종 점포</b><span>경쟁 밀도</span><p>현재 고른 업종 묶음의 점포 수입니다. 많으면 수요도 크지만 경쟁도 강합니다.</p></div>' +
-    '<div><b>직장 · 상주</b><span>지역 전체 수요</span><p>업종별 숫자가 아니라 행정동 전체 인구 신호입니다.</p></div>';
+    '<div><span>표 읽는 법</span><b>1곳 월평균 → 점포수 → 수요</b><p>먼저 점포 1곳당 월평균 매출을 보고, 그 다음 경쟁 점포 수와 직장·상주 수요를 봅니다.</p></div>';
 }
 
 function demandType(r){
@@ -279,71 +249,6 @@ function demandType(r){
   if (worker > resident * 2) return '직장 수요형';
   if (resident > worker * 2) return '주거 수요형';
   return '혼합 수요형';
-}
-
-function cardVerdict(r){
-  if (!r.stores) return '자료 부족';
-  if ((r.sales_per_store || 0) >= 100000000 && r.stores <= 80) return '우선 검토';
-  if (r.stores > 200) return '경쟁 과밀';
-  if ((r.sales_per_store || 0) < 30000000) return '매출 약함';
-  return '비교 후보';
-}
-
-function renderCandidateCards(rows){
-  const cards = rows.slice(0, 8).map((r, i) => {
-    const active = state.picked === r.code ? ' active' : '';
-    return '<button type="button" class="candidate-card' + active + '" data-code="' + r.code + '">' +
-      '<span class="badge">' + cardVerdict(r) + '</span>' +
-      '<b>' + (i + 1) + '. ' + r.gu + ' ' + r.name + '</b>' +
-      '<div class="candidate-metrics">' +
-        '<span><strong>' + money(r.sales_per_store) + '</strong><small>점포 1곳당 매출</small></span>' +
-        '<span><strong>' + fmt(r.stores) + '곳</strong><small>선택업종 점포</small></span>' +
-        '<span><strong>' + demandType(r) + '</strong><small>수요 타입</small></span>' +
-      '</div>' +
-      '<p>' + BIZ[state.biz].label + ' 기준 매출 ' + money(r.sales) + ', 직장 ' + fmt(r.workers) + ', 상주 ' + fmt(r.residents) + '.</p>' +
-    '</button>';
-  }).join('');
-  candidateCards.innerHTML =
-    '<div class="candidate-title"><b>먼저 볼 동네</b><span>표보다 이 카드의 점포 1곳당 매출과 경쟁 강도를 먼저 보세요.</span></div>' +
-    '<div class="candidate-grid">' + cards + '</div>';
-  for (const el of candidateCards.querySelectorAll('.candidate-card')){
-    el.onclick = () => { state.picked = el.dataset.code; render(); };
-  }
-}
-
-function insightCard(kind, label, row, body){
-  if (!row) return '';
-  return '<button type="button" class="insight-card ' + kind + '" data-code="' + row.code + '">' +
-    '<span>' + label + '</span>' +
-    '<b>' + row.gu + ' ' + row.name + '</b>' +
-    '<p>' + body + '</p>' +
-    '<small>종합 ' + fmt(row.score) + ' · 매출 ' + money(row.sales) + ' · 점포 ' + fmt(row.stores) + '곳</small>' +
-  '</button>';
-}
-
-function renderInsight(rows){
-  const b = BIZ[state.biz];
-  const top = rows[0];
-  const salesMid = median(rows, 'sales');
-  const workerMid = median(rows, 'workers');
-  const niche = rows
-    .filter(r => (r.sales || 0) >= salesMid && (r.workers || 0) >= workerMid)
-    .slice()
-    .sort((a, b) => (b.competition_score || 0) - (a.competition_score || 0) || (b.score || 0) - (a.score || 0))[0];
-  const crowded = rows
-    .filter(r => r.stores && r.sales)
-    .slice()
-    .sort((a, b) => (b.stores || 0) - (a.stores || 0))[0];
-  insight.innerHTML =
-    '<div class="insight-title"><b>' + b.label + ' 후보 요약</b><span>순위는 선택 업종 기준, 수요는 행정동 전체 기준입니다.</span></div>' +
-    '<div class="insight-grid">' +
-      insightCard('best', '추천 1순위', top, '매출과 지역 수요를 함께 봤을 때 가장 앞에 있는 후보입니다.') +
-      insightCard('niche', '틈새 후보', niche, '매출과 직장 수요는 살아 있으면서 선택 업종 점포 부담이 상대적으로 낮은 후보입니다.') +
-      insightCard('risk', '경쟁 확인', crowded, '선택 업종 점포가 많아 임대료와 차별화 조건을 먼저 봐야 하는 후보입니다.') +
-    '</div>';
-  for (const el of insight.querySelectorAll('.insight-card')){
-    el.onclick = () => { state.picked = el.dataset.code; render(); };
-  }
 }
 
 function filteredRows(){
@@ -362,8 +267,8 @@ function rowHtml(r, i){
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + (i + 1) + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b><small>' + r.code + ' · ' + storeLabel + '</small></span>' +
-    '<span><b>' + money(r.sales_per_store_month) + '</b><small>점포당 월매출</small></span>' +
-    '<span><b>' + money(r.sales_month) + '</b><small>월매출</small></span>' +
+    '<span><b>' + money(r.sales_per_store_month) + '</b><small>1곳 월평균</small></span>' +
+    '<span><b>' + money(r.sales_month) + '</b><small>업종 월평균</small></span>' +
     '<span><b>' + fmt(r.stores) + '</b><small>점포 수</small></span>' +
     '<span><b>' + demandType(r) + '</b><small>수요 타입</small></span>' +
     '<span><b>' + fmt(r.score) + '</b><small>종합</small></span>' +
@@ -458,14 +363,20 @@ function renderDetail(rows){
         stat('가구 수', fmt(r.households)) +
       '</div>' +
     '</div>';
+  const mapTab =
+    '<div class="map-placeholder">' +
+      '<b>업체 위치 지도는 좌표 데이터 연결 후 표시됩니다.</b>' +
+      '<p>현재 연결된 상권분석서비스 자료는 행정동 단위 집계라 개별 업체 좌표가 없습니다. 소상공인 상가업소 API의 좌표를 붙이면 이 탭에서 ' + r.gu + ' ' + r.name + ' 안의 ' + BIZ[state.biz].label + ' 위치를 지도에 찍을 수 있습니다.</p>' +
+      '<span>지금은 동네 후보를 좁히는 단계로 보고, 실제 매물·동선 확인은 다음 데이터 연결 후 진행합니다.</span>' +
+    '</div>';
   const checksTab = nextChecks(r);
-  const content = {summary: summaryTab, sales: salesTab, demand: demandTab, checks: checksTab}[state.tab] || summaryTab;
+  const content = {summary: summaryTab, sales: salesTab, demand: demandTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;
   detailTabs.innerHTML = TABS.map(t => '<button type="button" aria-pressed="' + (state.tab === t.k) + '" data-tab="' + t.k + '">' + t.l + '</button>').join('');
   for (const el of detailTabs.querySelectorAll('button')){
     el.onclick = () => { state.tab = el.dataset.tab; render(); };
   }
   detail.innerHTML =
-    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">점포당 월매출 <b>' + money(r.sales_per_store_month) + '</b></span></div>' +
+    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">1곳 월평균 <b>' + money(r.sales_per_store_month) + '</b></span></div>' +
     '<div class="dbody">' + content + '</div>';
 }
 
@@ -479,8 +390,8 @@ function render(){
   basis.textContent = '상권분석서비스 행정동 기준 · ' + BIZ[state.biz].label;
   renderSummary(rows);
   dataAlert();
-  const list = rows.slice(0, state.limit);
-  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>점포당 월매출</span><span>월매출</span><span>점포 수</span><span>수요 타입</span><span>종합</span></div>' +
+  const list = rows.slice(0, 10);
+  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>1곳 월평균</span><span>업종 월평균</span><span>점포 수</span><span>수요 타입</span><span>종합</span></div>' +
     (list.length ? list.map(rowHtml).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>');
   for (const el of table.querySelectorAll('.commercial-row')){
     el.onclick = () => { state.picked = el.dataset.code; render(); };
@@ -488,10 +399,8 @@ function render(){
   renderDetail(rows);
 }
 
-segment(sort, SORTS, () => state.sort, k => state.sort = k);
-segment(limit, [
-  {k:20, l:'20'}, {k:30, l:'30'}, {k:50, l:'50'}
-], () => state.limit, k => state.limit = k);
+sortPick.innerHTML = SORTS.map(it => '<option value="' + it.k + '">' + it.l + '</option>').join('');
+sortPick.onchange = e => { state.sort = e.target.value; state.picked = ''; render(); };
 biz.onchange = e => { state.biz = e.target.value; state.picked = ''; buildRows(); render(); };
 q.oninput = e => { state.q = e.target.value; state.picked = ''; render(); };
 
@@ -507,6 +416,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=62"></script>
+<script src="dates.js?v=63"></script>
 </body>
 </html>

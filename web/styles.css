@@ -87,6 +87,10 @@ select.pick:focus{outline:2px solid var(--accent-soft); border-color:var(--accen
   width:100%; border:1px solid var(--line-2); border-radius:9px; padding:9px 12px; font-size:14px;
 }
 .search:focus{outline:2px solid var(--accent-soft); border-color:var(--accent)}
+.side-note{
+  margin:2px 0 0; border-top:1px dashed var(--line); padding-top:14px;
+  color:var(--ink-3); font-size:12.5px; line-height:1.55; word-break:keep-all;
+}
 
 .seg{display:flex; width:100%}
 .seg button{
@@ -332,6 +336,14 @@ select.add-col{
 }
 .commercial-checks ul{margin:0; padding-left:19px; color:var(--ink-2); line-height:1.7}
 .commercial-checks li{padding:3px 0; word-break:keep-all}
+.map-placeholder{
+  min-height:220px; border:1px dashed var(--line-2); border-radius:10px; background:#fbfaf7;
+  display:flex; flex-direction:column; justify-content:center; gap:8px; padding:24px;
+  color:var(--ink-2); line-height:1.65; word-break:keep-all;
+}
+.map-placeholder b{display:block; color:var(--ink); font-size:17px}
+.map-placeholder p{margin:0; max-width:720px}
+.map-placeholder span{display:block; color:var(--ink-3); font-size:13px}
 
 @media (max-width:1000px){
   .app{grid-template-columns:1fr}
@@ -358,9 +370,10 @@ select.add-col{
   .detail-tabs{width:100%}
   .detail-tabs button{flex:1; min-width:0; padding:10px 8px; font-size:13px}
   .commercial-row{
-    grid-template-columns:34px 1fr 1fr 1fr; gap:8px 12px; padding:12px 14px;
+    position:relative; grid-template-columns:1fr 1fr; gap:8px 12px; padding:12px 14px 12px 48px;
   }
-  .commercial-row .place{grid-column:2 / -1}
+  .commercial-row .rank{position:absolute; left:14px; top:18px; width:22px}
+  .commercial-row .place{grid-column:1 / -1}
   .commercial-lists{grid-template-columns:1fr}
 }
 
