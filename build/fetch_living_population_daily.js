@@ -41,6 +41,10 @@ function compactDate(date = new Date()){
   ].join('');
 }
 
+function defaultLivingPopulationDate(date = new Date()){
+  return compactDate(new Date(date.getTime() - (4 * 24 * 60 * 60 * 1000)));
+}
+
 function normalizeNumber(value){
   const n = Number(value);
   return Number.isFinite(n) ? Math.round(n) : null;
@@ -122,7 +126,7 @@ async function fetchDailyGuPopulation({
 
 async function main(){
   const key = getKey();
-  const date = getArg('date', '');
+  const date = getArg('date', defaultLivingPopulationDate());
   const out = path.resolve(getArg('out', DEFAULT_OUT));
   const summary = await fetchDailyGuPopulation({key, date});
   fs.mkdirSync(path.dirname(out), {recursive: true});
@@ -137,4 +141,4 @@ if (require.main === module){
   });
 }
 
-module.exports = {SERVICE, compactDate, normalizeRows, fetchDailyGuPopulation};
+module.exports = {SERVICE, compactDate, defaultLivingPopulationDate, normalizeRows, fetchDailyGuPopulation};

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       date:
-        description: '조회할 기준일 YYYYMMDD. 비우면 API 기본 최신값'
+        description: '조회할 기준일 YYYYMMDD. 비우면 4일 전 기준일'
         required: false
         default: ''
       quarter:

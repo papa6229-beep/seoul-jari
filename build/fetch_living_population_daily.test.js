@@ -1,5 +1,5 @@
 const assert = require('assert');
-const {SERVICE, normalizeRows, fetchDailyGuPopulation} = require('./fetch_living_population_daily');
+const {SERVICE, defaultLivingPopulationDate, normalizeRows, fetchDailyGuPopulation} = require('./fetch_living_population_daily');
 
 const rows = normalizeRows([
   {
@@ -30,6 +30,7 @@ assert.equal(rows.length, 1);
 assert.equal(rows[0].name, '종로구');
 assert.equal(rows[0].total, 353670);
 assert.equal(rows[0].daytime, 495248);
+assert.equal(defaultLivingPopulationDate(new Date('2026-09-23T00:00:00+09:00')), '20260919');
 
 (async () => {
   const fetched = await fetchDailyGuPopulation({
