@@ -5,10 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=63">
+<link rel="stylesheet" href="styles.css?v=64">
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '63';
+  var PAGE_V = '64';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -72,9 +73,10 @@
 </div>
 
 <script>
-const V = '63';
+const V = '64';
 const FILES = {
-  view: 'commercial-view-dong.json'
+  view: 'commercial-view-dong.json',
+  places: 'places/index.json'
 };
 const BIZ = {
   cafe: {
@@ -109,12 +111,15 @@ const BIZ = {
   }
 };
 
-const state = {biz: new URLSearchParams(location.search).get('biz') || 'cafe', q: '', sort: 'sales_per_store_month', picked: '', tab: 'summary'};
+const state = {
+  biz: new URLSearchParams(location.search).get('biz') || 'cafe',
+  q: '', sort: 'sales_per_store_month', picked: '', tab: 'summary',
+  show: {school: true, academy: true, apartment: true, shop: true}
+};
 const DATA = {};
 let ROWS = [];
 const SORTS = [
-  {k:'sales_per_store_month', l:'점포당 월매출', help:'선택 업종 월평균 매출을 점포 수로 나눈 값입니다.'},
-  {k:'sales_month', l:'월매출', help:'선택 업종 전체의 월평균 추정매출이 큰 순서입니다.'},
+  {k:'sales_per_store_month', l:'평균 월매출', help:'동네 안에서 선택 업종 점포 1곳이 한 달에 올린 평균 매출 추정치입니다.'},
   {k:'stores', l:'점포수', help:'선택 업종 점포가 많은 순서입니다. 많을수록 시장도 크지만 경쟁도 강합니다.'},
   {k:'competition_score', l:'틈새', help:'매출과 수요는 있으면서 선택 업종 점포 부담이 낮은 순서입니다.'},
   {k:'workers', l:'직장인구', help:'행정동 전체 직장인구가 많은 순서입니다.'},
@@ -239,8 +244,8 @@ function renderSummary(rows){
   const b = BIZ[state.biz];
   const quarter = DATA.view && DATA.view.quarter ? DATA.view.quarter : '-';
   summary.innerHTML =
-    '<div><span>현재 기준</span><b>' + b.label + ' · 월평균 추정</b><p>원자료는 ' + quarter + '분기 자료이고, 화면 매출은 월평균으로 환산했습니다.</p></div>' +
-    '<div><span>표 읽는 법</span><b>1곳 월평균 → 점포수 → 수요</b><p>먼저 점포 1곳당 월평균 매출을 보고, 그 다음 경쟁 점포 수와 직장·상주 수요를 봅니다.</p></div>';
+    '<div><span>현재 기준</span><b>' + b.label + ' 평균 월매출</b><p>원자료는 ' + quarter + '분기 자료이고, 화면의 매출은 3개월로 나눈 월평균 추정치입니다.</p></div>' +
+    '<div><span>표 읽는 법</span><b>평균 월매출 → 점포수 → 지도</b><p>처음에는 점포 1곳 평균 월매출만 보고, 마음에 드는 동네는 아래 지도와 상세 탭에서 확인합니다.</p></div>';
 }
 
 function demandType(r){
@@ -267,8 +272,7 @@ function rowHtml(r, i){
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + (i + 1) + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b><small>' + r.code + ' · ' + storeLabel + '</small></span>' +
-    '<span><b>' + money(r.sales_per_store_month) + '</b><small>1곳 월평균</small></span>' +
-    '<span><b>' + money(r.sales_month) + '</b><small>업종 월평균</small></span>' +
+    '<span><b>' + money(r.sales_per_store_month) + '</b><small>' + BIZ[state.biz].label + ' 평균 월매출</small></span>' +
     '<span><b>' + fmt(r.stores) + '</b><small>점포 수</small></span>' +
     '<span><b>' + demandType(r) + '</b><small>수요 타입</small></span>' +
     '<span><b>' + fmt(r.score) + '</b><small>종합</small></span>' +
@@ -300,6 +304,139 @@ function nextChecks(r){
   return '<div class="commercial-checks"><p class="grp-title">다음 확인사항</p><ul>' + checks.slice(0, 5).map(v => '<li>' + v + '</li>').join('') + '</ul></div>';
 }
 
+function mapToggle(key, label, pin){
+  return '<button type="button" class="tg" data-show="' + key + '" aria-pressed="' + state.show[key] + '">' +
+    '<i class="pin ' + pin + '"></i>' + label + '</button>';
+}
+
+const PLACE_CACHE = {};
+let kakaoReady = false, commercialMap = null, commercialOverlays = [], commercialMapKey = '';
+
+function cleanPlaceName(v){
+  return (v || '').replace(/[^0-9A-Za-z가-힣]+/g, '');
+}
+
+function legalDongName(name){
+  return (name || '').replace(/(\d+(?:\.\d+)*)동$/, '동');
+}
+
+function placeFileFor(row){
+  const idx = DATA.places && DATA.places.dongs ? DATA.places.dongs : {};
+  const names = [row.name, legalDongName(row.name)];
+  for (const name of names){
+    const key = '서울/' + row.gu + '/' + name;
+    if (idx[key] && idx[key].f) return idx[key].f + '.json';
+  }
+  return cleanPlaceName('서울') + '_' + cleanPlaceName(row.gu) + '_' + cleanPlaceName(legalDongName(row.name)) + '.json';
+}
+
+function loadKakao(){
+  return new Promise((resolve, reject) => {
+    if (kakaoReady) return resolve();
+    if (!window.kakao || !window.kakao.maps) return reject(new Error('sdk'));
+    kakao.maps.load(() => { kakaoReady = true; resolve(); });
+  });
+}
+
+function loadPlaces(row){
+  const file = placeFileFor(row);
+  if (PLACE_CACHE[file]) return Promise.resolve(PLACE_CACHE[file]);
+  return fetch('data/places/' + encodeURIComponent(file) + '?v=' + V, {cache:'no-store'})
+    .then(r => r.ok ? r.json() : null)
+    .then(d => (PLACE_CACHE[file] = d))
+    .catch(() => null);
+}
+
+function clearCommercialMap(){
+  for (const o of commercialOverlays) o.setMap(null);
+  commercialOverlays = [];
+}
+
+function mapKind(p){
+  if (p.t === 's') return 'school';
+  if (p.t === 'a') return 'academy';
+  if (p.t === 'p') return 'apartment';
+  if (p.t === 'g') return 'shop';
+  return '';
+}
+
+function markerClass(p){
+  if (p.t === 's') return p.k === '중학교' ? 'm' : 'e';
+  if (p.t === 'a') return p.k === '교습소' ? 'a3' : (p.k === '영어+타 과목' ? 'a2' : 'a1');
+  if (p.t === 'p') return 'p3';
+  if (p.t === 'g') return 'g3';
+  return 'a1';
+}
+
+function markerCard(p){
+  const sub = [];
+  if (p.t === 's') sub.push(p.k, p.st ? '학생 ' + fmt(p.st) + '명' : '');
+  if (p.t === 'a') sub.push(p.k, p.y ? p.y + '년 개원' : '', p.f ? '월 ' + Math.round(p.f / 10000) + '만원' : '');
+  if (p.t === 'p') sub.push('아파트', p.y ? p.y + '년' : '', p.p ? '중간가 ' + money(p.p) : '');
+  if (p.t === 'g') sub.push('상가', p.k, p.ar ? Math.round(p.ar / 3.3) + '평' : '');
+  return '<b>' + p.n + '</b>' + sub.filter(Boolean).map(v => '<span>' + v + '</span>').join('');
+}
+
+function drawCommercialMap(row, keepView){
+  const box = document.getElementById('map');
+  if (!box) return;
+  if (box.dataset.built !== '1') box.innerHTML = '<div class="mapmsg">불러오는 중...</div>';
+  loadPlaces(row).then(data => {
+    if (!data || !Array.isArray(data.items) || !data.items.length){
+      box.innerHTML = '<div class="mapmsg">이 동네에 연결된 지도 지점이 없습니다.<br>다른 행정동을 눌러보세요.</div>';
+      const count = document.getElementById('mapcount');
+      if (count) count.textContent = '';
+      return;
+    }
+    return loadKakao().then(() => {
+      const pts = data.items.filter(p => state.show[mapKind(p)] !== false);
+      if (!pts.length){
+        clearCommercialMap();
+        const count = document.getElementById('mapcount');
+        if (count) count.textContent = '표시할 핀이 없습니다';
+        return;
+      }
+      const key = data.sido + '/' + data.gusi + '/' + data.dong;
+      const lat = pts.reduce((s, p) => s + p.lat, 0) / pts.length;
+      const lng = pts.reduce((s, p) => s + p.lng, 0) / pts.length;
+      if (!commercialMap || box.dataset.built !== '1'){
+        box.innerHTML = '';
+        commercialMap = new kakao.maps.Map(box, {center: new kakao.maps.LatLng(lat, lng), level: 5});
+        commercialMap.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+        kakao.maps.event.addListener(commercialMap, 'click', () => {
+          for (const el of box.querySelectorAll('.mk.open')) el.classList.remove('open');
+        });
+        box.dataset.built = '1';
+      }
+      clearCommercialMap();
+      const bounds = new kakao.maps.LatLngBounds();
+      for (const p of pts){
+        const pos = new kakao.maps.LatLng(p.lat, p.lng);
+        bounds.extend(pos);
+        const el = document.createElement('div');
+        el.className = 'mk ' + markerClass(p);
+        el.innerHTML = '<div class="card">' + markerCard(p) + '</div>';
+        const overlay = new kakao.maps.CustomOverlay({position: pos, content: el, yAnchor: 1, clickable: true, zIndex: 2});
+        overlay.setMap(commercialMap);
+        commercialOverlays.push(overlay);
+        el.onclick = () => {
+          for (const item of box.querySelectorAll('.mk.open')) item.classList.remove('open');
+          el.classList.add('open');
+        };
+      }
+      if (!keepView || commercialMapKey !== key) commercialMap.setBounds(bounds, 40, 40, 40, 40);
+      commercialMapKey = key;
+      const count = document.getElementById('mapcount');
+      if (count){
+        const n = t => pts.filter(p => p.t === t).length;
+        count.textContent = ['학교 ' + n('s'), '학원 ' + n('a'), '아파트 ' + n('p'), '상가 ' + n('g')].join(' · ');
+      }
+    });
+  }).catch(() => {
+    box.innerHTML = '<div class="mapmsg">지도를 불러오지 못했습니다.<br>카카오 지도 키 또는 네트워크 상태를 확인해주세요.</div>';
+  });
+}
+
 function renderDetail(rows){
   const r = rows.find(x => x.code === state.picked) || rows[0];
   if (!r){
@@ -315,8 +452,8 @@ function renderDetail(rows){
     explainRow(r, rows) +
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 보기</p>' +
-        stat('점포당 월매출', money(r.sales_per_store_month), '분기 매출 ÷ 3개월 ÷ 점포 수') +
-        stat('월평균 매출', money(r.sales_month), '선택 업종 전체 합산') +
+        stat(BIZ[state.biz].label + ' 평균 월매출', money(r.sales_per_store_month), '동네 업종 총매출 ÷ 3개월 ÷ 점포 수') +
+        stat('동네 업종 총 월매출', money(r.sales_month), '이 동네 선택 업종 전체 합산') +
         stat('점포 수', fmt(r.stores)) +
         stat('수요 타입', demandType(r)) +
       '</div>' +
@@ -330,8 +467,8 @@ function renderDetail(rows){
   const salesTab =
     '<div class="groups">' +
       '<div><p class="grp-title">매출</p>' +
-        stat(BIZ[state.biz].label + ' 월평균 매출', money(r.sales_month), r.sales_count ? '분기 매출건수 ' + fmt(r.sales_count) + '건' : '') +
-        stat('점포 1곳당 월매출', money(r.sales_per_store_month)) +
+        stat(BIZ[state.biz].label + ' 평균 월매출', money(r.sales_per_store_month), '점포 1곳 기준') +
+        stat('동네 업종 총 월매출', money(r.sales_month), r.sales_count ? '분기 매출건수 ' + fmt(r.sales_count) + '건' : '') +
         stat('객단가', r.unit_price ? fmt(r.unit_price) + '원' : '—') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p>' +
@@ -364,11 +501,14 @@ function renderDetail(rows){
       '</div>' +
     '</div>';
   const mapTab =
-    '<div class="map-placeholder">' +
-      '<b>업체 위치 지도는 좌표 데이터 연결 후 표시됩니다.</b>' +
-      '<p>현재 연결된 상권분석서비스 자료는 행정동 단위 집계라 개별 업체 좌표가 없습니다. 소상공인 상가업소 API의 좌표를 붙이면 이 탭에서 ' + r.gu + ' ' + r.name + ' 안의 ' + BIZ[state.biz].label + ' 위치를 지도에 찍을 수 있습니다.</p>' +
-      '<span>지금은 동네 후보를 좁히는 단계로 보고, 실제 매물·동선 확인은 다음 데이터 연결 후 진행합니다.</span>' +
-    '</div>';
+    '<div class="maparea"><div id="map"></div>' +
+      '<div class="maplegend commercial-map-legend">' +
+        mapToggle('school', '초·중학교', 'e') +
+        mapToggle('academy', '학원', 'a1') +
+        mapToggle('apartment', '아파트', 'p3') +
+        mapToggle('shop', '상가', 'g3') +
+        '<span class="hint" id="mapcount"></span>' +
+      '</div></div>';
   const checksTab = nextChecks(r);
   const content = {summary: summaryTab, sales: salesTab, demand: demandTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;
   detailTabs.innerHTML = TABS.map(t => '<button type="button" aria-pressed="' + (state.tab === t.k) + '" data-tab="' + t.k + '">' + t.l + '</button>').join('');
@@ -376,8 +516,14 @@ function renderDetail(rows){
     el.onclick = () => { state.tab = el.dataset.tab; render(); };
   }
   detail.innerHTML =
-    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">1곳 월평균 <b>' + money(r.sales_per_store_month) + '</b></span></div>' +
+    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">평균 월매출 <b>' + money(r.sales_per_store_month) + '</b></span></div>' +
     '<div class="dbody">' + content + '</div>';
+  if (state.tab === 'map'){
+    for (const el of detail.querySelectorAll('.tg[data-show]')){
+      el.onclick = () => { state.show[el.dataset.show] = !state.show[el.dataset.show]; drawCommercialMap(r, true); };
+    }
+    drawCommercialMap(r);
+  }
 }
 
 function render(){
@@ -391,7 +537,7 @@ function render(){
   renderSummary(rows);
   dataAlert();
   const list = rows.slice(0, 10);
-  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>1곳 월평균</span><span>업종 월평균</span><span>점포 수</span><span>수요 타입</span><span>종합</span></div>' +
+  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>평균 월매출</span><span>점포 수</span><span>수요 타입</span><span>종합</span></div>' +
     (list.length ? list.map(rowHtml).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>');
   for (const el of table.querySelectorAll('.commercial-row')){
     el.onclick = () => { state.picked = el.dataset.code; render(); };
@@ -416,6 +562,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=63"></script>
+<script src="dates.js?v=64"></script>
 </body>
 </html>
