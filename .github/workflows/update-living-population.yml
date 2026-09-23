@@ -43,6 +43,8 @@ jobs:
           TARGET_DATE: ${{ inputs.date }}
           TARGET_QUARTER: ${{ inputs.quarter }}
         run: |
+          curl -sS --max-time 10 "http://openapi.seoul.go.kr:8088/sample/json/SPOP_DAILYSUM_JACHI_250/1/1" | head -c 200
+          echo
           args=()
           if [ -n "$TARGET_DATE" ]; then args+=("--date=$TARGET_DATE"); fi
           node build/fetch_living_population_daily.js "${args[@]}"

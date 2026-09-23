@@ -35,7 +35,13 @@ function buildSeoulUrl({key, service, start = 1, end = 1000, format = 'json', ar
 
 async function fetchSeoulOpenApi({key, service, start = 1, end = 1000, format = 'json', args = [], fetchImpl = fetch}){
   const url = buildSeoulUrl({key, service, start, end, format, args});
-  const res = await fetchImpl(url);
+  let res;
+  try {
+    res = await fetchImpl(url);
+  } catch (err) {
+    const cause = err.cause && (err.cause.code || err.cause.message);
+    throw new Error(`서울 OpenAPI 연결 실패 service=${service} start=${start} end=${end}: ${err.message}${cause ? ` (${cause})` : ''}`);
+  }
   const text = await res.text();
   if (!res.ok) throw new Error('서울 OpenAPI HTTP ' + res.status + ': ' + text.slice(0, 200));
   if (format !== 'json') return {url, text};
