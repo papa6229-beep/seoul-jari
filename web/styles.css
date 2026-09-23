@@ -380,7 +380,7 @@ select.add-col{
 
 /* ---------- 지도 ---------- */
 .maparea{position:relative}
-#map{width:100%; height:440px; border-radius:9px; overflow:hidden; background:#eceae5}
+#map{width:100%; height:640px; min-height:58vh; border-radius:9px; overflow:hidden; background:#eceae5}
 .mapmsg{display:flex; align-items:center; justify-content:center; height:100%;
         text-align:center; color:var(--ink-3); line-height:1.8; font-size:14px}
 .maplegend{display:flex; align-items:center; gap:8px; flex-wrap:wrap;
@@ -489,9 +489,9 @@ select.add-col{
 .mk.open .card,.mk:hover .card,.mk:focus .card{
   display:block; position:absolute; left:50%; bottom:28px; transform:translateX(-50%);
   background:#fff; border:1px solid var(--line-2); border-radius:10px;
-  padding:12px 15px 13px; min-width:210px; max-width:300px;
+  padding:12px 15px 13px; min-width:230px; max-width:340px;
   box-shadow:0 6px 20px rgba(0,0,0,.25); white-space:normal; text-align:left;
-  font-size:14px; line-height:1.55; color:#23272e;
+  font-size:14px; line-height:1.55; color:#23272e; max-height:390px; overflow:auto;
 }
 .mk.open .card > b,.mk:hover .card > b,.mk:focus .card > b{display:block; font-size:17px; font-weight:800; line-height:1.35; color:var(--ink)}
 .mk.open .card > span,.mk:hover .card > span,.mk:focus .card > span{display:block; margin-top:5px}
@@ -499,7 +499,8 @@ select.add-col{
 .mk.open .card u,.mk:hover .card u,.mk:focus .card u{text-decoration:none; font-weight:700; color:var(--ink); font-size:15px}
 .mk.open .card small,.mk:hover .card small,.mk:focus .card small{font-size:12.5px; color:var(--ink-3)}
 .mk.open .card hr,.mk:hover .card hr,.mk:focus .card hr{border:0; border-top:1px solid #ebe8e2; margin:9px 0 0}
-.mk.open .card .li,.mk:hover .card .li,.mk:focus .card .li{border-top:1px solid #f0eee9; padding-top:6px; margin-top:6px; color:#23272e}
+.mk.open .card .li,.mk:hover .card .li,.mk:focus .card .li{border-top:1px solid #f0eee9; padding-top:7px; margin-top:7px; color:#23272e}
+.mk.open .card .li small,.mk:hover .card .li small,.mk:focus .card .li small{display:block; margin-top:2px; line-height:1.35}
 .mk.open .card .li.pick,.mk:hover .card .li.pick,.mk:focus .card .li.pick{cursor:pointer; margin-left:-7px; margin-right:-7px;
                         padding-left:7px; padding-right:7px; border-radius:6px}
 .mk.open .card .li.pick:hover,.mk:hover .card .li.pick:hover,.mk:focus .card .li.pick:hover{background:var(--accent-soft); color:var(--accent)}

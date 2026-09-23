@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=68">
+<link rel="stylesheet" href="styles.css?v=69">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '68';
+  var PAGE_V = '69';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '68';
+const V = '69';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -115,7 +115,7 @@ const BIZ = {
 const state = {
   biz: new URLSearchParams(location.search).get('biz') || 'cafe',
   q: '', sort: 'sales_per_store_month', picked: '', tab: 'summary',
-  show: {business: true, school: true, academy: false, apartment: true, shop: true}
+  show: {business: true, school: false, academy: false, apartment: true, shop: true}
 };
 const DATA = {};
 let ROWS = [];
@@ -379,6 +379,13 @@ function markerClass(p){
 
 function markerCard(p){
   if (p.t === 'b'){
+    if (Array.isArray(p.members) && p.members.length > 1){
+      const list = p.members.map(item =>
+        '<div class="li"><u>' + item.n + '</u>' +
+          '<small>' + [item.c || BIZ[state.biz].label, item.a || ''].filter(Boolean).join(' · ') + '</small></div>'
+      ).join('');
+      return '<b>같은 위치 ' + p.members.length + '곳</b>' + list;
+    }
     const meta = [
       '<span><b>업종</b> ' + (p.c || BIZ[state.biz].label) + '</span>',
       p.a ? '<span><b>주소</b> ' + p.a + '</span>' : ''
@@ -404,6 +411,26 @@ function businessPoints(row){
   return [];
 }
 
+function groupBusinessPoints(points){
+  const byCoord = new Map();
+  for (const p of points){
+    const key = [Number(p.lat).toFixed(6), Number(p.lng).toFixed(6)].join(',');
+    if (!byCoord.has(key)){
+      byCoord.set(key, {...p, members: [], n: p.n});
+    }
+    byCoord.get(key).members.push(p);
+  }
+  return [...byCoord.values()].map(p => {
+    if (p.members.length > 1){
+      p.n = '같은 위치 ' + p.members.length + '곳';
+      p.c = BIZ[state.biz].label;
+      p.a = p.members[0].a || '';
+      p.count = p.members.length;
+    }
+    return p;
+  });
+}
+
 function drawCommercialMap(row, keepView){
   const box = document.getElementById('map');
   if (!box) return;
@@ -416,8 +443,9 @@ function drawCommercialMap(row, keepView){
       return;
     }
     return loadKakao().then(() => {
-      const bizPts = businessPoints(row);
-      const context = data.items.filter(p => p.t === 's' || p.t === 'p' || p.t === 'g' || (state.biz === 'academy' && p.t === 'a'));
+      const bizRawPts = businessPoints(row);
+      const bizPts = groupBusinessPoints(bizRawPts);
+      const context = data.items.filter(p => p.t === 'p' || p.t === 'g' || (state.biz === 'academy' && p.t === 'a'));
       const pts = bizPts.concat(context).filter(p => state.show[mapKind(p)] !== false);
       if (!pts.length){
         clearCommercialMap();
@@ -444,6 +472,7 @@ function drawCommercialMap(row, keepView){
         bounds.extend(pos);
         const el = document.createElement('div');
         el.className = 'mk ' + markerClass(p);
+        if (p.count > 1) el.dataset.n = p.count;
         el.tabIndex = 0;
         el.setAttribute('aria-label', p.n || '지도 지점');
         el.innerHTML = '<div class="card">' + markerCard(p) + '</div>';
@@ -466,10 +495,12 @@ function drawCommercialMap(row, keepView){
       const count = document.getElementById('mapcount');
       if (count){
         const n = t => pts.filter(p => p.t === t).length;
+        const bizLabel = BIZ[state.biz].label + ' 좌표 ' + n('b') + '곳' +
+          (row.stores ? ' / 집계 ' + fmt(row.stores) + '곳' : '') +
+          (bizRawPts.length && bizRawPts.length !== n('b') ? ' · 실제 점포 ' + bizRawPts.length + '곳' : '');
         const missingBiz = bizPts.length ? '' : ' · 선택 업종 좌표 갱신 필요';
         count.textContent = [
-          BIZ[state.biz].label + ' ' + n('b'),
-          '학교 ' + n('s'),
+          bizLabel,
           state.biz === 'academy' ? '학원참고 ' + n('a') : '',
           '아파트 ' + n('p'),
           '상가 ' + n('g')
@@ -548,7 +579,6 @@ function renderDetail(rows){
     '<div class="maparea"><div id="map"></div>' +
       '<div class="maplegend commercial-map-legend">' +
         mapToggle('business', BIZ[state.biz].label, 'b1') +
-        mapToggle('school', '초·중학교', 'e') +
         (state.biz === 'academy' ? mapToggle('academy', '기존 학원 참고', 'a1') : '') +
         mapToggle('apartment', '아파트', 'p3') +
         mapToggle('shop', '상가', 'g3') +
@@ -611,6 +641,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=68"></script>
+<script src="dates.js?v=69"></script>
 </body>
 </html>
