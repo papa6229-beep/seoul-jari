@@ -482,39 +482,39 @@ select.add-col{
 
 /* 말풍선 — 제목은 크게, 본문은 진하게 */
 .mk .card{display:none}
-.mk.open{z-index:9}
-.mk.open .card{
+.mk.open,.mk:hover,.mk:focus{z-index:9; outline:0}
+.mk.open .card,.mk:hover .card,.mk:focus .card{
   display:block; position:absolute; left:50%; bottom:28px; transform:translateX(-50%);
   background:#fff; border:1px solid var(--line-2); border-radius:10px;
   padding:12px 15px 13px; min-width:210px; max-width:300px;
   box-shadow:0 6px 20px rgba(0,0,0,.25); white-space:normal; text-align:left;
   font-size:14px; line-height:1.55; color:#23272e;
 }
-.mk.open .card > b{display:block; font-size:17px; font-weight:800; line-height:1.35; color:var(--ink)}
-.mk.open .card > span{display:block; margin-top:5px}
-.mk.open .card span b{font-weight:800; font-size:inherit}
-.mk.open .card u{text-decoration:none; font-weight:700; color:var(--ink); font-size:15px}
-.mk.open .card small{font-size:12.5px; color:var(--ink-3)}
-.mk.open .card hr{border:0; border-top:1px solid #ebe8e2; margin:9px 0 0}
-.mk.open .card .li{border-top:1px solid #f0eee9; padding-top:6px; margin-top:6px; color:#23272e}
-.mk.open .card .li.pick{cursor:pointer; margin-left:-7px; margin-right:-7px;
+.mk.open .card > b,.mk:hover .card > b,.mk:focus .card > b{display:block; font-size:17px; font-weight:800; line-height:1.35; color:var(--ink)}
+.mk.open .card > span,.mk:hover .card > span,.mk:focus .card > span{display:block; margin-top:5px}
+.mk.open .card span b,.mk:hover .card span b,.mk:focus .card span b{font-weight:800; font-size:inherit}
+.mk.open .card u,.mk:hover .card u,.mk:focus .card u{text-decoration:none; font-weight:700; color:var(--ink); font-size:15px}
+.mk.open .card small,.mk:hover .card small,.mk:focus .card small{font-size:12.5px; color:var(--ink-3)}
+.mk.open .card hr,.mk:hover .card hr,.mk:focus .card hr{border:0; border-top:1px solid #ebe8e2; margin:9px 0 0}
+.mk.open .card .li,.mk:hover .card .li,.mk:focus .card .li{border-top:1px solid #f0eee9; padding-top:6px; margin-top:6px; color:#23272e}
+.mk.open .card .li.pick,.mk:hover .card .li.pick,.mk:focus .card .li.pick{cursor:pointer; margin-left:-7px; margin-right:-7px;
                         padding-left:7px; padding-right:7px; border-radius:6px}
-.mk.open .card .li.pick:hover{background:var(--accent-soft); color:var(--accent)}
-.mk.open .card .more{color:var(--accent); cursor:pointer; font-weight:700}
-.mk.open .card .more:hover{text-decoration:underline}
-.mk.open .card .back{
+.mk.open .card .li.pick:hover,.mk:hover .card .li.pick:hover,.mk:focus .card .li.pick:hover{background:var(--accent-soft); color:var(--accent)}
+.mk.open .card .more,.mk:hover .card .more,.mk:focus .card .more{color:var(--accent); cursor:pointer; font-weight:700}
+.mk.open .card .more:hover,.mk:hover .card .more:hover,.mk:focus .card .more:hover{text-decoration:underline}
+.mk.open .card .back,.mk:hover .card .back,.mk:focus .card .back{
   display:block; width:100%; text-align:left; border:0; background:transparent;
   color:var(--ink-3); font-size:13px; cursor:pointer; padding:0 0 7px;
   border-bottom:1px solid #f0eee9; margin-bottom:7px;
 }
-.mk.open .card .back:hover{color:var(--accent)}
+.mk.open .card .back:hover,.mk:hover .card .back:hover,.mk:focus .card .back:hover{color:var(--accent)}
 /* 말풍선 제목 왼쪽에 그 핀 색 띠를 둘러 어느 핀인지 잇는다 */
-.mk.open .card{border-left:5px solid var(--pin-c, var(--line-2))}
+.mk.open .card,.mk:hover .card,.mk:focus .card{border-left:5px solid var(--pin-c, var(--line-2))}
 .mk.e{--pin-c:var(--pin-e)} .mk.m{--pin-c:var(--pin-m)}
 .mk.b1{--pin-c:var(--pin-b)}
 .mk.a1{--pin-c:var(--pin-a1)} .mk.a2{--pin-c:var(--pin-a2)} .mk.a3{--pin-c:var(--pin-a3)}
 .mk.p1,.mk.p2,.mk.p3{--pin-c:var(--pin-p)} .mk.g1,.mk.g2,.mk.g3{--pin-c:var(--pin-g)}
-.mk.open .card span b{color:#0b7a3b}
+.mk.open .card span b,.mk:hover .card span b,.mk:focus .card span b{color:#0b7a3b}
 
 
 /* 학원 적은 순 — 단독 화면 */

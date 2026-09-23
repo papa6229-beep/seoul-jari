@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=66">
+<link rel="stylesheet" href="styles.css?v=67">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '66';
+  var PAGE_V = '67';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '66';
+const V = '67';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -378,8 +378,14 @@ function markerClass(p){
 }
 
 function markerCard(p){
+  if (p.t === 'b'){
+    const meta = [
+      '<span><b>업종</b> ' + (p.c || BIZ[state.biz].label) + '</span>',
+      p.a ? '<span><b>주소</b> ' + p.a + '</span>' : ''
+    ].filter(Boolean).join('');
+    return '<b>' + p.n + '</b>' + meta;
+  }
   const sub = [];
-  if (p.t === 'b') sub.push(p.c || BIZ[state.biz].label, p.a || '');
   if (p.t === 's') sub.push(p.k, p.st ? '학생 ' + fmt(p.st) + '명' : '');
   if (p.t === 'a') sub.push(p.k, p.y ? p.y + '년 개원' : '', p.f ? '월 ' + Math.round(p.f / 10000) + '만원' : '');
   if (p.t === 'p') sub.push('아파트', p.y ? p.y + '년' : '', p.p ? '중간가 ' + money(p.p) : '');
@@ -438,6 +444,8 @@ function drawCommercialMap(row, keepView){
         bounds.extend(pos);
         const el = document.createElement('div');
         el.className = 'mk ' + markerClass(p);
+        el.tabIndex = 0;
+        el.setAttribute('aria-label', p.n || '지도 지점');
         el.innerHTML = '<div class="card">' + markerCard(p) + '</div>';
         const overlay = new kakao.maps.CustomOverlay({position: pos, content: el, yAnchor: 1, clickable: true, zIndex: 2});
         overlay.setMap(commercialMap);
@@ -445,6 +453,12 @@ function drawCommercialMap(row, keepView){
         el.onclick = () => {
           for (const item of box.querySelectorAll('.mk.open')) item.classList.remove('open');
           el.classList.add('open');
+        };
+        el.onkeydown = ev => {
+          if (ev.key === 'Enter' || ev.key === ' '){
+            ev.preventDefault();
+            el.click();
+          }
         };
       }
       if (!keepView || commercialMapKey !== key) commercialMap.setBounds(bounds, 40, 40, 40, 40);
@@ -597,6 +611,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=66"></script>
+<script src="dates.js?v=67"></script>
 </body>
 </html>
