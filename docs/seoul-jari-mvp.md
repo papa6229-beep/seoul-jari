@@ -73,7 +73,7 @@
 
 ## 서울 열린데이터광장 수집 방식
 
-- 기본 엔드포인트: `https://openapi.seoul.go.kr:8088`
+- 기본 엔드포인트: `http://openapi.seoul.go.kr:8088`
 - URL 형식: `/인증키/json/서비스명/시작/끝/추가인자`
 - 인증키 저장 위치: 로컬 환경변수 또는 GitHub Actions secret `SEOUL_OPENAPI_KEY`
 - 1차 자동 갱신 대상: `SPOP_DAILYSUM_JACHI_250` 자치구별 서울 생활인구(250m) 일별집계

@@ -12,7 +12,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const BASE_URL = 'https://openapi.seoul.go.kr:8088';
+const BASE_URL = 'http://openapi.seoul.go.kr:8088';
 
 function getArg(name, fallback = ''){
   const prefix = '--' + name + '=';

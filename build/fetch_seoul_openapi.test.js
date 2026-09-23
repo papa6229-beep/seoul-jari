@@ -9,7 +9,7 @@ const url = buildSeoulUrl({
   args: ['20260923']
 });
 
-assert.equal(url, 'https://openapi.seoul.go.kr:8088/KEY/json/CardSubwayStatsNew/1/5/20260923');
+  assert.equal(url, 'http://openapi.seoul.go.kr:8088/KEY/json/CardSubwayStatsNew/1/5/20260923');
 
 (async () => {
   const data = await fetchSeoulOpenApi({
