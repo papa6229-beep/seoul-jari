@@ -5,10 +5,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=57">
+<link rel="stylesheet" href="styles.css?v=58">
 <script>
 (function(){
-  var PAGE_V = '57';
+  var PAGE_V = '58';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '57';
+const V = '58';
 const FILES = {
   view: 'commercial-view-dong.json'
 };
@@ -151,6 +151,17 @@ function norm(v, min, max, inverse){
   return inverse ? 100 - p : p;
 }
 
+function level(value, rows, key, high, mid, low){
+  const vals = rows.map(r => r[key]).filter(v => Number.isFinite(v));
+  if (!Number.isFinite(value) || vals.length < 3) return low;
+  vals.sort((a, b) => a - b);
+  const top = vals[Math.floor(vals.length * .75)];
+  const middle = vals[Math.floor(vals.length * .45)];
+  if (value >= top) return high;
+  if (value >= middle) return mid;
+  return low;
+}
+
 function buildRows(){
   const base = latestRows(DATA.view).map(src => {
     const biz = (src.biz && src.biz[state.biz]) || {};
@@ -192,6 +203,7 @@ function buildRows(){
     const revenue = norm(r.sales || 0, ranges.sales.min, ranges.sales.max);
     const spending = norm(r.spending || 0, ranges.spending.min, ranges.spending.max);
     const competition = norm(r.stores || 0, ranges.stores.min, ranges.stores.max, true);
+    r.competition_score = Math.round(competition);
     r.score = Math.round(demand * .32 + revenue * .28 + spending * .18 + competition * .22);
   });
   ROWS = base;
@@ -213,8 +225,8 @@ function renderSummary(rows){
   const loaded = Object.keys(DATA).filter(k => DATA[k]).length;
   const quarter = DATA.view && DATA.view.quarter ? DATA.view.quarter : '-';
   summary.innerHTML =
-    '<div><span>업종</span><b>' + b.label + '</b><p>' + b.caution + '</p></div>' +
-    '<div><span>판단축</span><b>' + b.demand.join(' · ') + '</b><p>점수는 수요, 매출, 소비, 경쟁을 섞은 참고 순위입니다.</p></div>' +
+    '<div><span>선택 업종 기준</span><b>' + b.label + '</b><p>매출, 점포, 개·폐업은 이 업종 묶음만 합산합니다.</p></div>' +
+    '<div><span>지역 수요 기준</span><b>' + b.demand.join(' · ') + '</b><p>유동인구, 직장인구, 상주인구, 소비지출은 행정동 전체 신호입니다.</p></div>' +
     '<div><span>자료</span><b>' + loaded + '/1개 연결</b><p>행정동 ' + fmt(rows.length) + '곳 · ' + quarter + '분기 기준</p></div>';
 }
 
@@ -230,15 +242,29 @@ function filteredRows(){
 
 function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
+  const storeLabel = r.stores ? '점포 ' + fmt(r.stores) + '곳' : '점포 자료 없음';
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + (i + 1) + '</span>' +
-    '<span class="place"><b>' + r.gu + ' ' + r.name + '</b><small>' + r.code + '</small></span>' +
+    '<span class="place"><b>' + r.gu + ' ' + r.name + '</b><small>' + r.code + ' · ' + storeLabel + '</small></span>' +
     '<span><b>' + fmt(r.score) + '</b><small>종합</small></span>' +
-    '<span><b>' + money(r.sales) + '</b><small>업종 매출</small></span>' +
-    '<span><b>' + fmt(r.stores) + '</b><small>경쟁 점포</small></span>' +
+    '<span><b>' + money(r.sales) + '</b><small>선택업종 매출</small></span>' +
+    '<span><b>' + fmt(r.stores) + '</b><small>선택업종 점포</small></span>' +
     '<span><b>' + fmt(r.workers) + '</b><small>직장인구</small></span>' +
     '<span><b>' + fmt(r.residents) + '</b><small>상주인구</small></span>' +
   '</button>';
+}
+
+function explainRow(r, rows){
+  const b = BIZ[state.biz];
+  const bits = [
+    level(r.sales, rows, 'sales', '선택 업종 매출이 서울 상위권입니다', '선택 업종 매출이 중상위권입니다', '선택 업종 매출 신호는 약합니다'),
+    level(r.workers, rows, 'workers', '직장인구가 많아 평일 수요가 강합니다', '직장인구가 일정 수준 있습니다', '직장인구 신호는 약합니다'),
+    level(r.residents, rows, 'residents', '상주인구 기반 수요도 큽니다', '상주인구 기반 수요가 보통입니다', '상주인구 기반 수요는 제한적입니다')
+  ];
+  const caution = r.stores
+    ? b.label + ' 관련 점포가 ' + fmt(r.stores) + '곳이라 경쟁 강도는 별도 확인이 필요합니다.'
+    : b.label + ' 관련 점포 수가 낮게 잡혀 현장 확인이 필요합니다.';
+  return '<div class="commercial-why"><b>왜 이 순위인가</b><p>' + bits.join(' · ') + '.</p><p class="warn">' + caution + '</p></div>';
 }
 
 function renderDetail(rows){
@@ -253,7 +279,8 @@ function renderDetail(rows){
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
   const item = r => '<li><b>' + r.business_name + '</b><span>' + (r.amount ? money(r.amount) : fmt(r.store_count) + '곳') + '</span></li>';
   detail.innerHTML =
-    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동</span><span class="lead">종합 <b>' + fmt(r.score) + '</b>점</span></div>' +
+    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">종합 <b>' + fmt(r.score) + '</b>점</span></div>' +
+    explainRow(r, rows) +
     '<div class="dbody">' +
       '<div class="groups">' +
         '<div><p class="grp-title">수요</p>' +
@@ -263,15 +290,15 @@ function renderDetail(rows){
           stat('직장인구', fmt(r.workers)) +
           stat('상주인구', fmt(r.residents)) +
         '</div>' +
-        '<div><p class="grp-title">돈이 도는 신호</p>' +
-          stat('업종 추정매출', money(r.sales), r.sales_count ? '매출건수 ' + fmt(r.sales_count) + '건' : '') +
-          stat('객단가', r.unit_price ? fmt(r.unit_price) + '원' : '—') +
+        '<div><p class="grp-title">선택 업종 매출</p>' +
+          stat(BIZ[state.biz].label + ' 추정매출', money(r.sales), r.sales_count ? '매출건수 ' + fmt(r.sales_count) + '건' : '') +
+          stat('선택 업종 객단가', r.unit_price ? fmt(r.unit_price) + '원' : '—') +
           stat('총 소비지출', money(r.spending)) +
           stat('음식 소비', money(r.food_spending)) +
           stat('교육 소비', money(r.education_spending)) +
         '</div>' +
-        '<div><p class="grp-title">경쟁 · 위험</p>' +
-          stat('업종 점포', fmt(r.stores)) +
+        '<div><p class="grp-title">선택 업종 경쟁</p>' +
+          stat(BIZ[state.biz].label + ' 점포', fmt(r.stores)) +
           stat('프랜차이즈', fmt(r.franchises)) +
           stat('개업 점포', fmt(r.open)) +
           stat('폐업 점포', fmt(r.close)) +
@@ -279,8 +306,8 @@ function renderDetail(rows){
         '</div>' +
       '</div>' +
       '<div class="commercial-lists">' +
-        '<div><p class="grp-title">매출 상위 업종</p><ol>' + (topSales.length ? topSales.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
-        '<div><p class="grp-title">점포 많은 업종</p><ol>' + (topStores.length ? topStores.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
+        '<div><p class="grp-title">선택 업종 매출 구성</p><ol>' + (topSales.length ? topSales.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
+        '<div><p class="grp-title">선택 업종 점포 구성</p><ol>' + (topStores.length ? topStores.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
       '</div>' +
     '</div>';
 }
@@ -293,7 +320,7 @@ function render(){
   renderSummary(rows);
   dataAlert();
   const list = rows.slice(0, state.limit);
-  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>종합</span><span>매출</span><span>경쟁</span><span>직장</span><span>상주</span></div>' +
+  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>종합</span><span>선택업종 매출</span><span>선택업종 점포</span><span>직장</span><span>상주</span></div>' +
     (list.length ? list.map(rowHtml).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>');
   for (const el of table.querySelectorAll('.commercial-row')){
     el.onclick = () => { state.picked = el.dataset.code; render(); };
@@ -302,7 +329,7 @@ function render(){
 }
 
 segment(sort, [
-  {k:'score', l:'종합'}, {k:'sales', l:'매출'}, {k:'stores', l:'경쟁'}, {k:'workers', l:'직장'}, {k:'residents', l:'상주'}
+  {k:'score', l:'종합'}, {k:'sales', l:'매출'}, {k:'competition_score', l:'틈새'}, {k:'workers', l:'직장'}, {k:'residents', l:'상주'}
 ], () => state.sort, k => state.sort = k);
 segment(limit, [
   {k:20, l:'20'}, {k:30, l:'30'}, {k:50, l:'50'}
@@ -322,6 +349,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=57"></script>
+<script src="dates.js?v=58"></script>
 </body>
 </html>
