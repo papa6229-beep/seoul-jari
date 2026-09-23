@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=65">
+<link rel="stylesheet" href="styles.css?v=66">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '65';
+  var PAGE_V = '66';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,10 +73,11 @@
 </div>
 
 <script>
-const V = '65';
+const V = '66';
 const FILES = {
   view: 'commercial-view-dong.json',
-  places: 'places/index.json'
+  places: 'places/index.json',
+  stores: 'store-summary.json'
 };
 const BIZ = {
   cafe: {
@@ -114,7 +115,7 @@ const BIZ = {
 const state = {
   biz: new URLSearchParams(location.search).get('biz') || 'cafe',
   q: '', sort: 'sales_per_store_month', picked: '', tab: 'summary',
-  show: {school: true, academy: true, apartment: true, shop: true}
+  show: {business: true, school: true, academy: false, apartment: true, shop: true}
 };
 const DATA = {};
 let ROWS = [];
@@ -231,6 +232,7 @@ function buildRows(){
 
 function dataAlert(){
   const missing = Object.entries(FILES)
+    .filter(([k]) => k === 'view')
     .filter(([k]) => !DATA[k] || !latestRows(DATA[k]).length)
     .map(([k, f]) => f);
   if (!missing.length){ alert.hidden = true; return; }
@@ -320,6 +322,11 @@ function legalDongName(name){
   return (name || '').replace(/(\d+(?:\.\d+)*)동$/, '동');
 }
 
+function storeDongKeys(row){
+  const names = [row.name, legalDongName(row.name)];
+  return [...new Set(names.map(name => row.gu + '/' + name))];
+}
+
 function placeFileFor(row){
   const idx = DATA.places && DATA.places.dongs ? DATA.places.dongs : {};
   const names = [row.name, legalDongName(row.name)];
@@ -353,6 +360,7 @@ function clearCommercialMap(){
 }
 
 function mapKind(p){
+  if (p.t === 'b') return 'business';
   if (p.t === 's') return 'school';
   if (p.t === 'a') return 'academy';
   if (p.t === 'p') return 'apartment';
@@ -361,6 +369,7 @@ function mapKind(p){
 }
 
 function markerClass(p){
+  if (p.t === 'b') return 'b1';
   if (p.t === 's') return p.k === '중학교' ? 'm' : 'e';
   if (p.t === 'a') return p.k === '교습소' ? 'a3' : (p.k === '영어+타 과목' ? 'a2' : 'a1');
   if (p.t === 'p') return 'p3';
@@ -370,11 +379,23 @@ function markerClass(p){
 
 function markerCard(p){
   const sub = [];
+  if (p.t === 'b') sub.push(p.c || BIZ[state.biz].label, p.a || '');
   if (p.t === 's') sub.push(p.k, p.st ? '학생 ' + fmt(p.st) + '명' : '');
   if (p.t === 'a') sub.push(p.k, p.y ? p.y + '년 개원' : '', p.f ? '월 ' + Math.round(p.f / 10000) + '만원' : '');
   if (p.t === 'p') sub.push('아파트', p.y ? p.y + '년' : '', p.p ? '중간가 ' + money(p.p) : '');
   if (p.t === 'g') sub.push('상가', p.k, p.ar ? Math.round(p.ar / 3.3) + '평' : '');
   return '<b>' + p.n + '</b>' + sub.filter(Boolean).map(v => '<span>' + v + '</span>').join('');
+}
+
+function businessPoints(row){
+  const all = DATA.stores && DATA.stores.points ? DATA.stores.points : {};
+  for (const key of storeDongKeys(row)){
+    const bucket = all[key] && all[key][state.biz];
+    if (Array.isArray(bucket) && bucket.length){
+      return bucket.map(p => ({...p, t: 'b', k: state.biz}));
+    }
+  }
+  return [];
 }
 
 function drawCommercialMap(row, keepView){
@@ -389,7 +410,9 @@ function drawCommercialMap(row, keepView){
       return;
     }
     return loadKakao().then(() => {
-      const pts = data.items.filter(p => state.show[mapKind(p)] !== false);
+      const bizPts = businessPoints(row);
+      const context = data.items.filter(p => p.t === 's' || p.t === 'p' || p.t === 'g' || (state.biz === 'academy' && p.t === 'a'));
+      const pts = bizPts.concat(context).filter(p => state.show[mapKind(p)] !== false);
       if (!pts.length){
         clearCommercialMap();
         const count = document.getElementById('mapcount');
@@ -429,7 +452,14 @@ function drawCommercialMap(row, keepView){
       const count = document.getElementById('mapcount');
       if (count){
         const n = t => pts.filter(p => p.t === t).length;
-        count.textContent = ['학교 ' + n('s'), '학원 ' + n('a'), '아파트 ' + n('p'), '상가 ' + n('g')].join(' · ');
+        const missingBiz = bizPts.length ? '' : ' · 선택 업종 좌표 갱신 필요';
+        count.textContent = [
+          BIZ[state.biz].label + ' ' + n('b'),
+          '학교 ' + n('s'),
+          state.biz === 'academy' ? '학원참고 ' + n('a') : '',
+          '아파트 ' + n('p'),
+          '상가 ' + n('g')
+        ].filter(Boolean).join(' · ') + missingBiz;
       }
     });
   }).catch(() => {
@@ -503,8 +533,9 @@ function renderDetail(rows){
   const mapTab =
     '<div class="maparea"><div id="map"></div>' +
       '<div class="maplegend commercial-map-legend">' +
+        mapToggle('business', BIZ[state.biz].label, 'b1') +
         mapToggle('school', '초·중학교', 'e') +
-        mapToggle('academy', '학원', 'a1') +
+        (state.biz === 'academy' ? mapToggle('academy', '기존 학원 참고', 'a1') : '') +
         mapToggle('apartment', '아파트', 'p3') +
         mapToggle('shop', '상가', 'g3') +
         '<span class="hint" id="mapcount"></span>' +
@@ -566,6 +597,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=65"></script>
+<script src="dates.js?v=66"></script>
 </body>
 </html>

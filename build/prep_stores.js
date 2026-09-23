@@ -28,8 +28,13 @@ const FIELD_ALIASES = {
   large: ['상권업종대분류명', '대분류명', 'large'],
   middle: ['상권업종중분류명', '중분류명', 'middle'],
   small: ['상권업종소분류명', '소분류명', 'small'],
-  standard: ['표준산업분류명', 'standard']
+  standard: ['표준산업분류명', 'standard'],
+  address: ['도로명주소', '지번주소', 'rdnmAdr', 'lnoAdr', 'address'],
+  lat: ['위도', 'lat'],
+  lng: ['경도', 'lon', 'lng']
 };
+
+const POINT_LIMIT_PER_CATEGORY = 250;
 
 function parseCsv(text){
   const rows = [];
@@ -74,6 +79,7 @@ function summarizeRecords(records, asOf){
   const byDong = new Map();
   const byGu = new Map();
   const totals = Object.fromEntries(CATEGORIES.map(c => [c.id, 0]));
+  const points = {};
   let sourceRows = 0;
 
   for (const r of records){
@@ -88,10 +94,22 @@ function summarizeRecords(records, asOf){
     const dongKey = gu + '/' + dong;
     if (!byDong.has(dongKey)) byDong.set(dongKey, {gu, dong, counts: Object.fromEntries(CATEGORIES.map(c => [c.id, 0])), total: 0});
     if (!byGu.has(gu)) byGu.set(gu, {gu, counts: Object.fromEntries(CATEGORIES.map(c => [c.id, 0])), total: 0});
+    if (!points[dongKey]) points[dongKey] = Object.fromEntries(CATEGORIES.map(c => [c.id, []]));
     const d = byDong.get(dongKey), g = byGu.get(gu);
     for (const id of cats){
       d.counts[id]++; g.counts[id]++; totals[id]++;
       d.total++; g.total++;
+      const lat = Number(r.lat);
+      const lng = Number(r.lng);
+      if (Number.isFinite(lat) && Number.isFinite(lng) && points[dongKey][id].length < POINT_LIMIT_PER_CATEGORY){
+        points[dongKey][id].push({
+          n: (r.name || '').trim() || '(상호 미상)',
+          c: (r.small || r.middle || r.standard || '').trim(),
+          a: (r.address || '').trim(),
+          lat,
+          lng
+        });
+      }
     }
   }
 
@@ -102,7 +120,8 @@ function summarizeRecords(records, asOf){
     categories: CATEGORIES.map(({id, label}) => ({id, label})),
     totals,
     gu: [...byGu.values()].sort((a, b) => a.gu.localeCompare(b.gu, 'ko')),
-    dong: [...byDong.values()].sort((a, b) => (a.gu + a.dong).localeCompare(b.gu + b.dong, 'ko'))
+    dong: [...byDong.values()].sort((a, b) => (a.gu + a.dong).localeCompare(b.gu + b.dong, 'ko')),
+    points
   };
 }
 
@@ -115,7 +134,10 @@ function summarizeRows(apiRows, asOf){
     large: r.indsLclsNm || r.상권업종대분류명 || r.large,
     middle: r.indsMclsNm || r.상권업종중분류명 || r.middle,
     small: r.indsSclsNm || r.상권업종소분류명 || r.small,
-    standard: r.ksicNm || r.표준산업분류명 || r.standard
+    standard: r.ksicNm || r.표준산업분류명 || r.standard,
+    address: r.rdnmAdr || r.lnoAdr || r.도로명주소 || r.지번주소 || r.address,
+    lat: r.lat || r.위도,
+    lng: r.lon || r.lng || r.경도
   }));
   return summarizeRecords(records, asOf);
 }
@@ -138,7 +160,10 @@ function summarizeCsv(text, asOf){
     large: idx.large >= 0 ? cols[idx.large] || '' : '',
     middle: idx.middle >= 0 ? cols[idx.middle] || '' : '',
     small: idx.small >= 0 ? cols[idx.small] || '' : '',
-    standard: idx.standard >= 0 ? cols[idx.standard] || '' : ''
+    standard: idx.standard >= 0 ? cols[idx.standard] || '' : '',
+    address: idx.address >= 0 ? cols[idx.address] || '' : '',
+    lat: idx.lat >= 0 ? cols[idx.lat] || '' : '',
+    lng: idx.lng >= 0 ? cols[idx.lng] || '' : ''
   }));
   return summarizeRecords(records, asOf);
 }

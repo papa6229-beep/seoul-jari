@@ -405,7 +405,7 @@ select.add-col{
 :root{
   --pin-e:#0a5cff; --pin-m:#8a2be2;
   --pin-a1:#ff1f7a; --pin-a2:#ff7a00; --pin-a3:#ffc800;
-  --pin-p:#00c2a0; --pin-g:#7ed600;
+  --pin-b:#111827; --pin-p:#00c2a0; --pin-g:#7ed600;
 }
 .mk{position:relative; cursor:pointer; white-space:nowrap}
 .mk::after{
@@ -421,6 +421,10 @@ select.add-col{
 .mk.a2::after{background:var(--pin-a2)}
 .mk.a3::after{                      /* 교습소 — 동그라미 */
   width:17px; height:17px; margin-left:-8.5px; border-radius:50%; background:var(--pin-a3);
+}
+.mk.b1::after{                      /* 선택 업종 — 검정 별표 */
+  width:22px; height:22px; margin-left:-11px; background:var(--pin-b);
+  clip-path:polygon(50% 0,61% 34%,98% 34%,68% 55%,79% 90%,50% 68%,21% 90%,32% 55%,2% 34%,39% 34%);
 }
 .mk.e::after{                       /* 초등학교 — 사각형 */
   width:20px; height:20px; margin-left:-10px; background:var(--pin-e); border-radius:3px;
@@ -469,6 +473,8 @@ select.add-col{
 .maplegend .pin.a1{background:var(--pin-a1)}
 .maplegend .pin.a2{background:var(--pin-a2)}
 .maplegend .pin.a3{width:12px; height:12px; border-radius:50%; background:var(--pin-a3)}
+.maplegend .pin.b1{width:14px; height:14px; background:var(--pin-b);
+                   clip-path:polygon(50% 0,61% 34%,98% 34%,68% 55%,79% 90%,50% 68%,21% 90%,32% 55%,2% 34%,39% 34%)}
 .maplegend .pin.p3{width:9px; height:15px; border-radius:2px; background:var(--pin-p)}
 .maplegend .pin.g3{width:0; height:0; border:0; box-shadow:none;
                    border-left:7px solid transparent; border-right:7px solid transparent;
@@ -505,6 +511,7 @@ select.add-col{
 /* 말풍선 제목 왼쪽에 그 핀 색 띠를 둘러 어느 핀인지 잇는다 */
 .mk.open .card{border-left:5px solid var(--pin-c, var(--line-2))}
 .mk.e{--pin-c:var(--pin-e)} .mk.m{--pin-c:var(--pin-m)}
+.mk.b1{--pin-c:var(--pin-b)}
 .mk.a1{--pin-c:var(--pin-a1)} .mk.a2{--pin-c:var(--pin-a2)} .mk.a3{--pin-c:var(--pin-a3)}
 .mk.p1,.mk.p2,.mk.p3{--pin-c:var(--pin-p)} .mk.g1,.mk.g2,.mk.g3{--pin-c:var(--pin-g)}
 .mk.open .card span b{color:#0b7a3b}
