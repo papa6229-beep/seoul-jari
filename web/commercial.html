@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=73">
+<link rel="stylesheet" href="styles.css?v=74">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '73';
+  var PAGE_V = '74';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -69,11 +69,12 @@
 </div>
 
 <script>
-const V = '73';
+const V = '74';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
-  stores: 'store-summary.json'
+  stores: 'store-summary.json',
+  coverage: 'commercial-coverage.json'
 };
 const BIZ = {
   cafe: {
@@ -148,11 +149,31 @@ const quarterLabel = q => {
 };
 
 function syncSegments(){
+  if (!hasSalesData() && state.sort === 'sales_per_store_month') state.sort = 'stores';
   sortPick.value = state.sort;
 }
 
 function serviceCaution(label){
-  return label + ' 세부 업종 기준으로 매출·점포·수요를 봅니다. 지도 핀은 현재 좌표가 연결된 추천 업종에서 먼저 제공됩니다.';
+  return label + ' 세부 업종 기준으로 매출·점포·수요를 봅니다. 매출이 없는 업종은 점포 밀도와 지도 핀을 먼저 봅니다.';
+}
+
+function coverageFor(id = state.biz){
+  const items = DATA.coverage && Array.isArray(DATA.coverage.items) ? DATA.coverage.items : [];
+  return items.find(item => item.id === id) || null;
+}
+
+function hasSalesData(){
+  const c = coverageFor();
+  return c ? !!c.has_sales : ROWS.some(r => r.sales);
+}
+
+function hasMapData(){
+  const c = coverageFor();
+  return c ? !!c.has_map_points : false;
+}
+
+function salesMissingText(){
+  return '이 업종은 상권분석서비스 추정매출이 제공되지 않아 점포 수·수요·지도 중심으로 봅니다.';
 }
 
 function applyBusinessTypes(){
@@ -284,22 +305,30 @@ function dataAlert(){
 function renderSummary(rows){
   const b = BIZ[state.biz];
   const period = quarterLabel(DATA.view && DATA.view.quarter);
+  const cov = coverageFor();
+  const salesOk = hasSalesData();
+  const mapOk = hasMapData();
   document.querySelectorAll('.commercial-insight').forEach(el => el.remove());
-  const best = rows[0];
+  const best = salesOk ? rows[0] : rows.slice().sort((a, z) => (z.stores || 0) - (a.stores || 0))[0];
   const lowComp = rows.slice().sort((a, z) => (z.competition_score || 0) - (a.competition_score || 0) || (z.sales_per_store_month || 0) - (a.sales_per_store_month || 0))[0];
   const highDemand = rows.slice().sort((a, z) => ((z.residents || 0) + (z.workers || 0)) - ((a.residents || 0) + (a.workers || 0)))[0];
   const card = (title, row, desc, cls) => row ? '<button type="button" class="insight-card ' + (cls || '') + '" data-pick="' + row.code + '">' +
     '<span>' + title + '</span><b>' + row.gu + ' ' + row.name + '</b><p>' + desc + '</p>' +
-    '<small>평균 월매출 ' + money(row.sales_per_store_month) + ' · 점포 ' + fmt(row.stores) + '곳</small></button>' : '';
+    '<small>' + (salesOk ? '평균 월매출 ' + money(row.sales_per_store_month) + ' · ' : '') + '점포 ' + fmt(row.stores) + '곳</small></button>' : '';
+  const status = [
+    salesOk ? '매출자료 있음' : '매출자료 없음',
+    mapOk ? '지도핀 ' + fmt(cov && cov.map_points) + '개' : '지도핀 없음',
+    cov ? '점포집계 ' + fmt(cov.store_dongs) + '개 동' : ''
+  ].filter(Boolean);
   summary.innerHTML =
-    '<div><span>현재 기준</span><b>' + b.label + ' 입지 후보 보기</b><p>' + period + ' 상권분석서비스 자료입니다. 매출은 분기 자료를 3개월로 나눈 월평균 추정치입니다.</p></div>' +
-    '<div><span>읽는 순서</span><b>평균 월매출 → 경쟁 → 지도</b><p>먼저 점포 1곳 매출을 보고, 점포 수와 지도 핀으로 실제 경쟁 위치를 확인하세요.</p></div>';
+    '<div><span>현재 기준</span><b>' + b.label + ' 입지 후보 보기</b><p>' + period + ' 상권분석서비스 자료입니다. ' + (salesOk ? '매출은 분기 자료를 3개월로 나눈 월평균 추정치입니다.' : salesMissingText()) + '</p></div>' +
+    '<div><span>자료 상태</span><b>' + status.join(' · ') + '</b><p>' + (mapOk ? '지도 탭에서 실제 상호명과 위치를 확인할 수 있습니다.' : '이 업종은 아직 지도 좌표 연결이 부족해 점포 집계 중심으로 봅니다.') + '</p></div>';
   const insight = document.createElement('section');
   insight.className = 'commercial-insight';
   insight.innerHTML =
     '<div class="insight-title"><b>먼저 볼 후보</b><span>카드를 누르면 아래 상세가 바뀝니다.</span></div>' +
     '<div class="insight-grid">' +
-      card('매출 우선', best, '점포 1곳 평균 월매출이 가장 높은 후보입니다.', '') +
+      card(salesOk ? '매출 우선' : '점포 많은 곳', best, salesOk ? '점포 1곳 평균 월매출이 가장 높은 후보입니다.' : '매출 자료가 없어 선택 업종 점포가 많이 모인 곳부터 봅니다.', '') +
       card('경쟁 낮은 곳', lowComp, '같은 업종 점포 부담이 상대적으로 낮은 후보입니다.', 'niche') +
       card('수요 기반', highDemand, '상주·직장 기반 수요가 큰 후보입니다.', 'risk') +
     '</div>';
@@ -350,10 +379,11 @@ function filteredRows(){
 function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
   const storeLabel = r.stores ? '점포 ' + fmt(r.stores) + '곳' : '점포 자료 없음';
+  const salesOk = hasSalesData();
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + (i + 1) + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b><small>' + r.code + ' · ' + storeLabel + '</small></span>' +
-    '<span><b>' + money(r.sales_per_store_month) + '</b><small>' + BIZ[state.biz].label + ' 평균 월매출</small></span>' +
+    '<span><b>' + (salesOk ? money(r.sales_per_store_month) : '자료 없음') + '</b><small>' + (salesOk ? BIZ[state.biz].label + ' 평균 월매출' : '매출 미제공') + '</small></span>' +
     '<span><b>' + fmt(r.stores) + '</b><small>점포 수</small></span>' +
     '<span><b>' + demandType(r) + '</b><small>수요 타입</small></span>' +
     '<span><b>' + fmt(r.score) + '</b><small>종합</small></span>' +
@@ -488,7 +518,6 @@ function markerCard(p){
 }
 
 function businessPoints(row){
-  if (BIZ[state.biz] && BIZ[state.biz].kind === 'service') return [];
   const all = DATA.stores && DATA.stores.points ? DATA.stores.points : {};
   for (const key of storeDongKeys(row)){
     const bucket = all[key] && all[key][state.biz];
@@ -524,16 +553,17 @@ function drawCommercialMap(row, keepView){
   if (!box) return;
   if (box.dataset.built !== '1') box.innerHTML = '<div class="mapmsg">불러오는 중...</div>';
   loadPlaces(row).then(data => {
-    if (!data || !Array.isArray(data.items) || !data.items.length){
+    const bizRawPts = businessPoints(row);
+    const bizPts = groupBusinessPoints(bizRawPts);
+    if ((!data || !Array.isArray(data.items) || !data.items.length) && !bizPts.length){
       box.innerHTML = '<div class="mapmsg">이 동네에 연결된 지도 지점이 없습니다.<br>다른 행정동을 눌러보세요.</div>';
       const count = document.getElementById('mapcount');
       if (count) count.textContent = '';
       return;
     }
     return loadKakao().then(() => {
-      const bizRawPts = businessPoints(row);
-      const bizPts = groupBusinessPoints(bizRawPts);
-      const context = data.items.filter(p => p.t === 'p' || p.t === 'g' || (state.biz === 'academy' && p.t === 'a'));
+      const contextItems = data && Array.isArray(data.items) ? data.items : [];
+      const context = contextItems.filter(p => p.t === 'p' || p.t === 'g' || (state.biz === 'academy' && p.t === 'a'));
       const pts = bizPts.concat(context).filter(p => state.show[mapKind(p)] !== false);
       if (!pts.length){
         clearCommercialMap();
@@ -541,7 +571,7 @@ function drawCommercialMap(row, keepView){
         if (count) count.textContent = '표시할 핀이 없습니다';
         return;
       }
-      const key = data.sido + '/' + data.gusi + '/' + data.dong;
+      const key = (data ? data.sido + '/' + data.gusi + '/' + data.dong : '') || row.gu + '/' + row.name;
       const lat = pts.reduce((s, p) => s + p.lat, 0) / pts.length;
       const lng = pts.reduce((s, p) => s + p.lng, 0) / pts.length;
       if (!commercialMap || box.dataset.built !== '1'){
@@ -583,11 +613,10 @@ function drawCommercialMap(row, keepView){
       const count = document.getElementById('mapcount');
       if (count){
         const n = t => pts.filter(p => p.t === t).length;
-        const isService = BIZ[state.biz] && BIZ[state.biz].kind === 'service';
-        const bizLabel = isService ? BIZ[state.biz].label + ' 세부 업종 좌표는 아직 연결 전' : BIZ[state.biz].label + ' 좌표 ' + n('b') + '곳' +
+        const bizLabel = BIZ[state.biz].label + ' 좌표 ' + n('b') + '곳' +
           (row.stores ? ' / 집계 ' + fmt(row.stores) + '곳' : '') +
           (bizRawPts.length && bizRawPts.length !== n('b') ? ' · 실제 점포 ' + bizRawPts.length + '곳' : '');
-        const missingBiz = isService || bizPts.length ? '' : ' · 선택 업종 좌표 갱신 필요';
+        const missingBiz = bizPts.length ? '' : ' · 선택 업종 좌표 없음';
         count.textContent = [
           bizLabel,
           state.biz === 'academy' ? '학원참고 ' + n('a') : '',
@@ -610,6 +639,9 @@ function renderDetail(rows){
   state.picked = r.code;
   const topSales = r.sales_items.slice().sort((a, b) => (b.amount || 0) - (a.amount || 0)).slice(0, 5);
   const topStores = r.store_items.slice().sort((a, b) => (b.store_count || 0) - (a.store_count || 0)).slice(0, 5);
+  const salesOk = hasSalesData();
+  const mapOk = hasMapData();
+  const cov = coverageFor();
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
   const item = r => '<li><b>' + r.business_name + '</b><span>' + (r.amount ? money(r.amount / 3) + '/월' : fmt(r.store_count) + '곳') + '</span></li>';
   const period = quarterLabel(DATA.view && DATA.view.quarter);
@@ -621,22 +653,22 @@ function renderDetail(rows){
   const summaryTab =
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 판단</p>' +
-        stat(BIZ[state.biz].label + ' 평균 월매출', money(r.sales_per_store_month), '동네 업종 총매출 ÷ 3개월 ÷ 점포 수') +
+        stat(BIZ[state.biz].label + ' 평균 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 업종 총매출 ÷ 3개월 ÷ 점포 수' : salesMissingText()) +
         stat('점포 수', fmt(r.stores)) +
         stat('수요 타입', demandType(r)) +
-        stat('한 줄 해석', '후보 판단', scoreGuide(r)) +
+        stat('자료 상태', salesOk ? '매출 있음' : '매출 없음', (mapOk ? '지도핀 ' + fmt(cov && cov.map_points) + '개 연결' : '지도핀 연결 부족')) +
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
-        stat('매출', r.sales_per_store_month ? '점포 1곳 월 ' + money(r.sales_per_store_month) : '자료 없음', period + ' 카드매출 기반 추정') +
+        stat('매출', salesOk && r.sales_per_store_month ? '점포 1곳 월 ' + money(r.sales_per_store_month) : '자료 없음', salesOk ? period + ' 카드매출 기반 추정' : salesMissingText()) +
         stat('경쟁', r.stores ? fmt(r.stores) + '곳' : '자료 없음', competitionGuide(r)) +
         stat('수요', demandType(r), demandTone(r)) +
       '</div>' +
     '</div>';
   const salesTab =
     '<div class="groups">' +
-      '<div><p class="grp-title">매출</p><p class="basis-note">' + period + ' 카드매출 자료를 월평균으로 바꿔 보여줍니다.</p>' +
-        stat(BIZ[state.biz].label + ' 평균 월매출', money(r.sales_per_store_month), '동네 업종 총매출 ÷ 3개월 ÷ 점포 수') +
-        stat('객단가', r.unit_price ? fmt(r.unit_price) + '원' : '—', '분기 총매출 ÷ 결제건수') +
+      '<div><p class="grp-title">매출</p><p class="basis-note">' + (salesOk ? period + ' 카드매출 자료를 월평균으로 바꿔 보여줍니다.' : salesMissingText()) + '</p>' +
+        stat(BIZ[state.biz].label + ' 평균 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 업종 총매출 ÷ 3개월 ÷ 점포 수' : '이 업종은 추정매출 대신 점포·수요·지도 중심으로 판단') +
+        stat('객단가', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '—', salesOk ? '분기 총매출 ÷ 결제건수' : '매출 자료가 없어 계산하지 않음') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p><p class="basis-note">점포·프랜차이즈·개업·폐업은 ' + period + ' 상권분석서비스 집계 기준입니다.</p>' +
         stat(BIZ[state.biz].label + ' 점포', fmt(r.stores), '같은 행정동의 선택 업종 점포 수') +
@@ -646,7 +678,7 @@ function renderDetail(rows){
       '</div>' +
     '</div>' +
     '<div class="commercial-lists">' +
-      '<div><p class="grp-title">매출 구성</p><ol>' + (topSales.length ? topSales.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
+      '<div><p class="grp-title">매출 구성</p><ol>' + (salesOk && topSales.length ? topSales.map(item).join('') : '<li>매출 자료 없음</li>') + '</ol></div>' +
       '<div><p class="grp-title">점포 구성</p><ol>' + (topStores.length ? topStores.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
     '</div>';
   const demandTab =
@@ -673,7 +705,7 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">입지 가설</p>' +
         stat('운영 타입', demandType(r), marketHypothesis) +
-        stat('매출 가설', r.sales_per_store_month ? '월 ' + money(r.sales_per_store_month) : '자료 없음', '이 수준을 내려면 실제 후보 점포가 지도 핀의 중심 동선에 붙어 있어야 합니다.') +
+        stat('매출 가설', salesOk && r.sales_per_store_month ? '월 ' + money(r.sales_per_store_month) : '자료 없음', salesOk ? '이 수준을 내려면 실제 후보 점포가 지도 핀의 중심 동선에 붙어 있어야 합니다.' : '매출 자료가 없으므로 지도상 점포 밀도와 수요 기반으로 먼저 걸러봅니다.') +
         stat('경쟁 가설', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '점포 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
       '</div>' +
       '<div><p class="grp-title">현장 검증</p>' +
@@ -698,7 +730,7 @@ function renderDetail(rows){
     el.onclick = () => { state.tab = el.dataset.tab; render(); };
   }
   detail.innerHTML =
-    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">평균 월매출 <b>' + money(r.sales_per_store_month) + '</b></span></div>' +
+    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">' + (salesOk ? '평균 월매출 <b>' + money(r.sales_per_store_month) + '</b>' : '매출 자료 <b>없음</b>') + '</span></div>' +
     '<div class="dbody">' + content + '</div>';
   if (state.tab === 'map'){
     for (const el of detail.querySelectorAll('.tg[data-show]')){
@@ -718,7 +750,9 @@ function render(){
   q.value = state.q;
   const rows = filteredRows();
   const currentSort = SORTS.find(it => it.k === state.sort) || SORTS[0];
-  sortHelp.textContent = currentSort.help;
+  sortHelp.textContent = !hasSalesData() && currentSort.k === 'stores'
+    ? salesMissingText() + ' 지금은 점포 수 기준으로 보여줍니다.'
+    : currentSort.help;
   basis.textContent = '상권분석서비스 행정동 기준 · ' + BIZ[state.biz].label;
   renderSummary(rows);
   dataAlert();
@@ -733,7 +767,13 @@ function render(){
 
 sortPick.innerHTML = SORTS.map(it => '<option value="' + it.k + '">' + it.l + '</option>').join('');
 sortPick.onchange = e => { state.sort = e.target.value; state.picked = ''; render(); };
-biz.onchange = e => { state.biz = e.target.value; state.picked = ''; buildRows(); render(); };
+biz.onchange = e => {
+  state.biz = e.target.value;
+  state.picked = '';
+  buildRows();
+  if (!hasSalesData() && state.sort === 'sales_per_store_month') state.sort = 'stores';
+  render();
+};
 q.oninput = e => { state.q = e.target.value; state.picked = ''; render(); };
 
 Promise.all(Object.entries(FILES).map(([key, file]) =>
