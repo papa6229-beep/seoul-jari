@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=90">
+<link rel="stylesheet" href="styles.css?v=91">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '90';
+  var PAGE_V = '91';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '90';
+const V = '91';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -124,8 +124,8 @@ const SORTS = [
   {k:'sales_per_store_month', l:'가게당 월매출', help:'이 동네에서 같은 업종 가게 1곳이 한 달에 얼마나 파는지 보는 값입니다.'},
   {k:'stores', l:'같은 업종 가게 수', help:'같은 업종 가게가 많은 동네부터 봅니다. 손님도 많을 수 있지만 경쟁도 셉니다.'},
   {k:'competition_score', l:'경쟁 덜한 곳', help:'같은 업종 가게가 비교적 적은 동네부터 봅니다. 매출도 같이 확인해야 합니다.'},
-  {k:'workers', l:'일하러 오는 사람', help:'평일 낮에 이 동네로 일하러 오는 사람이 많은 순서입니다.'},
-  {k:'residents', l:'사는 사람', help:'이 동네에 사는 사람이 많은 순서입니다.'}
+  {k:'workers', l:'직장인구', help:'평일 낮에 이 동네에서 일하는 사람이 많은 순서입니다.'},
+  {k:'residents', l:'거주인구', help:'이 동네에 사는 사람이 많은 순서입니다.'}
 ];
 const TABS = [
   {k:'summary', l:'요약'},
@@ -187,9 +187,9 @@ function salesMissingText(){
   const picked = ROWS.find(r => r.code === state.picked);
   const ref = (picked && picked.reference_sales) || (BIZ[state.biz] && BIZ[state.biz].reference_sales);
   if (ref && ref.monthly_sales_per_store){
-    return '행정동 매출은 없지만 ' + ref.scope + ' 기준 가게 1곳의 한 달 참고 매출은 ' + money(ref.monthly_sales_per_store) + '입니다. 후보 비교는 가게 수·손님 바탕·지도 중심으로 봅니다.';
+    return '행정동 매출은 없지만 ' + ref.scope + ' 기준 가게 1곳의 한 달 참고 매출은 ' + money(ref.monthly_sales_per_store) + '입니다. 후보 비교는 가게 수·수요·지도 중심으로 봅니다.';
   }
-  return '이 업종은 행정동 추정매출이 제공되지 않아 가게 수·손님 바탕·지도 중심으로 봅니다.';
+  return '이 업종은 행정동 추정매출이 제공되지 않아 가게 수·수요·지도 중심으로 봅니다.';
 }
 
 function referenceText(ref){
@@ -440,7 +440,7 @@ function renderSummary(rows){
     '<div class="insight-grid">' +
       card(salesOk ? '돈이 크게 도는 곳' : '가게가 많이 모인 곳', best, salesOk ? '같은 업종 가게 1곳의 월매출이 가장 높게 잡힌 동네입니다.' : '매출 자료가 없어 같은 업종 가게가 많이 모인 곳부터 봅니다.', '') +
       card('경쟁이 덜한 곳', lowComp, '같은 업종 가게가 상대적으로 적은 동네입니다.', 'niche') +
-      card('손님 바탕이 큰 곳', highDemand, '사는 사람과 일하러 오는 사람이 많은 동네입니다.', 'risk') +
+      card('수요 기반이 큰 곳', highDemand, '거주인구와 직장인구가 많은 동네입니다.', 'risk') +
     '</div>';
   summary.insertAdjacentElement('afterend', insight);
   for (const el of insight.querySelectorAll('[data-pick]')){
@@ -860,7 +860,7 @@ function renderDetail(rows){
   const salesTab =
     '<div class="groups">' +
       '<div><p class="grp-title">돈</p><p class="basis-note">' + (salesOk ? period + ' 카드매출 자료를 한 달 기준으로 바꿔 보여줍니다.' : salesMissingText()) + '</p>' +
-        stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 전체 매출을 가게 수로 나눈 월평균입니다.' : '이 업종은 추정매출 대신 가게 수·손님 바탕·지도로 판단합니다.') +
+        stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 전체 매출을 가게 수로 나눈 월평균입니다.' : '이 업종은 추정매출 대신 가게 수·수요·지도로 판단합니다.') +
         stat('손님 1명이 보통 쓰는 돈', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음', salesOk ? '평균입니다. 전체 매출을 결제 횟수로 나눈 값입니다.' : '매출 자료가 없어 계산하지 않습니다.') +
         (reference ? stat(reference.scope + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store), salesOk ? '개별 가게 매출이 아니라 시장 눈높이를 보는 보조값입니다.' : '행정동 후보 순위에는 쓰지 않는 보조 참고값입니다.') : '') +
         (reference && reference.customer_unit_price ? stat(reference.scope + ' 손님 1명이 보통 쓰는 돈', fmt(reference.customer_unit_price) + '원', '평균입니다. 넓은 권역의 총매출을 결제 횟수로 나눈 값입니다.') : '') +
@@ -878,28 +878,28 @@ function renderDetail(rows){
     '</div>';
   const demandTab =
     '<div class="groups">' +
-        '<div><p class="grp-title">손님 바탕</p><p class="basis-note">' + period + ' 기준으로 지나다니는 사람, 일하러 오는 사람, 사는 사람을 봅니다.</p>' +
-          stat('손님이 생기는 이유', demandType(r), demandTone(r)) +
-          stat('지나다니는 사람', withUnit(r.floating, '명'), '하루 동안 이 동네에 머문 사람 규모입니다.') +
-          stat('점심 유동', withUnit(r.lunch_flow, '명'), '점심 시간대 방문·체류 수요 참고') +
-          stat('저녁 유동', withUnit(r.evening_flow, '명'), '퇴근 이후와 저녁 운영 수요 참고') +
-          stat('일하러 오는 사람', withUnit(r.workers, '명'), '평일 낮 손님의 바탕입니다.') +
-          stat('사는 사람', withUnit(r.residents, '명'), '저녁·주말 손님의 바탕입니다.') +
+        '<div><p class="grp-title">인구 흐름</p>' +
+          stat('수요 유형', demandType(r)) +
+          stat('하루 생활인구', withUnit(r.floating, '명')) +
+          stat('점심 시간대 인구', withUnit(r.lunch_flow, '명')) +
+          stat('저녁 시간대 인구', withUnit(r.evening_flow, '명')) +
+          stat('직장인구', withUnit(r.workers, '명')) +
+          stat('거주인구', withUnit(r.residents, '명')) +
         '</div>' +
-        '<div><p class="grp-title">소비</p><p class="basis-note">소비지출은 업종별 지출 여력을 보는 보조지표입니다.</p>' +
-          stat('총 소비지출', money(r.spending), '행정동 전체 소비 규모') +
-          stat('음식 소비', money(r.food_spending), '카페·식사 업종이면 특히 참고') +
-          stat('교육 소비', money(r.education_spending), '학원·교습소 업종이면 특히 참고') +
+        '<div><p class="grp-title">소비 규모</p>' +
+          stat('전체 소비금액', money(r.spending)) +
+          stat('음식 소비금액', money(r.food_spending)) +
+          stat('교육 소비금액', money(r.education_spending)) +
         '</div>' +
-      '<div><p class="grp-title">가구</p><p class="basis-note">동네 생활권의 반복 수요를 가늠하는 보조 기준입니다.</p>' +
-        stat('가구 수', withUnit(r.households, '가구'), '거주 기반 수요의 크기') +
-        stat('아파트 단지', r.apartment ? fmt(r.apartment.complexes) + '개' : '자료 없음', apartmentTone(r)) +
-        stat('평균 아파트 시세', r.apartment ? money(r.apartment.average_market_price) : '자료 없음', '주거지 구매력과 손님 결제 여력을 보는 참고 지표') +
+      '<div><p class="grp-title">주거 기반</p>' +
+        stat('거주 가구', withUnit(r.households, '가구')) +
+        stat('아파트 단지', r.apartment ? fmt(r.apartment.complexes) + '개' : '자료 없음') +
+        stat('평균 아파트 시세', r.apartment ? money(r.apartment.average_market_price) : '자료 없음') +
       '</div>' +
-      '<div><p class="grp-title">집객시설</p><p class="basis-note">시설 수는 동네 안 반복 방문 이유가 얼마나 있는지 보는 보조 기준입니다.</p>' +
-        stat('전체 시설', r.facilities ? fmt(r.facilities.total) + '개' : '자료 없음', facilityTone(r)) +
-        stat('대중교통', r.facilities ? '지하철 ' + fmt(r.facilities.subway_stations) + '곳 · 버스 ' + fmt(r.facilities.bus_stops) + '곳' : '자료 없음', '정류장 수가 많아도 후보 점포 앞 동선과 연결되어야 의미가 있습니다.') +
-        stat('학교·대학', r.facilities ? fmt(r.facilities.schools) + '곳' : '자료 없음', '학원·간식·생활형 업종의 보조 수요') +
+      '<div><p class="grp-title">생활시설</p>' +
+        stat('전체 시설', r.facilities ? fmt(r.facilities.total) + '개' : '자료 없음') +
+        stat('지하철·버스', r.facilities ? '지하철 ' + fmt(r.facilities.subway_stations) + '곳 · 버스 ' + fmt(r.facilities.bus_stops) + '곳' : '자료 없음') +
+        stat('학교·대학', r.facilities ? fmt(r.facilities.schools) + '곳' : '자료 없음') +
       '</div>' +
     '</div>';
   const analysisTab =
@@ -969,7 +969,7 @@ function render(){
   renderSummary(rows);
   dataAlert();
   const list = rows.slice(0, 10);
-  table.innerHTML = '<div class="commercial-head"><span></span><span>동네</span><span>가게당 월매출</span><span>같은 업종 가게</span><span>손님 바탕</span><span>후보 점수</span></div>' +
+  table.innerHTML = '<div class="commercial-head"><span></span><span>동네</span><span>가게당 월매출</span><span>같은 업종 가게</span><span>수요 유형</span><span>후보 점수</span></div>' +
     (list.length ? list.map(rowHtml).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>');
   for (const el of table.querySelectorAll('.commercial-row')){
     el.onclick = () => { state.picked = el.dataset.code; render(); };
