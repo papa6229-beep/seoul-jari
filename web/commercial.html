@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=81">
+<link rel="stylesheet" href="styles.css?v=82">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '81';
+  var PAGE_V = '82';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -30,6 +30,13 @@
     <p class="where">행정동 기준 · 상권분석서비스 자동갱신 데이터</p>
 
     <div class="field">
+      <label for="biz">업종</label>
+      <select class="pick" id="biz">
+        <option value="cafe">개인 카페</option>
+      </select>
+    </div>
+
+    <div class="field">
       <label for="dongPick">행정동 선택</label>
       <select class="pick" id="dongPick">
         <option value="">전체 행정동</option>
@@ -39,13 +46,6 @@
     <div class="field">
       <label for="q">행정동 검색</label>
       <input class="search" id="q" type="search" placeholder="예: 성수, 잠실7동, 강남구">
-    </div>
-
-    <div class="field">
-      <label for="biz">업종</label>
-      <select class="pick" id="biz">
-        <option value="cafe">개인 카페</option>
-      </select>
     </div>
 
     <div class="field">
@@ -64,8 +64,8 @@
 
     <div class="commercial-summary compact" id="summary"></div>
     <div class="commercial-alert" id="alert" hidden></div>
-    <nav class="detail-tabs" id="detailTabs"></nav>
     <section class="commercial-table" id="table"></section>
+    <nav class="detail-tabs" id="detailTabs"></nav>
     <section class="detail commercial-detail" id="detail"></section>
 
     <p class="note">이 화면은 후보지를 좁히는 참고용입니다. 임대차 계약, 창업, 투자 판단은 현장 조사와 전문가 검토가 필요합니다.</p>
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '81';
+const V = '82';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
