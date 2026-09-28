@@ -1,6 +1,6 @@
 {
   "title": "상권 업종별 데이터 커버리지",
-  "generated_at": "2026-09-28T01:22:58.154Z",
+  "generated_at": "2026-09-28T02:20:59.965Z",
   "quarter": "20262",
   "rows": 427,
   "summary": {
@@ -8,7 +8,7 @@
     "service_types": 100,
     "service_with_sales": 63,
     "service_without_sales": 37,
-    "service_with_map_points": 0
+    "service_with_map_points": 88
   },
   "items": [
     {
@@ -93,13 +93,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 141,
       "store_dongs": 392,
       "sales_total": 162962542090,
       "store_total": 3255,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 340,
+      "map_points": 1500
     },
     {
       "id": "svc_CS300015",
@@ -108,13 +108,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 64,
       "store_dongs": 384,
       "sales_total": 51244907741,
       "store_total": 2894,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 316,
+      "map_points": 1550
     },
     {
       "id": "svc_CS300032",
@@ -123,13 +123,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 111,
       "store_dongs": 387,
       "sales_total": 277875338238,
       "store_total": 2445,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 403,
+      "map_points": 3963
     },
     {
       "id": "svc_CS200032",
@@ -138,13 +138,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 124,
       "store_dongs": 409,
       "sales_total": 10248374178,
       "store_total": 3091,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 403,
+      "map_points": 3963
     },
     {
       "id": "svc_CS200047",
@@ -153,13 +153,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 311,
       "sales_total": 0,
       "store_total": 975,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 277,
+      "map_points": 795
     },
     {
       "id": "svc_CS200043",
@@ -183,13 +183,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 204,
       "sales_total": 0,
       "store_total": 1335,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 80,
+      "map_points": 273
     },
     {
       "id": "svc_CS200036",
@@ -198,13 +198,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 2,
       "store_dongs": 72,
       "sales_total": 109416824,
       "store_total": 122,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 324,
+      "map_points": 3102
     },
     {
       "id": "svc_CS200017",
@@ -213,13 +213,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 198,
       "store_dongs": 363,
       "sales_total": 52074189277,
       "store_total": 1812,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 358,
+      "map_points": 1491
     },
     {
       "id": "svc_CS200013",
@@ -228,13 +228,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 324,
       "sales_total": 0,
       "store_total": 2292,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 289,
+      "map_points": 2193
     },
     {
       "id": "svc_CS200021",
@@ -243,13 +243,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 326,
       "sales_total": 0,
       "store_total": 1140,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 279,
+      "map_points": 1067
     },
     {
       "id": "svc_CS200029",
@@ -258,13 +258,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 262,
       "store_dongs": 413,
       "sales_total": 14569050063,
       "store_total": 4151,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 418,
+      "map_points": 4839
     },
     {
       "id": "svc_CS200037",
@@ -273,13 +273,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 336,
       "store_dongs": 391,
       "sales_total": 106210792180,
       "store_total": 5223,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 391,
+      "map_points": 5086
     },
     {
       "id": "svc_CS200040",
@@ -288,13 +288,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 254,
       "sales_total": 0,
       "store_total": 1063,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 2,
+      "map_points": 2
     },
     {
       "id": "svc_CS200016",
@@ -303,13 +303,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 331,
       "store_dongs": 400,
       "sales_total": 36308696784,
       "store_total": 3627,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 375,
+      "map_points": 1975
     },
     {
       "id": "svc_CS200038",
@@ -318,13 +318,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 403,
       "sales_total": 0,
       "store_total": 3032,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 393,
+      "map_points": 2742
     },
     {
       "id": "svc_CS200009",
@@ -333,13 +333,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 355,
       "sales_total": 0,
       "store_total": 1044,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 346,
+      "map_points": 913
     },
     {
       "id": "svc_CS300039",
@@ -348,13 +348,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 269,
       "sales_total": 0,
       "store_total": 789,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 213,
+      "map_points": 427
     },
     {
       "id": "svc_CS200027",
@@ -363,13 +363,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 274,
       "sales_total": 0,
       "store_total": 652,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 311,
+      "map_points": 978
     },
     {
       "id": "svc_CS300021",
@@ -378,13 +378,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 282,
       "store_dongs": 410,
       "sales_total": 288615181923,
       "store_total": 3976,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 390,
+      "map_points": 1719
     },
     {
       "id": "svc_CS300006",
@@ -393,13 +393,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 136,
       "store_dongs": 391,
       "sales_total": 116637041516,
       "store_total": 2757,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 1,
+      "map_points": 1
     },
     {
       "id": "svc_CS200028",
@@ -408,13 +408,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 418,
       "store_dongs": 422,
       "sales_total": 274918597378,
       "store_total": 20339,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 427,
+      "map_points": 20194
     },
     {
       "id": "svc_CS300023",
@@ -423,13 +423,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 346,
       "sales_total": 0,
       "store_total": 1486,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 26,
+      "map_points": 29
     },
     {
       "id": "svc_CS300010",
@@ -438,13 +438,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 317,
       "store_dongs": 422,
       "sales_total": 931901019408,
       "store_total": 9420,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 32,
+      "map_points": 36
     },
     {
       "id": "svc_CS200012",
@@ -453,13 +453,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 283,
       "sales_total": 0,
       "store_total": 2516,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 164,
+      "map_points": 756
     },
     {
       "id": "svc_CS200011",
@@ -468,13 +468,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 119,
       "sales_total": 0,
       "store_total": 933,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 2,
+      "map_points": 2
     },
     {
       "id": "svc_CS200010",
@@ -483,13 +483,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 235,
       "sales_total": 0,
       "store_total": 4679,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 11,
+      "map_points": 40
     },
     {
       "id": "svc_CS200022",
@@ -498,13 +498,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 350,
       "sales_total": 0,
       "store_total": 1046,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 164,
+      "map_points": 227
     },
     {
       "id": "svc_CS200018",
@@ -513,13 +513,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 89,
       "sales_total": 0,
       "store_total": 135,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 86,
+      "map_points": 120
     },
     {
       "id": "svc_CS200033",
@@ -528,13 +528,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 27,
       "store_dongs": 422,
       "sales_total": 7340973881,
       "store_total": 35613,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 5,
+      "map_points": 5
     },
     {
       "id": "svc_CS100008",
@@ -543,13 +543,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 409,
       "store_dongs": 422,
       "sales_total": 312871235562,
       "store_total": 8897,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 427,
+      "map_points": 8152
     },
     {
       "id": "svc_CS200045",
@@ -573,13 +573,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 419,
       "sales_total": 0,
       "store_total": 6658,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 238,
+      "map_points": 469
     },
     {
       "id": "svc_CS300020",
@@ -588,13 +588,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 208,
       "store_dongs": 417,
       "sales_total": 113276756471,
       "store_total": 3990,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 381,
+      "map_points": 1680
     },
     {
       "id": "svc_CS300027",
@@ -603,13 +603,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 173,
       "store_dongs": 408,
       "sales_total": 32984521293,
       "store_total": 3344,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 225,
+      "map_points": 653
     },
     {
       "id": "svc_CS200015",
@@ -618,13 +618,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 341,
       "sales_total": 0,
       "store_total": 7557,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 87,
+      "map_points": 161
     },
     {
       "id": "svc_CS200031",
@@ -633,13 +633,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 373,
       "store_dongs": 422,
       "sales_total": 49656840653,
       "store_total": 5030,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 427,
+      "map_points": 3876
     },
     {
       "id": "svc_CS300008",
@@ -648,13 +648,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 157,
       "store_dongs": 385,
       "sales_total": 957190549782,
       "store_total": 4902,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 252,
+      "map_points": 1162
     },
     {
       "id": "svc_CS300001",
@@ -663,13 +663,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 418,
       "store_dongs": 422,
       "sales_total": 1122659230970,
       "store_total": 9415,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 427,
+      "map_points": 8359
     },
     {
       "id": "svc_CS200005",
@@ -693,13 +693,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 298,
       "store_dongs": 405,
       "sales_total": 101033152991,
       "store_total": 5087,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 57,
+      "map_points": 65
     },
     {
       "id": "svc_CS300017",
@@ -708,13 +708,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 253,
       "store_dongs": 404,
       "sales_total": 290980769054,
       "store_total": 5669,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 380,
+      "map_points": 2068
     },
     {
       "id": "svc_CS300014",
@@ -723,13 +723,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 146,
       "store_dongs": 362,
       "sales_total": 123494753159,
       "store_total": 3908,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 425,
+      "map_points": 22838
     },
     {
       "id": "svc_CS300034",
@@ -738,13 +738,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 215,
       "sales_total": 0,
       "store_total": 783,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 204,
+      "map_points": 727
     },
     {
       "id": "svc_CS300016",
@@ -753,13 +753,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 300,
       "store_dongs": 395,
       "sales_total": 134227347576,
       "store_total": 2038,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 406,
+      "map_points": 2735
     },
     {
       "id": "svc_CS300029",
@@ -768,13 +768,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 146,
       "store_dongs": 401,
       "sales_total": 12763076271,
       "store_total": 2533,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 379,
+      "map_points": 1580
     },
     {
       "id": "svc_CS100004",
@@ -783,13 +783,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 234,
       "store_dongs": 409,
       "sales_total": 342486992691,
       "store_total": 7689,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 418,
+      "map_points": 7451
     },
     {
       "id": "svc_CS200034",
@@ -798,13 +798,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 189,
       "store_dongs": 330,
       "sales_total": 52314031109,
       "store_total": 3281,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 285,
+      "map_points": 2088
     },
     {
       "id": "svc_CS200044",
@@ -813,13 +813,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 390,
       "sales_total": 0,
       "store_total": 6558,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 387,
+      "map_points": 5203
     },
     {
       "id": "svc_CS300041",
@@ -828,13 +828,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 331,
       "sales_total": 0,
       "store_total": 2334,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 292,
+      "map_points": 1893
     },
     {
       "id": "svc_CS200003",
@@ -843,13 +843,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 375,
       "store_dongs": 418,
       "sales_total": 146488168677,
       "store_total": 9723,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 338,
+      "map_points": 1214
     },
     {
       "id": "svc_CS300026",
@@ -858,13 +858,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 32,
       "store_dongs": 310,
       "sales_total": 27430555283,
       "store_total": 1127,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 9,
+      "map_points": 9
     },
     {
       "id": "svc_CS200002",
@@ -873,13 +873,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 147,
       "store_dongs": 390,
       "sales_total": 73441071435,
       "store_total": 2758,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 351,
+      "map_points": 1639
     },
     {
       "id": "svc_CS300024",
@@ -918,13 +918,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 363,
       "store_dongs": 419,
       "sales_total": 757917360191,
       "store_total": 6761,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 425,
+      "map_points": 10983
     },
     {
       "id": "svc_CS300019",
@@ -933,13 +933,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 184,
       "store_dongs": 400,
       "sales_total": 245789964072,
       "store_total": 3628,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 354,
+      "map_points": 1421
     },
     {
       "id": "svc_CS200046",
@@ -948,13 +948,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 162,
       "sales_total": 0,
       "store_total": 540,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 137,
+      "map_points": 474
     },
     {
       "id": "svc_CS300018",
@@ -963,13 +963,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 406,
       "store_dongs": 421,
       "sales_total": 1738248730716,
       "store_total": 8585,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 422,
+      "map_points": 5830
     },
     {
       "id": "svc_CS300035",
@@ -978,13 +978,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 230,
       "store_dongs": 415,
       "sales_total": 71787428447,
       "store_total": 4250,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 421,
+      "map_points": 6168
     },
     {
       "id": "svc_CS200001",
@@ -993,13 +993,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 389,
       "store_dongs": 422,
       "sales_total": 921128056541,
       "store_total": 23329,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 133,
+      "map_points": 235
     },
     {
       "id": "svc_CS300011",
@@ -1008,13 +1008,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 398,
       "store_dongs": 422,
       "sales_total": 1921794444657,
       "store_total": 45016,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 425,
+      "map_points": 19381
     },
     {
       "id": "svc_CS200006",
@@ -1023,13 +1023,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 400,
       "store_dongs": 419,
       "sales_total": 2012205727911,
       "store_total": 11755,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 424,
+      "map_points": 9446
     },
     {
       "id": "svc_CS100003",
@@ -1038,13 +1038,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 277,
       "store_dongs": 392,
       "sales_total": 275412915693,
       "store_total": 5455,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 406,
+      "map_points": 7718
     },
     {
       "id": "svc_CS200026",
@@ -1068,13 +1068,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 373,
       "sales_total": 0,
       "store_total": 3395,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 270,
+      "map_points": 902
     },
     {
       "id": "svc_CS200025",
@@ -1083,13 +1083,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 334,
       "store_dongs": 396,
       "sales_total": 287786633588,
       "store_total": 4041,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 411,
+      "map_points": 6559
     },
     {
       "id": "svc_CS300025",
@@ -1098,13 +1098,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 74,
       "store_dongs": 297,
       "sales_total": 33749421250,
       "store_total": 787,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 243,
+      "map_points": 462
     },
     {
       "id": "svc_CS300040",
@@ -1128,13 +1128,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 108,
       "sales_total": 0,
       "store_total": 194,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 214,
+      "map_points": 564
     },
     {
       "id": "svc_CS300043",
@@ -1158,13 +1158,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 378,
       "store_dongs": 412,
       "sales_total": 268967039810,
       "store_total": 5372,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 422,
+      "map_points": 5804
     },
     {
       "id": "svc_CS300036",
@@ -1203,13 +1203,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 292,
       "sales_total": 0,
       "store_total": 935,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 256,
+      "map_points": 621
     },
     {
       "id": "svc_CS300030",
@@ -1218,13 +1218,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 67,
       "sales_total": 0,
       "store_total": 146,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 67,
+      "map_points": 125
     },
     {
       "id": "svc_CS300037",
@@ -1233,13 +1233,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 176,
       "sales_total": 0,
       "store_total": 856,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 11,
+      "map_points": 11
     },
     {
       "id": "svc_CS100002",
@@ -1248,13 +1248,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 353,
       "store_dongs": 412,
       "sales_total": 274451316543,
       "store_total": 5342,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 418,
+      "map_points": 5780
     },
     {
       "id": "svc_CS300033",
@@ -1263,13 +1263,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 263,
       "store_dongs": 394,
       "sales_total": 46529207703,
       "store_total": 2281,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 29,
+      "map_points": 31
     },
     {
       "id": "svc_CS300009",
@@ -1278,13 +1278,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 279,
       "store_dongs": 417,
       "sales_total": 1219983349763,
       "store_total": 8612,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 1,
+      "map_points": 1
     },
     {
       "id": "svc_CS200007",
@@ -1293,13 +1293,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 385,
       "store_dongs": 418,
       "sales_total": 577235682508,
       "store_total": 4911,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 422,
+      "map_points": 4452
     },
     {
       "id": "svc_CS100007",
@@ -1308,13 +1308,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 388,
       "store_dongs": 398,
       "sales_total": 115783728911,
       "store_total": 2069,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 425,
+      "map_points": 5991
     },
     {
       "id": "svc_CS100010",
@@ -1323,13 +1323,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 418,
       "store_dongs": 422,
       "sales_total": 776132941373,
       "store_total": 20384,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 427,
+      "map_points": 20071
     },
     {
       "id": "svc_CS300003",
@@ -1338,13 +1338,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 123,
       "store_dongs": 412,
       "sales_total": 543332132392,
       "store_total": 8863,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 315,
+      "map_points": 1409
     },
     {
       "id": "svc_CS200004",
@@ -1353,13 +1353,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 179,
       "sales_total": 0,
       "store_total": 372,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 147,
+      "map_points": 293
     },
     {
       "id": "svc_CS200042",
@@ -1368,13 +1368,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 378,
       "sales_total": 0,
       "store_total": 2000,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 42,
+      "map_points": 51
     },
     {
       "id": "svc_CS200023",
@@ -1383,13 +1383,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 240,
       "sales_total": 0,
       "store_total": 554,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 409,
+      "map_points": 3756
     },
     {
       "id": "svc_CS100006",
@@ -1398,13 +1398,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 359,
       "store_dongs": 389,
       "sales_total": 189886674573,
       "store_total": 2796,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 1,
+      "map_points": 1
     },
     {
       "id": "svc_CS300002",
@@ -1413,13 +1413,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 402,
       "store_dongs": 399,
       "sales_total": 1050192909518,
       "store_total": 2456,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 427,
+      "map_points": 9508
     },
     {
       "id": "svc_CS200030",
@@ -1428,13 +1428,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 330,
       "store_dongs": 420,
       "sales_total": 66240462216,
       "store_total": 10406,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 418,
+      "map_points": 6773
     },
     {
       "id": "svc_CS300012",
@@ -1458,13 +1458,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 420,
       "store_dongs": 422,
       "sales_total": 4136663233879,
       "store_total": 51421,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 427,
+      "map_points": 48118
     },
     {
       "id": "svc_CS200008",
@@ -1473,13 +1473,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 369,
       "store_dongs": 416,
       "sales_total": 219833902442,
       "store_total": 3845,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 416,
+      "map_points": 3421
     },
     {
       "id": "svc_CS300004",
@@ -1488,13 +1488,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 205,
       "store_dongs": 415,
       "sales_total": 72511384347,
       "store_total": 6047,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 409,
+      "map_points": 4128
     },
     {
       "id": "svc_CS100009",
@@ -1503,13 +1503,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 396,
       "store_dongs": 415,
       "sales_total": 729208646019,
       "store_total": 13493,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 299,
+      "map_points": 1243
     },
     {
       "id": "svc_CS300022",
@@ -1518,13 +1518,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 360,
       "store_dongs": 422,
       "sales_total": 309441661304,
       "store_total": 12926,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 426,
+      "map_points": 12563
     },
     {
       "id": "svc_CS300028",
@@ -1533,13 +1533,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 320,
       "store_dongs": 419,
       "sales_total": 91596477969,
       "store_total": 6117,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 417,
+      "map_points": 3998
     },
     {
       "id": "svc_CS200014",
@@ -1548,13 +1548,13 @@
       "kind": "service",
       "has_sales": false,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 0,
       "store_dongs": 180,
       "sales_total": 0,
       "store_total": 977,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 9,
+      "map_points": 10
     },
     {
       "id": "svc_CS200039",
@@ -1578,13 +1578,13 @@
       "kind": "service",
       "has_sales": true,
       "has_stores": true,
-      "has_map_points": false,
+      "has_map_points": true,
       "sales_dongs": 152,
       "store_dongs": 326,
       "sales_total": 59648489811,
       "store_total": 1012,
-      "map_dongs": 0,
-      "map_points": 0
+      "map_dongs": 345,
+      "map_points": 1134
     }
   ]
 }
