@@ -11,6 +11,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_IN = path.join(ROOT, 'data', 'raw', 'store_businesses.csv');
 const DEFAULT_OUT = path.join(ROOT, 'web', 'data', 'store-summary.json');
+const COMMERCIAL_VIEW = path.join(ROOT, 'web', 'data', 'commercial-view-dong.json');
 
 const CATEGORIES = [
   {id: 'cafe', label: '개인 카페', include: ['커피', '카페', '다방'], exclude: ['프랜차이즈본사']},
@@ -35,6 +36,7 @@ const FIELD_ALIASES = {
 };
 
 const POINT_LIMIT_PER_CATEGORY = 250;
+const POINT_LIMIT_PER_SERVICE = 250;
 
 function parseCsv(text){
   const rows = [];
@@ -75,15 +77,66 @@ function classify(rowText){
   }).map(c => c.id);
 }
 
+function compactText(value){
+  return String(value || '').replace(/[\s·ㆍ/()\-]+/g, '');
+}
+
+function serviceTerms(label){
+  const terms = new Set([label]);
+  const stripped = label
+    .replace(/음식점$/, '')
+    .replace(/전문점$/, '')
+    .replace(/판매점$/, '')
+    .replace(/판매$/, '')
+    .replace(/수리$/, '')
+    .replace(/서비스$/, '');
+  if (stripped && stripped !== label) terms.add(stripped);
+  if (label === '커피-음료') terms.add('커피전문점');
+  if (label === '패스트푸드점') terms.add('패스트푸드');
+  if (label === '분식전문점') terms.add('분식');
+  if (label === '호프-간이주점') terms.add('호프');
+  if (label === '일반의류') terms.add('의류');
+  if (label === '일반교습학원') terms.add('교습학원');
+  if (label === '스포츠 강습') terms.add('스포츠강습');
+  return [...terms].map(compactText).filter(Boolean);
+}
+
+function loadServiceCategories(){
+  if (!fs.existsSync(COMMERCIAL_VIEW)) return [];
+  try {
+    const view = JSON.parse(fs.readFileSync(COMMERCIAL_VIEW, 'utf8'));
+    return (view.business_types || [])
+      .filter(item => item.kind === 'service' && item.id && item.label)
+      .map(item => ({
+        id: item.id,
+        code: item.code,
+        label: item.label,
+        terms: serviceTerms(item.label)
+      }));
+  } catch (err) {
+    return [];
+  }
+}
+
+function classifyServices(rowText, serviceCategories){
+  const text = compactText(rowText);
+  if (!text) return [];
+  return serviceCategories
+    .filter(service => service.terms.some(term => term && text.includes(term)))
+    .map(service => service.id);
+}
+
 function isSeoulName(name){
   const v = (name || '').trim();
   return v === '서울' || v === '서울특별시';
 }
 
-function summarizeRecords(records, asOf){
+function summarizeRecords(records, asOf, options = {}){
+  const serviceCategories = options.serviceCategories || loadServiceCategories();
   const byDong = new Map();
   const byGu = new Map();
   const totals = Object.fromEntries(CATEGORIES.map(c => [c.id, 0]));
+  const serviceTotals = Object.fromEntries(serviceCategories.map(c => [c.id, 0]));
   const points = {};
   let sourceRows = 0;
 
@@ -94,11 +147,23 @@ function summarizeRecords(records, asOf){
     const dong = (r.dong || '').trim() || '(동 미상)';
     const textForClass = [r.name, r.large, r.middle, r.small, r.standard].filter(Boolean).join(' ');
     const cats = classify(textForClass);
-    if (!cats.length) continue;
+    const services = classifyServices(textForClass, serviceCategories);
+    if (!cats.length && !services.length) continue;
 
     const dongKey = gu + '/' + dong;
-    if (!byDong.has(dongKey)) byDong.set(dongKey, {gu, dong, counts: Object.fromEntries(CATEGORIES.map(c => [c.id, 0])), total: 0});
-    if (!byGu.has(gu)) byGu.set(gu, {gu, counts: Object.fromEntries(CATEGORIES.map(c => [c.id, 0])), total: 0});
+    if (!byDong.has(dongKey)) byDong.set(dongKey, {
+      gu,
+      dong,
+      counts: Object.fromEntries(CATEGORIES.map(c => [c.id, 0])),
+      service_counts: {},
+      total: 0
+    });
+    if (!byGu.has(gu)) byGu.set(gu, {
+      gu,
+      counts: Object.fromEntries(CATEGORIES.map(c => [c.id, 0])),
+      service_counts: {},
+      total: 0
+    });
     if (!points[dongKey]) points[dongKey] = Object.fromEntries(CATEGORIES.map(c => [c.id, []]));
     const d = byDong.get(dongKey), g = byGu.get(gu);
     for (const id of cats){
@@ -116,6 +181,23 @@ function summarizeRecords(records, asOf){
         });
       }
     }
+    for (const id of services){
+      d.service_counts[id] = (d.service_counts[id] || 0) + 1;
+      g.service_counts[id] = (g.service_counts[id] || 0) + 1;
+      serviceTotals[id] = (serviceTotals[id] || 0) + 1;
+      const lat = Number(r.lat);
+      const lng = Number(r.lng);
+      if (!points[dongKey][id]) points[dongKey][id] = [];
+      if (Number.isFinite(lat) && Number.isFinite(lng) && points[dongKey][id].length < POINT_LIMIT_PER_SERVICE){
+        points[dongKey][id].push({
+          n: (r.name || '').trim() || '(상호 미상)',
+          c: (r.small || r.middle || r.standard || '').trim(),
+          a: (r.address || '').trim(),
+          lat,
+          lng
+        });
+      }
+    }
   }
 
   return {
@@ -123,14 +205,16 @@ function summarizeRecords(records, asOf){
     as_of: asOf,
     source_rows: sourceRows,
     categories: CATEGORIES.map(({id, label}) => ({id, label})),
+    service_categories: serviceCategories.map(({id, code, label}) => ({id, code, label})),
     totals,
+    service_totals: serviceTotals,
     gu: [...byGu.values()].sort((a, b) => a.gu.localeCompare(b.gu, 'ko')),
     dong: [...byDong.values()].sort((a, b) => (a.gu + a.dong).localeCompare(b.gu + b.dong, 'ko')),
     points
   };
 }
 
-function summarizeRows(apiRows, asOf){
+function summarizeRows(apiRows, asOf, options = {}){
   const records = apiRows.map(r => ({
     sido: r.ctprvnNm || r.시도명 || r.sido,
     gu: r.signguNm || r.시군구명 || r.gu,
@@ -144,10 +228,10 @@ function summarizeRows(apiRows, asOf){
     lat: r.lat || r.위도,
     lng: r.lon || r.lng || r.경도
   }));
-  return summarizeRecords(records, asOf);
+  return summarizeRecords(records, asOf, options);
 }
 
-function summarizeCsv(text, asOf){
+function summarizeCsv(text, asOf, options = {}){
   const rows = parseCsv(text);
   if (rows.length < 2) throw new Error('CSV에 데이터가 없습니다.');
 
@@ -170,7 +254,7 @@ function summarizeCsv(text, asOf){
     lat: idx.lat >= 0 ? cols[idx.lat] || '' : '',
     lng: idx.lng >= 0 ? cols[idx.lng] || '' : ''
   }));
-  return summarizeRecords(records, asOf);
+  return summarizeRecords(records, asOf, options);
 }
 
 function main(){
@@ -186,4 +270,4 @@ function main(){
 
 if (require.main === module) main();
 
-module.exports = {parseCsv, summarizeCsv, summarizeRows, summarizeRecords, classify, CATEGORIES};
+module.exports = {parseCsv, summarizeCsv, summarizeRows, summarizeRecords, classify, classifyServices, serviceTerms, CATEGORIES};

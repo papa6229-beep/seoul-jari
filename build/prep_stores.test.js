@@ -10,7 +10,12 @@ const csv = [
   '경기,성남시,정자동,분당커피,음식,커피전문점,경기 성남시,37.36,127.11'
 ].join('\n');
 
-const out = summarizeCsv(csv, '2026-09-23');
+const serviceCategories = [
+  {id: 'svc_CS300029', code: 'CS300029', label: '커피-음료', terms: ['커피', '커피전문점', '음료']},
+  {id: 'svc_CS200005', code: 'CS200005', label: '스포츠 강습', terms: ['스포츠강습', '필라테스']},
+  {id: 'svc_CS100008', code: 'CS100008', label: '분식전문점', terms: ['분식', '김밥']}
+];
+const out = summarizeCsv(csv, '2026-09-23', {serviceCategories});
 
 assert.equal(out.source_rows, 4);
 assert.equal(out.totals.cafe, 1);
@@ -21,6 +26,11 @@ assert.equal(out.gu.find(g => g.gu === '성동구').counts.cafe, 1);
 assert.equal(out.dong.find(d => d.gu === '마포구' && d.dong === '연남동').counts.food, 1);
 assert.equal(out.points['성동구/성수동1가'].cafe[0].n, '성수커피');
 assert.equal(out.points['성동구/성수동1가'].cafe[0].lat, 37.544);
+assert.equal(out.service_totals.svc_CS300029, 1);
+assert.equal(out.service_totals.svc_CS200005, 1);
+assert.equal(out.service_totals.svc_CS100008, 1);
+assert.equal(out.points['성동구/성수동1가'].svc_CS300029[0].n, '성수커피');
+assert.equal(out.points['성동구/성수동1가'].svc_CS200005[0].n, '성수필라테스');
 assert(!out.gu.some(g => g.gu === '성남시'));
 
 console.log('prep_stores test ok');

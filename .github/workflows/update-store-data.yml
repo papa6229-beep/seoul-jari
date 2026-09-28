@@ -39,8 +39,9 @@ jobs:
           if [ -n "$LIMIT_GU" ]; then args+=("--limit-gu=$LIMIT_GU"); fi
           if [ -n "$MAX_PAGES" ]; then args+=("--max-pages=$MAX_PAGES"); fi
           node build/fetch_stores_api.js "${args[@]}"
+          node build/build_commercial_coverage.js
       - name: Commit updated data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: '상가업소 API 데이터 갱신'
-          file_pattern: web/data/store-summary.json
+          file_pattern: web/data/store-summary.json web/data/commercial-coverage.json
