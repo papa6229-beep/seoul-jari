@@ -26,6 +26,11 @@ function readJson(name){
   return JSON.parse(fs.readFileSync(path.join(DATA_DIR, name), 'utf8'));
 }
 
+function readJsonOptional(name){
+  const file = path.join(DATA_DIR, name);
+  return fs.existsSync(file) ? readJson(name) : {rows: []};
+}
+
 function rows(payload){
   if (!payload) return [];
   if (Array.isArray(payload.rows)) return payload.rows;
@@ -66,6 +71,49 @@ function addTop(list, item, key, limit = 5){
   if (list.length > limit) list.length = limit;
 }
 
+function addNumbers(...values){
+  return values.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
+}
+
+function summarizeMarketChange(row = {}){
+  if (!row.change_name) return null;
+  return {
+    code: row.change_code || null,
+    name: row.change_name || null,
+    operation_months: row.operation_months_avg ?? null,
+    close_months: row.close_months_avg ?? null,
+    seoul_operation_months: row.seoul_operation_months_avg ?? null,
+    seoul_close_months: row.seoul_close_months_avg ?? null
+  };
+}
+
+function summarizeApartment(row = {}){
+  if (!row.apartment_complexes) return null;
+  return {
+    complexes: row.apartment_complexes,
+    average_area: row.average_area ?? null,
+    average_market_price: row.average_market_price ?? null,
+    small_households: row.small_households ?? null,
+    large_households: addNumbers(row.large_households, row.extra_large_households) || null,
+    high_price_households: row.high_price_households ?? null
+  };
+}
+
+function summarizeFacilities(row = {}){
+  if (!row.total_facilities) return null;
+  return {
+    total: row.total_facilities,
+    public_offices: row.public_offices ?? null,
+    banks: row.banks ?? null,
+    hospitals: addNumbers(row.general_hospitals, row.hospitals) || null,
+    pharmacies: row.pharmacies ?? null,
+    schools: addNumbers(row.kindergartens, row.elementary_schools, row.middle_schools, row.high_schools, row.universities) || null,
+    universities: row.universities ?? null,
+    subway_stations: row.subway_stations ?? null,
+    bus_stops: row.bus_stops ?? null
+  };
+}
+
 function compact(){
   const codes = readJson('admin-dong-codes.json');
   const floating = readJson('commercial-floating-population-dong.json');
@@ -74,6 +122,9 @@ function compact(){
   const workers = readJson('commercial-worker-population-dong.json');
   const residents = readJson('commercial-resident-population-dong.json');
   const income = readJson('commercial-income-consumption-dong.json');
+  const changeIndex = readJsonOptional('commercial-change-index-dong.json');
+  const apartments = readJsonOptional('commercial-apartment-dong.json');
+  const facilities = readJsonOptional('commercial-facility-dong.json');
 
   const businessTypesById = new Map(Object.keys(GROUP_BIZ).map(key => [key, {
     id: key,
@@ -113,6 +164,9 @@ function compact(){
   const workerBy = indexBy(workers, 'dong_code');
   const residentBy = indexBy(residents, 'dong_code');
   const incomeBy = indexBy(income, 'dong_code');
+  const changeBy = indexBy(changeIndex, 'dong_code');
+  const apartmentBy = indexBy(apartments, 'dong_code');
+  const facilityBy = indexBy(facilities, 'dong_code');
 
   for (const row of byCode.values()){
     const f = floatingBy[row.code] || {};
@@ -130,6 +184,12 @@ function compact(){
     row.food_spending = inc.food_spending || null;
     row.education_spending = inc.education_spending || null;
     row.leisure_spending = inc.leisure_culture_spending || null;
+    const marketChange = summarizeMarketChange(changeBy[row.code] || {});
+    const apartment = summarizeApartment(apartmentBy[row.code] || {});
+    const facility = summarizeFacilities(facilityBy[row.code] || {});
+    if (marketChange) row.market_change = marketChange;
+    if (apartment) row.apartment = apartment;
+    if (facility) row.facilities = facility;
   }
 
   for (const item of rows(sales)){
@@ -202,4 +262,4 @@ function compact(){
 
 if (require.main === module) compact();
 
-module.exports = {BIZ: GROUP_BIZ, compact};
+module.exports = {BIZ: GROUP_BIZ, compact, summarizeApartment, summarizeFacilities, summarizeMarketChange};

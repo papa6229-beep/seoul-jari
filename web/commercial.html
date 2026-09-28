@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=75">
+<link rel="stylesheet" href="styles.css?v=76">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '75';
+  var PAGE_V = '76';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -70,7 +70,7 @@
 </div>
 
 <script>
-const V = '75';
+const V = '76';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -309,6 +309,9 @@ function buildRows(){
       franchises: biz.franchises || null,
       open: biz.open || null,
       close: biz.close || null,
+      market_change: src.market_change || null,
+      apartment: src.apartment || null,
+      facilities: src.facilities || null,
       demand_raw: demand,
       sales_items: biz.sales_items || [],
       store_items: biz.store_items || []
@@ -406,6 +409,33 @@ function competitionGuide(r){
   return '선택 업종 점포가 많은 편입니다. 가격·콘셉트·노출 위치로 이길 수 있는지 먼저 봐야 합니다.';
 }
 
+function marketChangeTone(r){
+  const m = r.market_change;
+  if (!m || !m.name) return '상권 변화지표가 아직 연결되지 않았습니다.';
+  const base = '운영 지속기간 평균 ' + fmt(m.operation_months) + '개월, 폐업 점포 영업기간 평균 ' + fmt(m.close_months) + '개월 기준입니다.';
+  if (m.name.includes('확장')) return '상권이 커지는 쪽으로 분류된 동네입니다. 신규 진입 기회와 임대료 상승 가능성을 같이 봐야 합니다. ' + base;
+  if (m.name.includes('정체')) return '상권 규모가 크게 움직이지 않는 쪽입니다. 새로움보다 고정 수요와 운영 안정성이 중요합니다. ' + base;
+  if (m.name.includes('축소') || m.name.includes('쇠퇴')) return '상권 힘이 약해지는 신호가 있어 보수적으로 봐야 합니다. ' + base;
+  return base;
+}
+
+function apartmentTone(r){
+  const a = r.apartment;
+  if (!a) return '아파트 자료가 아직 연결되지 않았습니다.';
+  const high = a.high_price_households ? '고가 단지 세대 ' + fmt(a.high_price_households) + '세대가 포함됩니다. ' : '';
+  return '아파트 단지 ' + fmt(a.complexes) + '개, 평균 면적 ' + fmt(a.average_area) + '㎡, 평균 시세 ' + money(a.average_market_price) + ' 수준입니다. ' + high + '주거 반복 수요와 객단가 여력을 볼 때 참고합니다.';
+}
+
+function facilityTone(r){
+  const f = r.facilities;
+  if (!f) return '집객시설 자료가 아직 연결되지 않았습니다.';
+  const transit = [f.subway_stations ? '지하철 ' + fmt(f.subway_stations) + '곳' : '', f.bus_stops ? '버스정류장 ' + fmt(f.bus_stops) + '곳' : ''].filter(Boolean).join(' · ');
+  const base = '집객시설 ' + fmt(f.total) + '개' + (transit ? ', ' + transit : '') + ' 기준입니다.';
+  if ((f.schools || 0) >= 5) return base + ' 학교·교육시설이 많은 편이라 학원, 간식, 생활형 업종에서 추가로 볼 만합니다.';
+  if ((f.hospitals || 0) || (f.pharmacies || 0)) return base + ' 병원·약국 주변 반복 방문 수요를 같이 확인할 만합니다.';
+  return base + ' 지도에서 실제 보행 동선과 시설 위치가 이어지는지 확인해야 합니다.';
+}
+
 function filteredRows(){
   const q = state.q.trim();
   let out = ROWS;
@@ -460,6 +490,9 @@ function nextChecks(r){
   if ((r.stores || 0) > 100) checks.unshift('선택 업종 점포가 많으므로 가격, 콘셉트, 회전율 차별화 가능성을 먼저 확인');
   if ((r.workers || 0) > (r.residents || 0) * 2) checks.unshift('평일 점심·퇴근 수요형인지, 주말 공백을 버틸 수 있는지 확인');
   if ((r.residents || 0) > (r.workers || 0) * 2) checks.unshift('주거 수요형인지, 야간·주말 운영 시간과 객단가가 맞는지 확인');
+  if (r.market_change && r.market_change.name) checks.unshift('상권 변화지표가 ' + r.market_change.name + '인지, 실제 임대료와 공실 분위기가 같은지 확인');
+  if (r.apartment && r.apartment.complexes) checks.unshift('아파트 단지와 후보 점포 사이의 실제 보행 동선이 끊기지 않는지 확인');
+  if (r.facilities && (r.facilities.bus_stops || r.facilities.subway_stations)) checks.unshift('대중교통 정류장과 후보 점포 입구가 시야 안에 이어지는지 확인');
   return '<div class="commercial-checks"><p class="grp-title">다음 확인사항 <small>' + BIZ[state.biz].label + ' 기준</small></p><ul>' + checks.slice(0, 7).map(v => '<li>' + v + '</li>').join('') + '</ul></div>';
 }
 
@@ -738,6 +771,13 @@ function renderDetail(rows){
         '</div>' +
       '<div><p class="grp-title">가구</p><p class="basis-note">동네 생활권의 반복 수요를 가늠하는 보조 기준입니다.</p>' +
         stat('가구 수', fmt(r.households), '거주 기반 수요의 크기') +
+        stat('아파트 단지', r.apartment ? fmt(r.apartment.complexes) + '개' : '자료 없음', apartmentTone(r)) +
+        stat('평균 아파트 시세', r.apartment ? money(r.apartment.average_market_price) : '자료 없음', '주거지 구매력과 객단가 여력을 보는 참고 지표') +
+      '</div>' +
+      '<div><p class="grp-title">집객시설</p><p class="basis-note">시설 수는 동네 안 반복 방문 이유가 얼마나 있는지 보는 보조 기준입니다.</p>' +
+        stat('전체 시설', r.facilities ? fmt(r.facilities.total) + '개' : '자료 없음', facilityTone(r)) +
+        stat('대중교통', r.facilities ? '지하철 ' + fmt(r.facilities.subway_stations) + ' · 버스 ' + fmt(r.facilities.bus_stops) : '자료 없음', '정류장 수가 많아도 후보 점포 앞 동선과 연결되어야 의미가 있습니다.') +
+        stat('학교·대학', r.facilities ? fmt(r.facilities.schools) + '곳' : '자료 없음', '학원·간식·생활형 업종의 보조 수요') +
       '</div>' +
     '</div>';
   const analysisTab =
@@ -745,8 +785,14 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">입지 가설</p>' +
         stat('운영 타입', demandType(r), marketHypothesis) +
+        stat('상권 흐름', r.market_change && r.market_change.name ? r.market_change.name : '자료 없음', marketChangeTone(r)) +
         stat('매출 가설', salesOk && r.sales_per_store_month ? '월 ' + money(r.sales_per_store_month) : '자료 없음', salesOk ? '이 수준을 내려면 실제 후보 점포가 지도 핀의 중심 동선에 붙어 있어야 합니다.' : '매출 자료가 없으므로 지도상 점포 밀도와 수요 기반으로 먼저 걸러봅니다.') +
         stat('경쟁 가설', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '점포 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
+      '</div>' +
+      '<div><p class="grp-title">생활권 해석</p>' +
+        stat('주거 기반', r.apartment ? fmt(r.apartment.complexes) + '개 단지' : '자료 없음', apartmentTone(r)) +
+        stat('시설 기반', r.facilities ? fmt(r.facilities.total) + '개 시설' : '자료 없음', facilityTone(r)) +
+        stat('반복 수요', r.households ? fmt(r.households) + '가구' : '자료 없음', '주거·시설·교통이 후보 점포 앞에서 만나는지가 핵심입니다.') +
       '</div>' +
       '<div><p class="grp-title">현장 검증</p>' +
         stat('첫 번째', '지도 확인', '선택 업종 핀이 어디에 몰리는지 보고, 빈 구간이 실제로 비어 있는지 확인합니다.') +

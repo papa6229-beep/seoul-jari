@@ -118,6 +118,9 @@ def main() -> None:
         ("상권 직장인구", "commercial-worker-population-dong.json"),
         ("상권 상주인구", "commercial-resident-population-dong.json"),
         ("상권 소득소비", "commercial-income-consumption-dong.json"),
+        ("상권 변화지표", "commercial-change-index-dong.json"),
+        ("상권 아파트", "commercial-apartment-dong.json"),
+        ("상권 집객시설", "commercial-facility-dong.json"),
         ("상가업소 지도", "store-summary.json"),
     ]
     for what, file_name in commercial_files:
