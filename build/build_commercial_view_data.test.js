@@ -1,5 +1,5 @@
 const assert = require('assert');
-const {summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales} = require('./build_commercial_view_data');
+const {summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales, summarizeTopMarkets} = require('./build_commercial_view_data');
 
 const apartment = summarizeApartment({
   apartment_complexes: 42,
@@ -98,5 +98,23 @@ assert.deepStrictEqual(guReferenceSales, {
   monthly_sales_per_store: 10000000,
   customer_unit_price: 20000
 });
+
+assert.deepStrictEqual(summarizeTopMarkets(
+  [
+    {area_code: '3001', area_name: 'A상권', market_type_name: '골목상권', business_code: 'CS100001', business_name: '한식음식점', amount: 900000000, count: 30000},
+    {area_code: '3002', area_name: 'B상권', market_type_name: '발달상권', business_code: 'CS100001', business_name: '한식음식점', amount: 600000000, count: 20000},
+    {area_code: '3003', area_name: 'C상권', market_type_name: '골목상권', business_code: 'CS100002', business_name: '중식음식점', amount: 700000000, count: 10000}
+  ],
+  [
+    {area_code: '3001', business_code: 'CS100001', store_count: 30},
+    {area_code: '3002', business_code: 'CS100001', store_count: 10}
+  ],
+  {code: 'CS100001', label: '한식음식점'},
+  '상권',
+  2
+), [
+  {scope: '상권', area_code: '3002', area_name: 'B상권', market_type_name: '발달상권', amount: 600000000, stores: 10, monthly_sales_per_store: 20000000, customer_unit_price: 30000},
+  {scope: '상권', area_code: '3001', area_name: 'A상권', market_type_name: '골목상권', amount: 900000000, stores: 30, monthly_sales_per_store: 10000000, customer_unit_price: 30000}
+]);
 
 console.log('build_commercial_view_data test ok');

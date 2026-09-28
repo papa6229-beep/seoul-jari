@@ -140,6 +140,34 @@ function summarizeReferenceSales(salesRows, storeRows, type, scope = '서울시'
   };
 }
 
+function summarizeTopMarkets(salesRows, storeRows, type, scope = '상권', limit = 5){
+  const storesByArea = new Map(
+    rows({rows: storeRows})
+      .filter(item => matchesType(item, type))
+      .map(item => [String(item.area_code || ''), item])
+  );
+  return rows({rows: salesRows})
+    .filter(item => matchesType(item, type))
+    .map(item => {
+      const store = storesByArea.get(String(item.area_code || '')) || {};
+      const stores = store.store_count || 0;
+      if (!item.amount || !stores) return null;
+      return {
+        scope,
+        area_code: item.area_code,
+        area_name: item.area_name,
+        market_type_name: item.market_type_name || null,
+        amount: item.amount,
+        stores,
+        monthly_sales_per_store: Math.round(item.amount / stores / 3),
+        customer_unit_price: item.amount && item.count ? Math.round(item.amount / item.count) : null
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b.monthly_sales_per_store || 0) - (a.monthly_sales_per_store || 0))
+    .slice(0, limit);
+}
+
 function compact(){
   const codes = readJson('admin-dong-codes.json');
   const floating = readJson('commercial-floating-population-dong.json');
@@ -155,6 +183,10 @@ function compact(){
   const signguStores = readJsonOptional('commercial-stores-signgu.json');
   const megaSales = readJsonOptional('commercial-sales-mega.json');
   const megaStores = readJsonOptional('commercial-stores-mega.json');
+  const trdarSales = readJsonOptional('commercial-sales-trdar.json');
+  const trdarStores = readJsonOptional('commercial-stores-trdar.json');
+  const trdhlSales = readJsonOptional('commercial-sales-trdhl.json');
+  const trdhlStores = readJsonOptional('commercial-stores-trdhl.json');
 
   const businessTypesById = new Map(Object.keys(GROUP_BIZ).map(key => [key, {
     id: key,
@@ -285,7 +317,14 @@ function compact(){
 
   const enrichedBusinessTypes = Array.from(businessTypesById.values()).map(type => {
     const referenceSales = summarizeReferenceSales(rows(megaSales), rows(megaStores), type, '서울시');
-    return referenceSales ? {...type, reference_sales: referenceSales} : type;
+    const topMarkets = summarizeTopMarkets(rows(trdarSales), rows(trdarStores), type, '상권');
+    const topHinterlands = summarizeTopMarkets(rows(trdhlSales), rows(trdhlStores), type, '상권배후지');
+    return {
+      ...type,
+      ...(referenceSales ? {reference_sales: referenceSales} : {}),
+      ...(topMarkets.length ? {top_markets: topMarkets} : {}),
+      ...(topHinterlands.length ? {top_hinterlands: topHinterlands} : {})
+    };
   });
 
   const payload = {
@@ -306,4 +345,4 @@ function compact(){
 
 if (require.main === module) compact();
 
-module.exports = {BIZ: GROUP_BIZ, compact, summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales};
+module.exports = {BIZ: GROUP_BIZ, compact, summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales, summarizeTopMarkets};
