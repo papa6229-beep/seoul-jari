@@ -122,9 +122,10 @@ function matchesType(item, type){
   return words.length > 0 && words.some(word => name.includes(word));
 }
 
-function summarizeReferenceSales(salesRows, storeRows, type, scope = '서울시'){
-  const matchedSales = rows({rows: salesRows}).filter(item => matchesType(item, type));
-  const matchedStores = rows({rows: storeRows}).filter(item => matchesType(item, type));
+function summarizeReferenceSales(salesRows, storeRows, type, scope = '서울시', areaCode = null){
+  const areaMatches = item => !areaCode || String(item.area_code || '') === String(areaCode);
+  const matchedSales = rows({rows: salesRows}).filter(item => areaMatches(item) && matchesType(item, type));
+  const matchedStores = rows({rows: storeRows}).filter(item => areaMatches(item) && matchesType(item, type));
   const amount = addNumbers(...matchedSales.map(item => item.amount));
   const count = addNumbers(...matchedSales.map(item => item.count));
   const stores = addNumbers(...matchedStores.map(item => item.store_count));
@@ -150,6 +151,8 @@ function compact(){
   const changeIndex = readJsonOptional('commercial-change-index-dong.json');
   const apartments = readJsonOptional('commercial-apartment-dong.json');
   const facilities = readJsonOptional('commercial-facility-dong.json');
+  const signguSales = readJsonOptional('commercial-sales-signgu.json');
+  const signguStores = readJsonOptional('commercial-stores-signgu.json');
   const megaSales = readJsonOptional('commercial-sales-mega.json');
   const megaStores = readJsonOptional('commercial-stores-mega.json');
 
@@ -268,6 +271,15 @@ function compact(){
         business_name: item.business_name,
         store_count: item.store_count || 0
       }, 'store_count');
+    }
+  }
+
+  for (const row of byCode.values()){
+    for (const type of businessTypesById.values()){
+      const bucket = row.biz[type.id];
+      if (!bucket) continue;
+      const referenceSales = summarizeReferenceSales(rows(signguSales), rows(signguStores), type, '자치구', row.code.slice(0, 5));
+      if (referenceSales) bucket.reference_sales = referenceSales;
     }
   }
 

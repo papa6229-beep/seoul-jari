@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=77">
+<link rel="stylesheet" href="styles.css?v=78">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '77';
+  var PAGE_V = '78';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -70,7 +70,7 @@
 </div>
 
 <script>
-const V = '77';
+const V = '78';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -174,7 +174,8 @@ function hasMapData(){
 }
 
 function salesMissingText(){
-  const ref = BIZ[state.biz] && BIZ[state.biz].reference_sales;
+  const picked = ROWS.find(r => r.code === state.picked);
+  const ref = (picked && picked.reference_sales) || (BIZ[state.biz] && BIZ[state.biz].reference_sales);
   if (ref && ref.monthly_sales_per_store){
     return '행정동 매출은 없지만 ' + ref.scope + ' 기준 점포 1곳 참고 월매출은 ' + money(ref.monthly_sales_per_store) + '입니다. 후보 비교는 점포 수·수요·지도 중심으로 봅니다.';
   }
@@ -326,7 +327,8 @@ function buildRows(){
       facilities: src.facilities || null,
       demand_raw: demand,
       sales_items: biz.sales_items || [],
-      store_items: biz.store_items || []
+      store_items: biz.store_items || [],
+      reference_sales: biz.reference_sales || null
     };
   });
 
@@ -754,6 +756,8 @@ function renderDetail(rows){
       '<div><p class="grp-title">매출</p><p class="basis-note">' + (salesOk ? period + ' 카드매출 자료를 월평균으로 바꿔 보여줍니다.' : salesMissingText()) + '</p>' +
         stat(BIZ[state.biz].label + ' 평균 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 업종 총매출 ÷ 3개월 ÷ 점포 수' : '이 업종은 추정매출 대신 점포·수요·지도 중심으로 판단') +
         stat('객단가', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '—', salesOk ? '분기 총매출 ÷ 결제건수' : '매출 자료가 없어 계산하지 않음') +
+        (!salesOk && r.reference_sales ? stat(r.reference_sales.scope + ' 참고 월매출', money(r.reference_sales.monthly_sales_per_store), '행정동 후보 순위에는 쓰지 않는 보조 참고값') : '') +
+        (!salesOk && r.reference_sales && r.reference_sales.customer_unit_price ? stat(r.reference_sales.scope + ' 참고 객단가', fmt(r.reference_sales.customer_unit_price) + '원', '권역 총매출 ÷ 결제건수') : '') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p><p class="basis-note">점포·프랜차이즈·개업·폐업은 ' + period + ' 상권분석서비스 집계 기준입니다.</p>' +
         stat(BIZ[state.biz].label + ' 점포', fmt(r.stores), '같은 행정동의 선택 업종 점포 수') +

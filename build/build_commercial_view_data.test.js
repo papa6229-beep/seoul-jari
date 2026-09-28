@@ -77,4 +77,26 @@ assert.deepStrictEqual(referenceSales, {
   customer_unit_price: 30000
 });
 
+const guReferenceSales = summarizeReferenceSales(
+  [
+    {area_code: '11740', business_code: 'CS100001', business_name: '한식음식점', amount: 300000000, count: 15000},
+    {area_code: '11680', business_code: 'CS100001', business_name: '한식음식점', amount: 600000000, count: 30000}
+  ],
+  [
+    {area_code: '11740', business_code: 'CS100001', store_count: 10},
+    {area_code: '11680', business_code: 'CS100001', store_count: 20}
+  ],
+  {code: 'CS100001', label: '한식음식점'},
+  '자치구',
+  '11740'
+);
+assert.deepStrictEqual(guReferenceSales, {
+  scope: '자치구',
+  amount: 300000000,
+  count: 15000,
+  stores: 10,
+  monthly_sales_per_store: 10000000,
+  customer_unit_price: 20000
+});
+
 console.log('build_commercial_view_data test ok');
