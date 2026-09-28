@@ -74,7 +74,7 @@ button,select,input{font:inherit}
 .side h1{margin:0; font-size:19px; font-weight:600}
 .side .where{margin:4px 0 24px; font-size:13.5px; color:var(--ink-2)}
 
-.field{margin-bottom:20px}
+.field{margin-bottom:16px}
 .field > label, .field > .lbl{
   display:block; font-size:14px; font-weight:700; color:var(--ink); margin-bottom:8px;
 }
@@ -88,7 +88,7 @@ select.pick:focus{outline:2px solid var(--accent-soft); border-color:var(--accen
 }
 .search:focus{outline:2px solid var(--accent-soft); border-color:var(--accent)}
 .side-note{
-  margin:2px 0 0; border-top:1px dashed var(--line); padding-top:14px;
+  margin:2px 0 0; border-top:1px dashed var(--line); padding-top:12px;
   color:var(--ink-3); font-size:12.5px; line-height:1.55; word-break:keep-all;
 }
 .coverage-box{
@@ -137,8 +137,8 @@ select.add-col{
 }
 
 /* ---------- 오른쪽 ---------- */
-.main{min-width:0; padding:24px 28px 40px}
-.topbar{display:flex; align-items:baseline; gap:18px; flex-wrap:wrap; margin-bottom:6px}
+.main{min-width:0; padding:18px 28px 40px}
+.topbar{display:flex; justify-content:flex-end; align-items:center; gap:18px; flex-wrap:wrap; margin-bottom:8px}
 .topbar h2{margin:0; font-size:17px; font-weight:600}
 .topbar .basis{margin-left:auto; font-size:13px; color:var(--ink-3)}
 .explain{
@@ -241,6 +241,7 @@ select.add-col{
 .commercial-summary{
   display:grid; grid-template-columns:1.1fr 1.5fr .9fr; gap:12px; margin:8px 0 16px;
 }
+.commercial-summary:empty{display:none}
 .commercial-summary > div{
   border:1px solid var(--line); border-radius:10px; background:var(--surface); padding:14px 16px;
 }
@@ -309,11 +310,11 @@ select.add-col{
   gap:10px; align-items:center; padding:0 14px;
 }
 .commercial-head{
-  min-height:42px; color:var(--ink-3); font-size:12.5px; font-weight:800; background:#fbfaf7;
+  min-height:36px; color:var(--ink-3); font-size:12.5px; font-weight:800; background:#fbfaf7;
   border-bottom:1px solid var(--line);
 }
 .commercial-row{
-  width:100%; min-height:62px; border:0; border-bottom:1px solid #efede8; background:transparent;
+  width:100%; min-height:52px; border:0; border-bottom:1px solid #efede8; background:transparent;
   color:var(--ink); text-align:left; cursor:pointer;
 }
 .commercial-row:hover,.commercial-row.active{background:var(--accent-soft)}
@@ -323,12 +324,12 @@ select.add-col{
 .commercial-row .place small,.commercial-row span small{display:block; color:var(--ink-3); font-size:12px; font-weight:600}
 .commercial-row span b{font-size:15.5px; font-variant-numeric:tabular-nums}
 .detail-tabs{
-  display:flex; gap:0; margin:16px 0 0; border:1px solid var(--line); border-bottom:0;
+  display:flex; gap:0; margin:0; border:1px solid var(--line); border-bottom:0;
   border-radius:10px 10px 0 0; overflow:hidden; background:#fbfaf7; width:max-content; max-width:100%;
 }
 .detail-tabs button{
   min-width:96px; border:0; border-right:1px solid var(--line); background:transparent;
-  padding:10px 14px; cursor:pointer; color:var(--ink-2); font-weight:800;
+  padding:9px 14px; cursor:pointer; color:var(--ink-2); font-weight:800;
 }
 .detail-tabs button:last-child{border-right:0}
 .detail-tabs button[aria-pressed="true"]{background:var(--accent); color:#fff}

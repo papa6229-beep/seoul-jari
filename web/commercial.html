@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=80">
+<link rel="stylesheet" href="styles.css?v=81">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '80';
+  var PAGE_V = '81';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -30,16 +30,22 @@
     <p class="where">행정동 기준 · 상권분석서비스 자동갱신 데이터</p>
 
     <div class="field">
-      <label for="biz">업종</label>
-      <select class="pick" id="biz">
-        <option value="cafe">개인 카페</option>
+      <label for="dongPick">행정동 선택</label>
+      <select class="pick" id="dongPick">
+        <option value="">전체 행정동</option>
       </select>
     </div>
 
     <div class="field">
       <label for="q">행정동 검색</label>
       <input class="search" id="q" type="search" placeholder="예: 성수, 잠실7동, 강남구">
-      <small class="qhint">행정동 자료라 기존 입지 분석의 법정동 화면과 따로 봅니다.</small>
+    </div>
+
+    <div class="field">
+      <label for="biz">업종</label>
+      <select class="pick" id="biz">
+        <option value="cafe">개인 카페</option>
+      </select>
     </div>
 
     <div class="field">
@@ -48,21 +54,18 @@
       <small class="qhint" id="sortHelp"></small>
     </div>
 
-    <div class="coverage-box" id="coverageBox"></div>
-    <p class="side-note">상위 10개 후보만 보여줍니다. 행을 누르면 아래 탭에서 자세히 볼 수 있습니다.</p>
+    <p class="side-note">상위 10개 후보만 표시합니다. 행을 누르면 상세 기준이 바뀝니다.</p>
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <h2 id="title">행정동 상권 신호</h2>
-      <span class="basis" id="basis">공공데이터 기반 참고 정보</span>
       <details class="dates" data-dates><summary>자료 기준일</summary></details>
     </div>
 
     <div class="commercial-summary compact" id="summary"></div>
     <div class="commercial-alert" id="alert" hidden></div>
-    <section class="commercial-table" id="table"></section>
     <nav class="detail-tabs" id="detailTabs"></nav>
+    <section class="commercial-table" id="table"></section>
     <section class="detail commercial-detail" id="detail"></section>
 
     <p class="note">이 화면은 후보지를 좁히는 참고용입니다. 임대차 계약, 창업, 투자 판단은 현장 조사와 전문가 검토가 필요합니다.</p>
@@ -70,7 +73,7 @@
 </div>
 
 <script>
-const V = '80';
+const V = '81';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -112,7 +115,7 @@ const BIZ = {
 
 const state = {
   biz: new URLSearchParams(location.search).get('biz') || 'cafe',
-  q: '', sort: 'sales_per_store_month', picked: '', tab: 'summary',
+  dong: '', q: '', sort: 'sales_per_store_month', picked: '', tab: 'summary',
   show: {business: true, school: false, academy: false, apartment: true, shop: true}
 };
 const DATA = {};
@@ -232,6 +235,7 @@ function coverageClass(cov){
 }
 
 function renderCoverageBox(){
+  if (typeof coverageBox === 'undefined' || !coverageBox) return;
   const cov = coverageFor();
   const parts = cov ? [
     cov.has_sales ? '매출 ' + fmt(cov.sales_dongs) + '개 동' : '매출 없음',
@@ -288,6 +292,17 @@ function applyBusinessTypes(){
     return '<optgroup label="' + escapeHtml(group) + '">' + options + '</optgroup>';
   }).join('');
   if (!BIZ[state.biz]) state.biz = 'cafe';
+}
+
+function applyDongOptions(){
+  const select = document.getElementById('dongPick');
+  if (!select || !DATA.view || !Array.isArray(DATA.view.rows)) return;
+  select.innerHTML = '<option value="">전체 행정동</option>' + DATA.view.rows
+    .slice()
+    .sort((a, b) => (a.gu + a.name).localeCompare(b.gu + b.name, 'ko'))
+    .map(row => '<option value="' + escapeHtml(row.code) + '">' + escapeHtml(row.gu + ' ' + row.name) + '</option>')
+    .join('');
+  select.value = state.dong || '';
 }
 
 async function loadJson(name){
@@ -502,6 +517,7 @@ function facilityTone(r){
 function filteredRows(){
   const q = state.q.trim();
   let out = ROWS;
+  if (state.dong) out = out.filter(r => r.code === state.dong);
   if (q) out = out.filter(r => (r.full_name + ' ' + r.gu + ' ' + r.name).includes(q));
   out = out.filter(r => r.score || r.sales || r.stores || r.floating || r.workers || r.residents);
   const key = state.sort;
@@ -915,15 +931,15 @@ function renderDetail(rows){
 function render(){
   syncSegments();
   biz.value = state.biz;
+  dongPick.value = state.dong || '';
   q.value = state.q;
-  renderCoverageBox();
   const rows = filteredRows();
   const currentSort = SORTS.find(it => it.k === state.sort) || SORTS[0];
   sortHelp.textContent = !hasSalesData() && currentSort.k === 'stores'
     ? salesMissingText() + ' 지금은 점포 수 기준으로 보여줍니다.'
     : currentSort.help;
-  basis.textContent = '상권분석서비스 행정동 기준 · ' + BIZ[state.biz].label;
-  renderSummary(rows);
+  document.querySelectorAll('.commercial-insight').forEach(el => el.remove());
+  summary.innerHTML = '';
   dataAlert();
   const list = rows.slice(0, 10);
   table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>월매출/참고</span><span>점포 수</span><span>수요 타입</span><span>종합</span></div>' +
@@ -936,6 +952,7 @@ function render(){
 
 sortPick.innerHTML = SORTS.map(it => '<option value="' + it.k + '">' + it.l + '</option>').join('');
 sortPick.onchange = e => { state.sort = e.target.value; state.picked = ''; render(); };
+dongPick.onchange = e => { state.dong = e.target.value; state.q = ''; state.picked = e.target.value; render(); };
 biz.onchange = e => {
   state.biz = e.target.value;
   state.picked = '';
@@ -954,6 +971,7 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
     return;
   }
   applyBusinessTypes();
+  applyDongOptions();
   buildRows();
   render();
 });
