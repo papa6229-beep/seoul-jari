@@ -1,6 +1,6 @@
 {
   "title": "상권 업종별 데이터 커버리지",
-  "generated_at": "2026-09-28T02:20:59.965Z",
+  "generated_at": "2026-09-28T03:01:59.313Z",
   "quarter": "20262",
   "rows": 427,
   "summary": {
@@ -24,7 +24,10 @@
       "sales_total": 1234986655756,
       "store_total": 28552,
       "map_dongs": 427,
-      "map_points": 26554
+      "map_points": 26554,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "food",
@@ -39,7 +42,10 @@
       "sales_total": 5531772368941,
       "store_total": 81600,
       "map_dongs": 427,
-      "map_points": 14717
+      "map_points": 14717,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "fitness",
@@ -54,7 +60,10 @@
       "sales_total": 219038591521,
       "store_total": 13901,
       "map_dongs": 427,
-      "map_points": 9264
+      "map_points": 9264,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "academy",
@@ -69,7 +78,10 @@
       "sales_total": 1141057296653,
       "store_total": 36182,
       "map_dongs": 427,
-      "map_points": 40331
+      "map_points": 40331,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "unmanned",
@@ -84,7 +96,10 @@
       "sales_total": 2511124163064,
       "store_total": 20877,
       "map_dongs": 370,
-      "map_points": 1371
+      "map_points": 1371,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300031",
@@ -99,7 +114,10 @@
       "sales_total": 162962542090,
       "store_total": 3255,
       "map_dongs": 340,
-      "map_points": 1500
+      "map_points": 1500,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300015",
@@ -114,7 +132,10 @@
       "sales_total": 51244907741,
       "store_total": 2894,
       "map_dongs": 316,
-      "map_points": 1550
+      "map_points": 1550,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300032",
@@ -129,7 +150,10 @@
       "sales_total": 277875338238,
       "store_total": 2445,
       "map_dongs": 403,
-      "map_points": 3963
+      "map_points": 3963,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200032",
@@ -144,7 +168,10 @@
       "sales_total": 10248374178,
       "store_total": 3091,
       "map_dongs": 403,
-      "map_points": 3963
+      "map_points": 3963,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200047",
@@ -159,7 +186,10 @@
       "sales_total": 0,
       "store_total": 975,
       "map_dongs": 277,
-      "map_points": 795
+      "map_points": 795,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200043",
@@ -174,7 +204,10 @@
       "sales_total": 0,
       "store_total": 5343,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "점포 집계 있음 · 지도핀 부족",
+      "recommended_action": "공공 매출과 실제 위치 좌표가 부족합니다. 우선 점포 수와 수요만 참고하도록 표시합니다."
     },
     {
       "id": "svc_CS200035",
@@ -189,7 +222,10 @@
       "sales_total": 0,
       "store_total": 1335,
       "map_dongs": 80,
-      "map_points": 273
+      "map_points": 273,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200036",
@@ -204,7 +240,10 @@
       "sales_total": 109416824,
       "store_total": 122,
       "map_dongs": 324,
-      "map_points": 3102
+      "map_points": 3102,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200017",
@@ -219,7 +258,10 @@
       "sales_total": 52074189277,
       "store_total": 1812,
       "map_dongs": 358,
-      "map_points": 1491
+      "map_points": 1491,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200013",
@@ -234,7 +276,10 @@
       "sales_total": 0,
       "store_total": 2292,
       "map_dongs": 289,
-      "map_points": 2193
+      "map_points": 2193,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200021",
@@ -249,7 +294,10 @@
       "sales_total": 0,
       "store_total": 1140,
       "map_dongs": 279,
-      "map_points": 1067
+      "map_points": 1067,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200029",
@@ -264,7 +312,10 @@
       "sales_total": 14569050063,
       "store_total": 4151,
       "map_dongs": 418,
-      "map_points": 4839
+      "map_points": 4839,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200037",
@@ -279,7 +330,10 @@
       "sales_total": 106210792180,
       "store_total": 5223,
       "map_dongs": 391,
-      "map_points": 5086
+      "map_points": 5086,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200040",
@@ -294,7 +348,10 @@
       "sales_total": 0,
       "store_total": 1063,
       "map_dongs": 2,
-      "map_points": 2
+      "map_points": 2,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200016",
@@ -309,7 +366,10 @@
       "sales_total": 36308696784,
       "store_total": 3627,
       "map_dongs": 375,
-      "map_points": 1975
+      "map_points": 1975,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200038",
@@ -324,7 +384,10 @@
       "sales_total": 0,
       "store_total": 3032,
       "map_dongs": 393,
-      "map_points": 2742
+      "map_points": 2742,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200009",
@@ -339,7 +402,10 @@
       "sales_total": 0,
       "store_total": 1044,
       "map_dongs": 346,
-      "map_points": 913
+      "map_points": 913,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300039",
@@ -354,7 +420,10 @@
       "sales_total": 0,
       "store_total": 789,
       "map_dongs": 213,
-      "map_points": 427
+      "map_points": 427,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200027",
@@ -369,7 +438,10 @@
       "sales_total": 0,
       "store_total": 652,
       "map_dongs": 311,
-      "map_points": 978
+      "map_points": 978,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300021",
@@ -384,7 +456,10 @@
       "sales_total": 288615181923,
       "store_total": 3976,
       "map_dongs": 390,
-      "map_points": 1719
+      "map_points": 1719,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300006",
@@ -399,7 +474,10 @@
       "sales_total": 116637041516,
       "store_total": 2757,
       "map_dongs": 1,
-      "map_points": 1
+      "map_points": 1,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200028",
@@ -414,7 +492,10 @@
       "sales_total": 274918597378,
       "store_total": 20339,
       "map_dongs": 427,
-      "map_points": 20194
+      "map_points": 20194,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300023",
@@ -429,7 +510,10 @@
       "sales_total": 0,
       "store_total": 1486,
       "map_dongs": 26,
-      "map_points": 29
+      "map_points": 29,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300010",
@@ -444,7 +528,10 @@
       "sales_total": 931901019408,
       "store_total": 9420,
       "map_dongs": 32,
-      "map_points": 36
+      "map_points": 36,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200012",
@@ -459,7 +546,10 @@
       "sales_total": 0,
       "store_total": 2516,
       "map_dongs": 164,
-      "map_points": 756
+      "map_points": 756,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200011",
@@ -474,7 +564,10 @@
       "sales_total": 0,
       "store_total": 933,
       "map_dongs": 2,
-      "map_points": 2
+      "map_points": 2,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200010",
@@ -489,7 +582,10 @@
       "sales_total": 0,
       "store_total": 4679,
       "map_dongs": 11,
-      "map_points": 40
+      "map_points": 40,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200022",
@@ -504,7 +600,10 @@
       "sales_total": 0,
       "store_total": 1046,
       "map_dongs": 164,
-      "map_points": 227
+      "map_points": 227,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200018",
@@ -519,7 +618,10 @@
       "sales_total": 0,
       "store_total": 135,
       "map_dongs": 86,
-      "map_points": 120
+      "map_points": 120,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200033",
@@ -534,7 +636,10 @@
       "sales_total": 7340973881,
       "store_total": 35613,
       "map_dongs": 5,
-      "map_points": 5
+      "map_points": 5,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS100008",
@@ -549,7 +654,10 @@
       "sales_total": 312871235562,
       "store_total": 8897,
       "map_dongs": 427,
-      "map_points": 8152
+      "map_points": 8152,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200045",
@@ -564,7 +672,10 @@
       "sales_total": 0,
       "store_total": 207,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "점포 집계 있음 · 지도핀 부족",
+      "recommended_action": "공공 매출과 실제 위치 좌표가 부족합니다. 우선 점포 수와 수요만 참고하도록 표시합니다."
     },
     {
       "id": "svc_CS200041",
@@ -579,7 +690,10 @@
       "sales_total": 0,
       "store_total": 6658,
       "map_dongs": 238,
-      "map_points": 469
+      "map_points": 469,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300020",
@@ -594,7 +708,10 @@
       "sales_total": 113276756471,
       "store_total": 3990,
       "map_dongs": 381,
-      "map_points": 1680
+      "map_points": 1680,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300027",
@@ -609,7 +726,10 @@
       "sales_total": 32984521293,
       "store_total": 3344,
       "map_dongs": 225,
-      "map_points": 653
+      "map_points": 653,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200015",
@@ -624,7 +744,10 @@
       "sales_total": 0,
       "store_total": 7557,
       "map_dongs": 87,
-      "map_points": 161
+      "map_points": 161,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200031",
@@ -639,7 +762,10 @@
       "sales_total": 49656840653,
       "store_total": 5030,
       "map_dongs": 427,
-      "map_points": 3876
+      "map_points": 3876,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300008",
@@ -654,7 +780,10 @@
       "sales_total": 957190549782,
       "store_total": 4902,
       "map_dongs": 252,
-      "map_points": 1162
+      "map_points": 1162,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300001",
@@ -669,7 +798,10 @@
       "sales_total": 1122659230970,
       "store_total": 9415,
       "map_dongs": 427,
-      "map_points": 8359
+      "map_points": 8359,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200005",
@@ -684,7 +816,10 @@
       "sales_total": 118005438530,
       "store_total": 8814,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "매출·점포 있음 · 지도핀 부족",
+      "recommended_action": "매출 분석은 가능하지만 실제 상호 위치가 부족합니다. 지도 데이터 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200024",
@@ -699,7 +834,10 @@
       "sales_total": 101033152991,
       "store_total": 5087,
       "map_dongs": 57,
-      "map_points": 65
+      "map_points": 65,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300017",
@@ -714,7 +852,10 @@
       "sales_total": 290980769054,
       "store_total": 5669,
       "map_dongs": 380,
-      "map_points": 2068
+      "map_points": 2068,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300014",
@@ -729,7 +870,10 @@
       "sales_total": 123494753159,
       "store_total": 3908,
       "map_dongs": 425,
-      "map_points": 22838
+      "map_points": 22838,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300034",
@@ -744,7 +888,10 @@
       "sales_total": 0,
       "store_total": 783,
       "map_dongs": 204,
-      "map_points": 727
+      "map_points": 727,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300016",
@@ -759,7 +906,10 @@
       "sales_total": 134227347576,
       "store_total": 2038,
       "map_dongs": 406,
-      "map_points": 2735
+      "map_points": 2735,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300029",
@@ -774,7 +924,10 @@
       "sales_total": 12763076271,
       "store_total": 2533,
       "map_dongs": 379,
-      "map_points": 1580
+      "map_points": 1580,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS100004",
@@ -789,7 +942,10 @@
       "sales_total": 342486992691,
       "store_total": 7689,
       "map_dongs": 418,
-      "map_points": 7451
+      "map_points": 7451,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200034",
@@ -804,7 +960,10 @@
       "sales_total": 52314031109,
       "store_total": 3281,
       "map_dongs": 285,
-      "map_points": 2088
+      "map_points": 2088,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200044",
@@ -819,7 +978,10 @@
       "sales_total": 0,
       "store_total": 6558,
       "map_dongs": 387,
-      "map_points": 5203
+      "map_points": 5203,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300041",
@@ -834,7 +996,10 @@
       "sales_total": 0,
       "store_total": 2334,
       "map_dongs": 292,
-      "map_points": 1893
+      "map_points": 1893,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200003",
@@ -849,7 +1014,10 @@
       "sales_total": 146488168677,
       "store_total": 9723,
       "map_dongs": 338,
-      "map_points": 1214
+      "map_points": 1214,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300026",
@@ -864,7 +1032,10 @@
       "sales_total": 27430555283,
       "store_total": 1127,
       "map_dongs": 9,
-      "map_points": 9
+      "map_points": 9,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200002",
@@ -879,7 +1050,10 @@
       "sales_total": 73441071435,
       "store_total": 2758,
       "map_dongs": 351,
-      "map_points": 1639
+      "map_points": 1639,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300024",
@@ -894,7 +1068,10 @@
       "sales_total": 217866881265,
       "store_total": 3859,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "매출·점포 있음 · 지도핀 부족",
+      "recommended_action": "매출 분석은 가능하지만 실제 상호 위치가 부족합니다. 지도 데이터 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300013",
@@ -909,7 +1086,10 @@
       "sales_total": 0,
       "store_total": 1525,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "점포 집계 있음 · 지도핀 부족",
+      "recommended_action": "공공 매출과 실제 위치 좌표가 부족합니다. 우선 점포 수와 수요만 참고하도록 표시합니다."
     },
     {
       "id": "svc_CS300007",
@@ -924,7 +1104,10 @@
       "sales_total": 757917360191,
       "store_total": 6761,
       "map_dongs": 425,
-      "map_points": 10983
+      "map_points": 10983,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300019",
@@ -939,7 +1122,10 @@
       "sales_total": 245789964072,
       "store_total": 3628,
       "map_dongs": 354,
-      "map_points": 1421
+      "map_points": 1421,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200046",
@@ -954,7 +1140,10 @@
       "sales_total": 0,
       "store_total": 540,
       "map_dongs": 137,
-      "map_points": 474
+      "map_points": 474,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300018",
@@ -969,7 +1158,10 @@
       "sales_total": 1738248730716,
       "store_total": 8585,
       "map_dongs": 422,
-      "map_points": 5830
+      "map_points": 5830,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300035",
@@ -984,7 +1176,10 @@
       "sales_total": 71787428447,
       "store_total": 4250,
       "map_dongs": 421,
-      "map_points": 6168
+      "map_points": 6168,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200001",
@@ -999,7 +1194,10 @@
       "sales_total": 921128056541,
       "store_total": 23329,
       "map_dongs": 133,
-      "map_points": 235
+      "map_points": 235,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300011",
@@ -1014,7 +1212,10 @@
       "sales_total": 1921794444657,
       "store_total": 45016,
       "map_dongs": 425,
-      "map_points": 19381
+      "map_points": 19381,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200006",
@@ -1029,7 +1230,10 @@
       "sales_total": 2012205727911,
       "store_total": 11755,
       "map_dongs": 424,
-      "map_points": 9446
+      "map_points": 9446,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS100003",
@@ -1044,7 +1248,10 @@
       "sales_total": 275412915693,
       "store_total": 5455,
       "map_dongs": 406,
-      "map_points": 7718
+      "map_points": 7718,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200026",
@@ -1059,7 +1266,10 @@
       "sales_total": 13988234693,
       "store_total": 1622,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "매출·점포 있음 · 지도핀 부족",
+      "recommended_action": "매출 분석은 가능하지만 실제 상호 위치가 부족합니다. 지도 데이터 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300038",
@@ -1074,7 +1284,10 @@
       "sales_total": 0,
       "store_total": 3395,
       "map_dongs": 270,
-      "map_points": 902
+      "map_points": 902,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200025",
@@ -1089,7 +1302,10 @@
       "sales_total": 287786633588,
       "store_total": 4041,
       "map_dongs": 411,
-      "map_points": 6559
+      "map_points": 6559,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300025",
@@ -1104,7 +1320,10 @@
       "sales_total": 33749421250,
       "store_total": 787,
       "map_dongs": 243,
-      "map_points": 462
+      "map_points": 462,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300040",
@@ -1119,7 +1338,10 @@
       "sales_total": 0,
       "store_total": 1140,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "점포 집계 있음 · 지도핀 부족",
+      "recommended_action": "공공 매출과 실제 위치 좌표가 부족합니다. 우선 점포 수와 수요만 참고하도록 표시합니다."
     },
     {
       "id": "svc_CS200020",
@@ -1134,7 +1356,10 @@
       "sales_total": 0,
       "store_total": 194,
       "map_dongs": 214,
-      "map_points": 564
+      "map_points": 564,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300043",
@@ -1149,7 +1374,10 @@
       "sales_total": 31615496467,
       "store_total": 17108,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "매출·점포 있음 · 지도핀 부족",
+      "recommended_action": "매출 분석은 가능하지만 실제 상호 위치가 부족합니다. 지도 데이터 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS100005",
@@ -1164,7 +1392,10 @@
       "sales_total": 268967039810,
       "store_total": 5372,
       "map_dongs": 422,
-      "map_points": 5804
+      "map_points": 5804,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300036",
@@ -1179,7 +1410,10 @@
       "sales_total": 410410678159,
       "store_total": 10672,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "매출·점포 있음 · 지도핀 부족",
+      "recommended_action": "매출 분석은 가능하지만 실제 상호 위치가 부족합니다. 지도 데이터 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300005",
@@ -1194,7 +1428,10 @@
       "sales_total": 0,
       "store_total": 833,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "점포 집계 있음 · 지도핀 부족",
+      "recommended_action": "공공 매출과 실제 위치 좌표가 부족합니다. 우선 점포 수와 수요만 참고하도록 표시합니다."
     },
     {
       "id": "svc_CS300042",
@@ -1209,7 +1446,10 @@
       "sales_total": 0,
       "store_total": 935,
       "map_dongs": 256,
-      "map_points": 621
+      "map_points": 621,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300030",
@@ -1224,7 +1464,10 @@
       "sales_total": 0,
       "store_total": 146,
       "map_dongs": 67,
-      "map_points": 125
+      "map_points": 125,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS300037",
@@ -1239,7 +1482,10 @@
       "sales_total": 0,
       "store_total": 856,
       "map_dongs": 11,
-      "map_points": 11
+      "map_points": 11,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS100002",
@@ -1254,7 +1500,10 @@
       "sales_total": 274451316543,
       "store_total": 5342,
       "map_dongs": 418,
-      "map_points": 5780
+      "map_points": 5780,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300033",
@@ -1269,7 +1518,10 @@
       "sales_total": 46529207703,
       "store_total": 2281,
       "map_dongs": 29,
-      "map_points": 31
+      "map_points": 31,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300009",
@@ -1284,7 +1536,10 @@
       "sales_total": 1219983349763,
       "store_total": 8612,
       "map_dongs": 1,
-      "map_points": 1
+      "map_points": 1,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200007",
@@ -1299,7 +1554,10 @@
       "sales_total": 577235682508,
       "store_total": 4911,
       "map_dongs": 422,
-      "map_points": 4452
+      "map_points": 4452,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS100007",
@@ -1314,7 +1572,10 @@
       "sales_total": 115783728911,
       "store_total": 2069,
       "map_dongs": 425,
-      "map_points": 5991
+      "map_points": 5991,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS100010",
@@ -1329,7 +1590,10 @@
       "sales_total": 776132941373,
       "store_total": 20384,
       "map_dongs": 427,
-      "map_points": 20071
+      "map_points": 20071,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300003",
@@ -1344,7 +1608,10 @@
       "sales_total": 543332132392,
       "store_total": 8863,
       "map_dongs": 315,
-      "map_points": 1409
+      "map_points": 1409,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200004",
@@ -1359,7 +1626,10 @@
       "sales_total": 0,
       "store_total": 372,
       "map_dongs": 147,
-      "map_points": 293
+      "map_points": 293,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200042",
@@ -1374,7 +1644,10 @@
       "sales_total": 0,
       "store_total": 2000,
       "map_dongs": 42,
-      "map_points": 51
+      "map_points": 51,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200023",
@@ -1389,7 +1662,10 @@
       "sales_total": 0,
       "store_total": 554,
       "map_dongs": 409,
-      "map_points": 3756
+      "map_points": 3756,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS100006",
@@ -1404,7 +1680,10 @@
       "sales_total": 189886674573,
       "store_total": 2796,
       "map_dongs": 1,
-      "map_points": 1
+      "map_points": 1,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300002",
@@ -1419,7 +1698,10 @@
       "sales_total": 1050192909518,
       "store_total": 2456,
       "map_dongs": 427,
-      "map_points": 9508
+      "map_points": 9508,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200030",
@@ -1434,7 +1716,10 @@
       "sales_total": 66240462216,
       "store_total": 10406,
       "map_dongs": 418,
-      "map_points": 6773
+      "map_points": 6773,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300012",
@@ -1449,7 +1734,10 @@
       "sales_total": 0,
       "store_total": 357,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "점포 집계 있음 · 지도핀 부족",
+      "recommended_action": "공공 매출과 실제 위치 좌표가 부족합니다. 우선 점포 수와 수요만 참고하도록 표시합니다."
     },
     {
       "id": "svc_CS100001",
@@ -1464,7 +1752,10 @@
       "sales_total": 4136663233879,
       "store_total": 51421,
       "map_dongs": 427,
-      "map_points": 48118
+      "map_points": 48118,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200008",
@@ -1479,7 +1770,10 @@
       "sales_total": 219833902442,
       "store_total": 3845,
       "map_dongs": 416,
-      "map_points": 3421
+      "map_points": 3421,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300004",
@@ -1494,7 +1788,10 @@
       "sales_total": 72511384347,
       "store_total": 6047,
       "map_dongs": 409,
-      "map_points": 4128
+      "map_points": 4128,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS100009",
@@ -1509,7 +1806,10 @@
       "sales_total": 729208646019,
       "store_total": 13493,
       "map_dongs": 299,
-      "map_points": 1243
+      "map_points": 1243,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300022",
@@ -1524,7 +1824,10 @@
       "sales_total": 309441661304,
       "store_total": 12926,
       "map_dongs": 426,
-      "map_points": 12563
+      "map_points": 12563,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS300028",
@@ -1539,7 +1842,10 @@
       "sales_total": 91596477969,
       "store_total": 6117,
       "map_dongs": 417,
-      "map_points": 3998
+      "map_points": 3998,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     },
     {
       "id": "svc_CS200014",
@@ -1554,7 +1860,10 @@
       "sales_total": 0,
       "store_total": 977,
       "map_dongs": 9,
-      "map_points": 10
+      "map_points": 10,
+      "coverage_level": "needs_private_sales",
+      "coverage_label": "공공 매출 없음 · 점포·지도 있음",
+      "recommended_action": "공공 매출은 미제공입니다. 점포·수요·지도 중심으로 보여주고, 민간 카드 매출 보강 후보로 표시합니다."
     },
     {
       "id": "svc_CS200039",
@@ -1569,7 +1878,10 @@
       "sales_total": 0,
       "store_total": 679,
       "map_dongs": 0,
-      "map_points": 0
+      "map_points": 0,
+      "coverage_level": "needs_map",
+      "coverage_label": "점포 집계 있음 · 지도핀 부족",
+      "recommended_action": "공공 매출과 실제 위치 좌표가 부족합니다. 우선 점포 수와 수요만 참고하도록 표시합니다."
     },
     {
       "id": "svc_CS200019",
@@ -1584,7 +1896,10 @@
       "sales_total": 59648489811,
       "store_total": 1012,
       "map_dongs": 345,
-      "map_points": 1134
+      "map_points": 1134,
+      "coverage_level": "complete",
+      "coverage_label": "매출·점포·지도 모두 있음",
+      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
     }
   ]
 }

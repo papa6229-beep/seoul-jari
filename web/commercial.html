@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=74">
+<link rel="stylesheet" href="styles.css?v=75">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '74';
+  var PAGE_V = '75';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -48,6 +48,7 @@
       <small class="qhint" id="sortHelp"></small>
     </div>
 
+    <div class="coverage-box" id="coverageBox"></div>
     <p class="side-note">상위 10개 후보만 보여줍니다. 행을 누르면 아래 탭에서 자세히 볼 수 있습니다.</p>
   </aside>
 
@@ -69,7 +70,7 @@
 </div>
 
 <script>
-const V = '74';
+const V = '75';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -176,6 +177,42 @@ function salesMissingText(){
   return '이 업종은 상권분석서비스 추정매출이 제공되지 않아 점포 수·수요·지도 중심으로 봅니다.';
 }
 
+function coverageLabel(cov){
+  if (!cov) return '자료 상태 확인 중';
+  return cov.coverage_label || [
+    cov.has_sales ? '매출 있음' : '매출 없음',
+    cov.has_stores ? '점포 있음' : '점포 없음',
+    cov.has_map_points ? '지도 있음' : '지도 없음'
+  ].join(' · ');
+}
+
+function coverageAction(cov){
+  if (!cov) return '업종별 자료 상태를 불러오는 중입니다.';
+  return cov.recommended_action || (cov.has_sales
+    ? '매출과 점포 데이터를 같이 볼 수 있습니다.'
+    : '공공 매출은 미제공입니다. 점포·수요·지도 중심으로 먼저 봅니다.');
+}
+
+function coverageClass(cov){
+  const level = cov && cov.coverage_level ? cov.coverage_level : 'limited';
+  return 'coverage-' + level;
+}
+
+function renderCoverageBox(){
+  const cov = coverageFor();
+  const parts = cov ? [
+    cov.has_sales ? '매출 ' + fmt(cov.sales_dongs) + '개 동' : '매출 없음',
+    cov.has_stores ? '점포 ' + fmt(cov.store_dongs) + '개 동' : '점포 없음',
+    cov.has_map_points ? '지도핀 ' + fmt(cov.map_points) + '개' : '지도핀 없음'
+  ] : ['자료 확인 중'];
+  coverageBox.className = 'coverage-box ' + coverageClass(cov);
+  coverageBox.innerHTML =
+    '<span>데이터 상태</span>' +
+    '<b>' + escapeHtml(coverageLabel(cov)) + '</b>' +
+    '<p>' + escapeHtml(parts.join(' · ')) + '</p>' +
+    '<small>' + escapeHtml(coverageAction(cov)) + '</small>';
+}
+
 function applyBusinessTypes(){
   const types = Array.isArray(DATA.view && DATA.view.business_types) ? DATA.view.business_types : [];
   for (const item of types){
@@ -200,7 +237,11 @@ function applyBusinessTypes(){
     byGroup.set('추천 업종', Object.keys(BIZ).map(id => ({id, label: BIZ[id].label})));
   }
   biz.innerHTML = groupOrder.concat([...byGroup.keys()].filter(g => !groupOrder.includes(g))).filter(g => byGroup.has(g)).map(group => {
-    const options = byGroup.get(group).map(item => '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.label) + '</option>').join('');
+    const options = byGroup.get(group).map(item => {
+      const cov = coverageFor(item.id);
+      const mark = cov && !cov.has_sales ? ' · 매출없음' : '';
+      return '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.label + mark) + '</option>';
+    }).join('');
     return '<optgroup label="' + escapeHtml(group) + '">' + options + '</optgroup>';
   }).join('');
   if (!BIZ[state.biz]) state.biz = 'cafe';
@@ -315,14 +356,13 @@ function renderSummary(rows){
   const card = (title, row, desc, cls) => row ? '<button type="button" class="insight-card ' + (cls || '') + '" data-pick="' + row.code + '">' +
     '<span>' + title + '</span><b>' + row.gu + ' ' + row.name + '</b><p>' + desc + '</p>' +
     '<small>' + (salesOk ? '평균 월매출 ' + money(row.sales_per_store_month) + ' · ' : '') + '점포 ' + fmt(row.stores) + '곳</small></button>' : '';
-  const status = [
+  const status = cov ? coverageLabel(cov) : [
     salesOk ? '매출자료 있음' : '매출자료 없음',
-    mapOk ? '지도핀 ' + fmt(cov && cov.map_points) + '개' : '지도핀 없음',
-    cov ? '점포집계 ' + fmt(cov.store_dongs) + '개 동' : ''
-  ].filter(Boolean);
+    mapOk ? '지도핀 ' + fmt(cov && cov.map_points) + '개' : '지도핀 없음'
+  ].filter(Boolean).join(' · ');
   summary.innerHTML =
     '<div><span>현재 기준</span><b>' + b.label + ' 입지 후보 보기</b><p>' + period + ' 상권분석서비스 자료입니다. ' + (salesOk ? '매출은 분기 자료를 3개월로 나눈 월평균 추정치입니다.' : salesMissingText()) + '</p></div>' +
-    '<div><span>자료 상태</span><b>' + status.join(' · ') + '</b><p>' + (mapOk ? '지도 탭에서 실제 상호명과 위치를 확인할 수 있습니다.' : '이 업종은 아직 지도 좌표 연결이 부족해 점포 집계 중심으로 봅니다.') + '</p></div>';
+    '<div><span>자료 상태</span><b>' + status + '</b><p>' + coverageAction(cov) + '</p></div>';
   const insight = document.createElement('section');
   insight.className = 'commercial-insight';
   insight.innerHTML =
@@ -748,6 +788,7 @@ function render(){
   syncSegments();
   biz.value = state.biz;
   q.value = state.q;
+  renderCoverageBox();
   const rows = filteredRows();
   const currentSort = SORTS.find(it => it.k === state.sort) || SORTS[0];
   sortHelp.textContent = !hasSalesData() && currentSort.k === 'stores'
@@ -789,6 +830,6 @@ Promise.all(Object.entries(FILES).map(([key, file]) =>
   render();
 });
 </script>
-<script src="dates.js?v=73"></script>
+<script src="dates.js?v=75"></script>
 </body>
 </html>
