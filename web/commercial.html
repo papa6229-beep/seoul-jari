@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=86">
+<link rel="stylesheet" href="styles.css?v=87">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '86';
+  var PAGE_V = '87';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '86';
+const V = '87';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -673,6 +673,27 @@ function markerCard(p){
   return '<b>' + p.n + '</b>' + sub.filter(Boolean).map(v => '<span>' + v + '</span>').join('');
 }
 
+function mapSelectionTitle(p){
+  if (!p) return '지도 핀을 눌러보세요';
+  if (p.t === 'b') return p.count > 1 ? '같은 위치 ' + p.members.length + '곳' : '선택한 가게';
+  if (p.t === 'p') return '선택한 아파트';
+  if (p.t === 'g') return '선택한 상가';
+  if (p.t === 'a') return '선택한 학원';
+  return '선택한 장소';
+}
+
+function setMapSelection(p){
+  const panel = document.getElementById('mapSelection');
+  if (!panel) return;
+  if (!p){
+    panel.innerHTML = '<span>선택한 장소</span><p>지도에서 핀을 누르면 상호명, 업종, 주소 같은 정보를 여기에서 볼 수 있습니다.</p>';
+    return;
+  }
+  panel.innerHTML =
+    '<span>' + escapeHtml(mapSelectionTitle(p)) + '</span>' +
+    '<div class="map-selected-body">' + markerCard(p) + '</div>';
+}
+
 function businessPoints(row){
   const all = DATA.stores && DATA.stores.points ? DATA.stores.points : {};
   const salesNote = row.sales_per_store_month
@@ -730,6 +751,7 @@ function drawCommercialMap(row, keepView){
         clearCommercialMap();
         const count = document.getElementById('mapcount');
         if (count) count.textContent = '표시할 핀이 없습니다';
+        setMapSelection(null);
         return;
       }
       const key = (data ? data.sido + '/' + data.gusi + '/' + data.dong : '') || row.gu + '/' + row.name;
@@ -741,10 +763,12 @@ function drawCommercialMap(row, keepView){
         commercialMap.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
         kakao.maps.event.addListener(commercialMap, 'click', () => {
           for (const el of box.querySelectorAll('.mk.open')) el.classList.remove('open');
+          setMapSelection(null);
         });
         box.dataset.built = '1';
       }
       clearCommercialMap();
+      setMapSelection(null);
       const bounds = new kakao.maps.LatLngBounds();
       for (const p of pts){
         const pos = new kakao.maps.LatLng(p.lat, p.lng);
@@ -754,13 +778,14 @@ function drawCommercialMap(row, keepView){
         if (p.count > 1) el.dataset.n = p.count;
         el.tabIndex = 0;
         el.setAttribute('aria-label', p.n || '지도 지점');
-        el.innerHTML = '<div class="card">' + markerCard(p) + '</div>';
+        el.innerHTML = '';
         const overlay = new kakao.maps.CustomOverlay({position: pos, content: el, yAnchor: 1, clickable: true, zIndex: 2});
         overlay.setMap(commercialMap);
         commercialOverlays.push(overlay);
         el.onclick = () => {
           for (const item of box.querySelectorAll('.mk.open')) item.classList.remove('open');
           el.classList.add('open');
+          setMapSelection(p);
         };
         el.onkeydown = ev => {
           if (ev.key === 'Enter' || ev.key === ' '){
@@ -904,7 +929,9 @@ function renderDetail(rows){
         mapToggle('apartment', '아파트', 'p3') +
         mapToggle('shop', '상가', 'g3') +
         '<span class="hint" id="mapcount"></span>' +
-      '</div></div>';
+      '</div>' +
+      '<aside class="map-selection" id="mapSelection"><span>선택한 장소</span><p>지도에서 핀을 누르면 상호명, 업종, 주소 같은 정보를 여기에서 볼 수 있습니다.</p></aside>' +
+    '</div>';
   const checksTab = nextChecks(r);
   const content = {summary: summaryTab, sales: salesTab, demand: demandTab, analysis: analysisTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;
   detailTabs.innerHTML = TABS.map(t => '<button type="button" aria-pressed="' + (state.tab === t.k) + '" data-tab="' + t.k + '">' + t.l + '</button>').join('');
