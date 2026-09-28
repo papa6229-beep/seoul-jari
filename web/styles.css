@@ -247,7 +247,7 @@ select.add-col{
 .commercial-summary span{display:block; color:var(--ink-3); font-size:13px; font-weight:700}
 .commercial-summary b{display:block; margin-top:2px; font-size:18px; color:var(--accent); word-break:keep-all}
 .commercial-summary p{margin:6px 0 0; color:var(--ink-2); font-size:13.5px; line-height:1.55; word-break:keep-all}
-.commercial-summary.compact{grid-template-columns:1fr 1.15fr; margin-bottom:12px}
+.commercial-summary.compact{grid-template-columns:1fr 1.15fr 1fr; margin-bottom:12px}
 .commercial-summary.compact > div{padding:12px 14px}
 .commercial-summary.compact b{font-size:16px}
 .commercial-summary.compact p{font-size:13px}
@@ -345,6 +345,12 @@ select.add-col{
 .commercial-lists li{padding:6px 0; border-bottom:1px dashed #e4e1da}
 .commercial-lists li b{font-weight:700}
 .commercial-lists li span{float:right; color:var(--accent); font-weight:800; font-variant-numeric:tabular-nums}
+.market-rank{margin:0; padding-left:20px}
+.market-rank li{padding:8px 0; border-bottom:1px dashed #e4e1da; line-height:1.35}
+.market-rank li:last-child{border-bottom:0}
+.market-rank b{display:block; font-size:14px; color:var(--ink); word-break:keep-all}
+.market-rank span{float:right; margin-left:10px; color:var(--accent); font-weight:800; font-variant-numeric:tabular-nums}
+.market-rank small{display:block; margin-top:3px; color:var(--ink-3); font-size:12px; word-break:keep-all}
 .commercial-checks{
   margin-top:22px; border-top:1px solid var(--line); padding-top:18px;
 }

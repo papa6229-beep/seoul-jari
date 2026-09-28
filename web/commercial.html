@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=78">
+<link rel="stylesheet" href="styles.css?v=79">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '78';
+  var PAGE_V = '79';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -70,7 +70,7 @@
 </div>
 
 <script>
-const V = '78';
+const V = '79';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -144,6 +144,11 @@ const money = n => {
   if (n >= 100000000) return (n / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
   return Math.round(n / 10000).toLocaleString('ko-KR') + '만원';
 };
+const shortMoney = n => {
+  if (!n) return '—';
+  if (n >= 100000000) return (n / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
+  return Math.round(n / 10000).toLocaleString('ko-KR') + '만';
+};
 const quarterLabel = q => {
   const v = String(q || '');
   return /^\d{5}$/.test(v) ? v.slice(0, 4) + '년 ' + v.slice(4) + '분기' : '최신 분기';
@@ -180,6 +185,27 @@ function salesMissingText(){
     return '행정동 매출은 없지만 ' + ref.scope + ' 기준 점포 1곳 참고 월매출은 ' + money(ref.monthly_sales_per_store) + '입니다. 후보 비교는 점포 수·수요·지도 중심으로 봅니다.';
   }
   return '이 업종은 행정동 추정매출이 제공되지 않아 점포 수·수요·지도 중심으로 봅니다.';
+}
+
+function referenceText(ref){
+  if (!ref || !ref.monthly_sales_per_store) return '';
+  return ref.scope + ' 기준 점포 1곳 참고 월매출 ' + money(ref.monthly_sales_per_store) +
+    (ref.customer_unit_price ? ', 참고 객단가 ' + fmt(ref.customer_unit_price) + '원' : '');
+}
+
+function businessMeta(){
+  return (DATA.view && Array.isArray(DATA.view.business_types) ? DATA.view.business_types : [])
+    .find(item => item.id === state.biz) || {};
+}
+
+function topMarketList(items){
+  if (!items || !items.length) return '<li>참고 상권 자료 없음</li>';
+  return items.slice(0, 5).map(item =>
+    '<li><b>' + escapeHtml(item.area_name || '이름 없음') + '</b><span>' +
+    shortMoney(item.monthly_sales_per_store) + '/월</span><small>' +
+    escapeHtml([item.market_type_name, '점포 ' + fmt(item.stores) + '곳', item.customer_unit_price ? '객단가 ' + fmt(item.customer_unit_price) + '원' : ''].filter(Boolean).join(' · ')) +
+    '</small></li>'
+  ).join('');
 }
 
 function coverageLabel(cov){
@@ -366,20 +392,29 @@ function renderSummary(rows){
   const cov = coverageFor();
   const salesOk = hasSalesData();
   const mapOk = hasMapData();
+  const meta = businessMeta();
+  const ref = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
   document.querySelectorAll('.commercial-insight').forEach(el => el.remove());
   const best = salesOk ? rows[0] : rows.slice().sort((a, z) => (z.stores || 0) - (a.stores || 0))[0];
-  const lowComp = rows.slice().sort((a, z) => (z.competition_score || 0) - (a.competition_score || 0) || (z.sales_per_store_month || 0) - (a.sales_per_store_month || 0))[0];
+  const validStoreRows = rows.filter(r => r.stores);
+  const lowComp = (validStoreRows.length ? validStoreRows : rows).slice().sort((a, z) => (z.competition_score || 0) - (a.competition_score || 0) || (z.sales_per_store_month || 0) - (a.sales_per_store_month || 0))[0];
   const highDemand = rows.slice().sort((a, z) => ((z.residents || 0) + (z.workers || 0)) - ((a.residents || 0) + (a.workers || 0)))[0];
+  const rowSalesNote = row => {
+    if (row.sales_per_store_month) return '평균 월매출 ' + money(row.sales_per_store_month);
+    if (row.reference_sales && row.reference_sales.monthly_sales_per_store) return row.reference_sales.scope + ' 참고 ' + money(row.reference_sales.monthly_sales_per_store);
+    return '매출 자료 없음';
+  };
   const card = (title, row, desc, cls) => row ? '<button type="button" class="insight-card ' + (cls || '') + '" data-pick="' + row.code + '">' +
     '<span>' + title + '</span><b>' + row.gu + ' ' + row.name + '</b><p>' + desc + '</p>' +
-    '<small>' + (salesOk ? '평균 월매출 ' + money(row.sales_per_store_month) + ' · ' : '') + '점포 ' + fmt(row.stores) + '곳</small></button>' : '';
+    '<small>' + rowSalesNote(row) + ' · 점포 ' + fmt(row.stores) + '곳</small></button>' : '';
   const status = cov ? coverageLabel(cov) : [
     salesOk ? '매출자료 있음' : '매출자료 없음',
     mapOk ? '지도핀 ' + fmt(cov && cov.map_points) + '개' : '지도핀 없음'
   ].filter(Boolean).join(' · ');
   summary.innerHTML =
     '<div><span>현재 기준</span><b>' + b.label + ' 입지 후보 보기</b><p>' + period + ' 상권분석서비스 자료입니다. ' + (salesOk ? '매출은 분기 자료를 3개월로 나눈 월평균 추정치입니다.' : salesMissingText()) + '</p></div>' +
-    '<div><span>자료 상태</span><b>' + status + '</b><p>' + coverageAction(cov) + '</p></div>';
+    '<div><span>자료 상태</span><b>' + status + '</b><p>' + coverageAction(cov) + '</p></div>' +
+    '<div><span>서울 기준 참고값</span><b>' + (ref ? money(ref.monthly_sales_per_store) : '자료 없음') + '</b><p>' + (ref ? referenceText(ref) : '업종 전체 참고 매출은 아직 연결되지 않았습니다.') + '</p></div>';
   const insight = document.createElement('section');
   insight.className = 'commercial-insight';
   insight.innerHTML =
@@ -433,6 +468,16 @@ function marketChangeTone(r){
   return base;
 }
 
+function marketChangeLabel(r){
+  const name = r.market_change && r.market_change.name;
+  if (!name) return '자료 없음';
+  if (name.includes('다이나믹')) return '변화 큰 상권';
+  if (name.includes('정체')) return '안정·정체 상권';
+  if (name.includes('확장')) return '확장 상권';
+  if (name.includes('축소') || name.includes('쇠퇴')) return '위축 상권';
+  return name;
+}
+
 function apartmentTone(r){
   const a = r.apartment;
   if (!a) return '아파트 자료가 아직 연결되지 않았습니다.';
@@ -464,10 +509,14 @@ function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
   const storeLabel = r.stores ? '점포 ' + fmt(r.stores) + '곳' : '점포 자료 없음';
   const salesOk = hasSalesData();
+  const salesValue = r.sales_per_store_month || (r.reference_sales && r.reference_sales.monthly_sales_per_store);
+  const salesLabel = r.sales_per_store_month
+    ? BIZ[state.biz].label + ' 평균 월매출'
+    : (r.reference_sales ? r.reference_sales.scope + ' 참고 월매출' : '매출 미제공');
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + (i + 1) + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b><small>' + r.code + ' · ' + storeLabel + '</small></span>' +
-    '<span><b>' + (salesOk ? money(r.sales_per_store_month) : '자료 없음') + '</b><small>' + (salesOk ? BIZ[state.biz].label + ' 평균 월매출' : '매출 미제공') + '</small></span>' +
+    '<span><b>' + (salesValue ? money(salesValue) : '자료 없음') + '</b><small>' + salesLabel + '</small></span>' +
     '<span><b>' + fmt(r.stores) + '</b><small>점포 수</small></span>' +
     '<span><b>' + demandType(r) + '</b><small>수요 타입</small></span>' +
     '<span><b>' + fmt(r.score) + '</b><small>종합</small></span>' +
@@ -729,6 +778,9 @@ function renderDetail(rows){
   const salesOk = hasSalesData();
   const mapOk = hasMapData();
   const cov = coverageFor();
+  const meta = businessMeta();
+  const bizRef = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
+  const reference = r.reference_sales || bizRef;
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
   const item = r => '<li><b>' + r.business_name + '</b><span>' + (r.amount ? money(r.amount / 3) + '/월' : fmt(r.store_count) + '곳') + '</span></li>';
   const period = quarterLabel(DATA.view && DATA.view.quarter);
@@ -741,6 +793,7 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 판단</p>' +
         stat(BIZ[state.biz].label + ' 평균 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 업종 총매출 ÷ 3개월 ÷ 점포 수' : salesMissingText()) +
+        (reference ? stat(reference.scope + ' 참고 월매출', money(reference.monthly_sales_per_store), '직접 매출이 없거나 약할 때 시장 눈높이를 보는 보조 기준') : '') +
         stat('점포 수', fmt(r.stores)) +
         stat('수요 타입', demandType(r)) +
         stat('자료 상태', salesOk ? '매출 있음' : '매출 없음', (mapOk ? '지도핀 ' + fmt(cov && cov.map_points) + '개 연결' : '지도핀 연결 부족')) +
@@ -756,8 +809,8 @@ function renderDetail(rows){
       '<div><p class="grp-title">매출</p><p class="basis-note">' + (salesOk ? period + ' 카드매출 자료를 월평균으로 바꿔 보여줍니다.' : salesMissingText()) + '</p>' +
         stat(BIZ[state.biz].label + ' 평균 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 업종 총매출 ÷ 3개월 ÷ 점포 수' : '이 업종은 추정매출 대신 점포·수요·지도 중심으로 판단') +
         stat('객단가', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '—', salesOk ? '분기 총매출 ÷ 결제건수' : '매출 자료가 없어 계산하지 않음') +
-        (!salesOk && r.reference_sales ? stat(r.reference_sales.scope + ' 참고 월매출', money(r.reference_sales.monthly_sales_per_store), '행정동 후보 순위에는 쓰지 않는 보조 참고값') : '') +
-        (!salesOk && r.reference_sales && r.reference_sales.customer_unit_price ? stat(r.reference_sales.scope + ' 참고 객단가', fmt(r.reference_sales.customer_unit_price) + '원', '권역 총매출 ÷ 결제건수') : '') +
+        (reference ? stat(reference.scope + ' 참고 월매출', money(reference.monthly_sales_per_store), salesOk ? '직접 매출과 비교해 시장 전체 눈높이를 보는 보조값' : '행정동 후보 순위에는 쓰지 않는 보조 참고값') : '') +
+        (reference && reference.customer_unit_price ? stat(reference.scope + ' 참고 객단가', fmt(reference.customer_unit_price) + '원', '권역 총매출 ÷ 결제건수') : '') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p><p class="basis-note">점포·프랜차이즈·개업·폐업은 ' + period + ' 상권분석서비스 집계 기준입니다.</p>' +
         stat(BIZ[state.biz].label + ' 점포', fmt(r.stores), '같은 행정동의 선택 업종 점포 수') +
@@ -801,7 +854,7 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">입지 가설</p>' +
         stat('운영 타입', demandType(r), marketHypothesis) +
-        stat('상권 흐름', r.market_change && r.market_change.name ? r.market_change.name : '자료 없음', marketChangeTone(r)) +
+        stat('상권 흐름', marketChangeLabel(r), marketChangeTone(r)) +
         stat('매출 가설', salesOk && r.sales_per_store_month ? '월 ' + money(r.sales_per_store_month) : '자료 없음', salesOk ? '이 수준을 내려면 실제 후보 점포가 지도 핀의 중심 동선에 붙어 있어야 합니다.' : '매출 자료가 없으므로 지도상 점포 밀도와 수요 기반으로 먼저 걸러봅니다.') +
         stat('경쟁 가설', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '점포 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
       '</div>' +
@@ -815,6 +868,8 @@ function renderDetail(rows){
         stat('두 번째', '임대료 확인', '평균 월매출이 높아도 임대료·권리금이 높으면 후보에서 제외될 수 있습니다.') +
         stat('세 번째', '시간대 확인', demandTone(r)) +
       '</div>' +
+      '<div><p class="grp-title">서울 안 강한 상권</p><p class="basis-note">선택 업종의 점포 1곳 월매출이 높게 잡힌 상권입니다. 후보 동네와 비교하는 참고용입니다.</p><ol class="market-rank">' + topMarketList(meta.top_markets) + '</ol></div>' +
+      '<div><p class="grp-title">주변 생활권 참고</p><p class="basis-note">상권배후지 기준으로 같은 업종이 강하게 잡힌 곳입니다.</p><ol class="market-rank">' + topMarketList(meta.top_hinterlands) + '</ol></div>' +
     '</div>';
   const mapTab =
     '<div class="maparea"><div id="map"></div>' +
@@ -832,7 +887,7 @@ function renderDetail(rows){
     el.onclick = () => { state.tab = el.dataset.tab; render(); };
   }
   detail.innerHTML =
-    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">' + (salesOk ? '평균 월매출 <b>' + money(r.sales_per_store_month) + '</b>' : '매출 자료 <b>없음</b>') + '</span></div>' +
+    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">' + (r.sales_per_store_month ? '평균 월매출 <b>' + money(r.sales_per_store_month) + '</b>' : (reference ? reference.scope + ' 참고 월매출 <b>' + money(reference.monthly_sales_per_store) + '</b>' : '매출 자료 <b>없음</b>')) + '</span></div>' +
     '<div class="dbody">' + content + '</div>';
   if (state.tab === 'map'){
     for (const el of detail.querySelectorAll('.tg[data-show]')){
@@ -860,7 +915,7 @@ function render(){
   renderSummary(rows);
   dataAlert();
   const list = rows.slice(0, 10);
-  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>평균 월매출</span><span>점포 수</span><span>수요 타입</span><span>종합</span></div>' +
+  table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>월매출/참고</span><span>점포 수</span><span>수요 타입</span><span>종합</span></div>' +
     (list.length ? list.map(rowHtml).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>');
   for (const el of table.querySelectorAll('.commercial-row')){
     el.onclick = () => { state.picked = el.dataset.code; render(); };
