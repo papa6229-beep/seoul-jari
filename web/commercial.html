@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=82">
+<link rel="stylesheet" href="styles.css?v=83">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '82';
+  var PAGE_V = '83';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '82';
+const V = '83';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -430,10 +430,7 @@ function renderSummary(rows){
     salesOk ? '매출자료 있음' : '매출자료 없음',
     mapOk ? '지도핀 ' + fmt(cov && cov.map_points) + '개' : '지도핀 없음'
   ].filter(Boolean).join(' · ');
-  summary.innerHTML =
-    '<div><span>현재 기준</span><b>' + b.label + ' 입지 후보 보기</b><p>' + period + ' 상권분석서비스 자료입니다. ' + (salesOk ? '매출은 분기 자료를 3개월로 나눈 월평균 추정치입니다.' : salesMissingText()) + '</p></div>' +
-    '<div><span>자료 상태</span><b>' + status + '</b><p>' + coverageAction(cov) + '</p></div>' +
-    '<div><span>서울 기준 참고값</span><b>' + (ref ? money(ref.monthly_sales_per_store) : '자료 없음') + '</b><p>' + (ref ? referenceText(ref) : '업종 전체 참고 매출은 아직 연결되지 않았습니다.') + '</p></div>';
+  summary.innerHTML = '';
   const insight = document.createElement('section');
   insight.className = 'commercial-insight';
   insight.innerHTML =
@@ -938,8 +935,7 @@ function render(){
   sortHelp.textContent = !hasSalesData() && currentSort.k === 'stores'
     ? salesMissingText() + ' 지금은 점포 수 기준으로 보여줍니다.'
     : currentSort.help;
-  document.querySelectorAll('.commercial-insight').forEach(el => el.remove());
-  summary.innerHTML = '';
+  renderSummary(rows);
   dataAlert();
   const list = rows.slice(0, 10);
   table.innerHTML = '<div class="commercial-head"><span></span><span>행정동</span><span>월매출/참고</span><span>점포 수</span><span>수요 타입</span><span>종합</span></div>' +
