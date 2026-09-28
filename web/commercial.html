@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=88">
+<link rel="stylesheet" href="styles.css?v=89">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '88';
+  var PAGE_V = '89';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '88';
+const V = '89';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -186,15 +186,15 @@ function salesMissingText(){
   const picked = ROWS.find(r => r.code === state.picked);
   const ref = (picked && picked.reference_sales) || (BIZ[state.biz] && BIZ[state.biz].reference_sales);
   if (ref && ref.monthly_sales_per_store){
-    return '행정동 매출은 없지만 ' + ref.scope + ' 기준 점포 1곳 참고 월매출은 ' + money(ref.monthly_sales_per_store) + '입니다. 후보 비교는 점포 수·수요·지도 중심으로 봅니다.';
+    return '행정동 매출은 없지만 ' + ref.scope + ' 기준 가게 1곳의 한 달 참고 매출은 ' + money(ref.monthly_sales_per_store) + '입니다. 후보 비교는 가게 수·손님 바탕·지도 중심으로 봅니다.';
   }
-  return '이 업종은 행정동 추정매출이 제공되지 않아 점포 수·수요·지도 중심으로 봅니다.';
+  return '이 업종은 행정동 추정매출이 제공되지 않아 가게 수·손님 바탕·지도 중심으로 봅니다.';
 }
 
 function referenceText(ref){
   if (!ref || !ref.monthly_sales_per_store) return '';
-  return ref.scope + ' 기준 점포 1곳 참고 월매출 ' + money(ref.monthly_sales_per_store) +
-    (ref.customer_unit_price ? ', 참고 객단가 ' + fmt(ref.customer_unit_price) + '원' : '');
+  return ref.scope + ' 기준 가게 1곳의 한 달 참고 매출 ' + money(ref.monthly_sales_per_store) +
+    (ref.customer_unit_price ? ', 손님 1번 참고 결제금액 ' + fmt(ref.customer_unit_price) + '원' : '');
 }
 
 function businessMeta(){
@@ -207,7 +207,7 @@ function topMarketList(items){
   return items.slice(0, 5).map(item =>
     '<li><b>' + escapeHtml(item.area_name || '이름 없음') + '</b><span>' +
     shortMoney(item.monthly_sales_per_store) + '/월</span><small>' +
-    escapeHtml([item.market_type_name, '점포 ' + fmt(item.stores) + '곳', item.customer_unit_price ? '객단가 ' + fmt(item.customer_unit_price) + '원' : ''].filter(Boolean).join(' · ')) +
+    escapeHtml([item.market_type_name, '가게 ' + fmt(item.stores) + '곳', item.customer_unit_price ? '손님 1번 결제금액 ' + fmt(item.customer_unit_price) + '원' : ''].filter(Boolean).join(' · ')) +
     '</small></li>'
   ).join('');
 }
@@ -499,7 +499,7 @@ function apartmentTone(r){
   const a = r.apartment;
   if (!a) return '아파트 자료가 아직 연결되지 않았습니다.';
   const high = a.high_price_households ? '고가 단지 세대 ' + fmt(a.high_price_households) + '세대가 포함됩니다. ' : '';
-  return '아파트 단지 ' + fmt(a.complexes) + '개, 평균 면적 ' + fmt(a.average_area) + '㎡, 평균 시세 ' + money(a.average_market_price) + ' 수준입니다. ' + high + '주거 반복 수요와 객단가 여력을 볼 때 참고합니다.';
+  return '아파트 단지 ' + fmt(a.complexes) + '개, 평균 면적 ' + fmt(a.average_area) + '㎡, 평균 시세 ' + money(a.average_market_price) + ' 수준입니다. ' + high + '주거 반복 수요와 손님 결제 여력을 볼 때 참고합니다.';
 }
 
 function facilityTone(r){
@@ -530,7 +530,7 @@ function rowHtml(r, i){
   const salesValue = r.sales_per_store_month || (r.reference_sales && r.reference_sales.monthly_sales_per_store);
   const salesLabel = r.sales_per_store_month
     ? BIZ[state.biz].label + ' 가게당 월매출'
-    : (r.reference_sales ? r.reference_sales.scope + ' 참고 월매출' : '매출 미제공');
+    : (r.reference_sales ? r.reference_sales.scope + ' 가게당 참고 월매출' : '매출 미제공');
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + (i + 1) + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b><small>' + r.code + ' · ' + storeLabel + '</small></span>' +
@@ -563,14 +563,14 @@ function nextChecks(r){
   const byBiz = {
     cafe: ['테이크아웃 동선과 앉아서 머무는 좌석 수요 중 어느 쪽인지 구분', '아침·점심·저녁 피크가 각각 살아있는지 주변 직장·주거 동선을 확인', '프랜차이즈와 개인 카페가 섞인 위치에서는 메뉴 단가와 회전율 차별화 필요'],
     food: ['점심 회전율, 배달 반경, 저녁 매출 가능성을 따로 확인', '주방 배기·냄새·상하수도 조건을 임대차 전에 확인', '같은 가격대 식사 업종이 몰린 골목인지 현장 메뉴판으로 비교'],
-    fitness: ['층고, 샤워실, 방음, 환기, 엘리베이터, 주차 가능 여부를 먼저 확인', '퇴근 후 18~22시 접근성과 여성 이용자 동선을 현장에서 확인', 'PT·필라테스는 주변 객단가와 강사 확보 가능성이 매출을 크게 좌우'],
+    fitness: ['층고, 샤워실, 방음, 환기, 엘리베이터, 주차 가능 여부를 먼저 확인', '퇴근 후 18~22시 접근성과 여성 이용자 동선을 현장에서 확인', 'PT·필라테스는 주변 결제금액과 강사 확보 가능성이 매출을 크게 좌우'],
     academy: ['학교·아파트·버스정류장 동선을 이어서 보는 것이 우선', '같은 과목 학원 밀도와 학년별 수요를 기존 입지 분석 화면과 같이 확인', '차량 승하차, 엘리베이터, 소음 민원 가능성을 확인'],
     unmanned: ['야간 유동, CCTV 시야, 출입 관리, 민원 가능성을 먼저 확인', '아파트 출입 동선과 편의점·마트 경쟁 위치를 같이 확인', '재고 보충 거리와 관리 빈도를 감당할 수 있는지 확인']
   };
   const checks = [...(byBiz[state.biz] || []), ...common];
   if ((r.stores || 0) > 100) checks.unshift('선택 업종 점포가 많으므로 가격, 콘셉트, 회전율 차별화 가능성을 먼저 확인');
   if ((r.workers || 0) > (r.residents || 0) * 2) checks.unshift('평일 점심·퇴근 수요형인지, 주말 공백을 버틸 수 있는지 확인');
-  if ((r.residents || 0) > (r.workers || 0) * 2) checks.unshift('주거 수요형인지, 야간·주말 운영 시간과 객단가가 맞는지 확인');
+  if ((r.residents || 0) > (r.workers || 0) * 2) checks.unshift('주거 수요형인지, 야간·주말 운영 시간과 손님 1번 결제금액이 맞는지 확인');
   if (r.market_change && r.market_change.name) checks.unshift('상권 변화지표가 ' + r.market_change.name + '인지, 실제 임대료와 공실 분위기가 같은지 확인');
   if (r.apartment && r.apartment.complexes) checks.unshift('아파트 단지와 후보 점포 사이의 실제 보행 동선이 끊기지 않는지 확인');
   if (r.facilities && (r.facilities.bus_stops || r.facilities.subway_stations)) checks.unshift('대중교통 정류장과 후보 점포 입구가 시야 안에 이어지는지 확인');
@@ -655,12 +655,12 @@ function markerCard(p){
         '<div class="li"><u>' + item.n + '</u>' +
           '<small>' + [item.c || BIZ[state.biz].label, item.a || ''].filter(Boolean).join(' · ') + '</small></div>'
       ).join('');
-      const salesNote = p.sales_note ? '<span><b>매출</b> ' + p.sales_note + '</span>' : '';
+      const salesNote = p.sales_note ? '<span><b>매출 기준</b> ' + p.sales_note + '</span>' : '';
       return '<b>같은 위치 ' + p.members.length + '곳</b>' + salesNote + list;
     }
     const meta = [
       '<span><b>업종</b> ' + (p.c || BIZ[state.biz].label) + '</span>',
-      p.sales_note ? '<span><b>매출</b> ' + p.sales_note + '</span>' : '',
+      p.sales_note ? '<span><b>매출 기준</b> ' + p.sales_note + '</span>' : '',
       p.a ? '<span><b>주소</b> ' + p.a + '</span>' : ''
     ].filter(Boolean).join('');
     return '<b>' + p.n + '</b>' + meta;
@@ -697,9 +697,9 @@ function setMapSelection(p){
 function businessPoints(row){
   const all = DATA.stores && DATA.stores.points ? DATA.stores.points : {};
   const salesNote = row.sales_per_store_month
-    ? '개별 업체 매출 아님 · 이 동네 평균 ' + money(row.sales_per_store_month)
+    ? '개별 가게 매출 아님 · 이 동네 ' + BIZ[state.biz].label + ' 가게 1곳의 한 달 평균 매출 ' + money(row.sales_per_store_month)
     : (row.reference_sales && row.reference_sales.monthly_sales_per_store
-      ? '개별 업체 매출 아님 · ' + row.reference_sales.scope + ' 참고 ' + money(row.reference_sales.monthly_sales_per_store)
+      ? '개별 가게 매출 아님 · ' + row.reference_sales.scope + ' 기준 가게 1곳의 한 달 참고 매출 ' + money(row.reference_sales.monthly_sales_per_store)
       : '');
   for (const key of storeDongKeys(row)){
     const bucket = all[key] && all[key][state.biz];
@@ -843,7 +843,7 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 판단</p>' +
         stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 전체 매출을 가게 수로 나눈 월평균입니다.' : salesMissingText()) +
-        (reference ? stat(reference.scope + ' 참고 월매출', money(reference.monthly_sales_per_store), '직접 매출이 없거나 약할 때 시장 눈높이를 보는 보조 기준') : '') +
+        (reference ? stat(reference.scope + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store), '개별 가게 매출이 아니라 넓은 권역에서 가게 1곳이 한 달에 파는 금액을 참고로 보는 값입니다.') : '') +
         stat('같은 업종 가게', fmt(r.stores) + '곳') +
         stat('손님이 생기는 이유', demandType(r)) +
         stat('자료 상태', salesOk ? '매출 있음' : '매출 없음', (mapOk ? '지도핀 ' + fmt(cov && cov.map_points) + '개 연결' : '지도핀 연결 부족')) +
@@ -859,8 +859,8 @@ function renderDetail(rows){
       '<div><p class="grp-title">돈</p><p class="basis-note">' + (salesOk ? period + ' 카드매출 자료를 한 달 기준으로 바꿔 보여줍니다.' : salesMissingText()) + '</p>' +
         stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 전체 매출을 가게 수로 나눈 월평균입니다.' : '이 업종은 추정매출 대신 가게 수·손님 바탕·지도로 판단합니다.') +
         stat('손님 1번 결제금액', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '—', salesOk ? '전체 매출을 결제 횟수로 나눈 값입니다.' : '매출 자료가 없어 계산하지 않습니다.') +
-        (reference ? stat(reference.scope + ' 참고 월매출', money(reference.monthly_sales_per_store), salesOk ? '직접 매출과 비교해 시장 전체 눈높이를 보는 보조값' : '행정동 후보 순위에는 쓰지 않는 보조 참고값') : '') +
-        (reference && reference.customer_unit_price ? stat(reference.scope + ' 참고 객단가', fmt(reference.customer_unit_price) + '원', '권역 총매출 ÷ 결제건수') : '') +
+        (reference ? stat(reference.scope + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store), salesOk ? '개별 가게 매출이 아니라 시장 눈높이를 보는 보조값입니다.' : '행정동 후보 순위에는 쓰지 않는 보조 참고값입니다.') : '') +
+        (reference && reference.customer_unit_price ? stat(reference.scope + ' 손님 1번 참고 결제금액', fmt(reference.customer_unit_price) + '원', '넓은 권역의 총매출을 결제 횟수로 나눈 값입니다.') : '') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p><p class="basis-note">가게 수·브랜드 가게·새로 생긴 가게·문 닫은 가게는 ' + period + ' 기준입니다.</p>' +
         stat(BIZ[state.biz].label + ' 가게', fmt(r.stores) + '곳', '같은 행정동의 같은 업종 가게 수입니다.') +
@@ -891,7 +891,7 @@ function renderDetail(rows){
       '<div><p class="grp-title">가구</p><p class="basis-note">동네 생활권의 반복 수요를 가늠하는 보조 기준입니다.</p>' +
         stat('가구 수', withUnit(r.households, '가구'), '거주 기반 수요의 크기') +
         stat('아파트 단지', r.apartment ? fmt(r.apartment.complexes) + '개' : '자료 없음', apartmentTone(r)) +
-        stat('평균 아파트 시세', r.apartment ? money(r.apartment.average_market_price) : '자료 없음', '주거지 구매력과 객단가 여력을 보는 참고 지표') +
+        stat('평균 아파트 시세', r.apartment ? money(r.apartment.average_market_price) : '자료 없음', '주거지 구매력과 손님 결제 여력을 보는 참고 지표') +
       '</div>' +
       '<div><p class="grp-title">집객시설</p><p class="basis-note">시설 수는 동네 안 반복 방문 이유가 얼마나 있는지 보는 보조 기준입니다.</p>' +
         stat('전체 시설', r.facilities ? fmt(r.facilities.total) + '개' : '자료 없음', facilityTone(r)) +
@@ -915,10 +915,10 @@ function renderDetail(rows){
       '</div>' +
       '<div><p class="grp-title">현장 검증</p>' +
         stat('첫 번째', '지도 확인', '선택 업종 핀이 어디에 몰리는지 보고, 빈 구간이 실제로 비어 있는지 확인합니다.') +
-        stat('두 번째', '임대료 확인', '평균 월매출이 높아도 임대료·권리금이 높으면 후보에서 제외될 수 있습니다.') +
+        stat('두 번째', '임대료 확인', '가게당 월매출이 높아도 임대료·권리금이 높으면 후보에서 제외될 수 있습니다.') +
         stat('세 번째', '시간대 확인', demandTone(r)) +
       '</div>' +
-      '<div><p class="grp-title">서울 안 강한 상권</p><p class="basis-note">선택 업종의 점포 1곳 월매출이 높게 잡힌 상권입니다. 후보 동네와 비교하는 참고용입니다.</p><ol class="market-rank">' + topMarketList(meta.top_markets) + '</ol></div>' +
+      '<div><p class="grp-title">서울 안 강한 상권</p><p class="basis-note">선택 업종 가게 1곳의 한 달 매출이 높게 잡힌 상권입니다. 후보 동네와 비교하는 참고용입니다.</p><ol class="market-rank">' + topMarketList(meta.top_markets) + '</ol></div>' +
       '<div><p class="grp-title">주변 생활권 참고</p><p class="basis-note">상권배후지 기준으로 같은 업종이 강하게 잡힌 곳입니다.</p><ol class="market-rank">' + topMarketList(meta.top_hinterlands) + '</ol></div>' +
     '</div>';
   const mapTab =
@@ -939,7 +939,7 @@ function renderDetail(rows){
     el.onclick = () => { state.tab = el.dataset.tab; render(); };
   }
   detail.innerHTML =
-    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">' + (r.sales_per_store_month ? '가게당 월매출 <b>' + money(r.sales_per_store_month) + '</b>' : (reference ? reference.scope + ' 참고 월매출 <b>' + money(reference.monthly_sales_per_store) + '</b>' : '매출 자료 <b>없음</b>')) + '</span></div>' +
+    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">' + (r.sales_per_store_month ? '가게당 월매출 <b>' + money(r.sales_per_store_month) + '</b>' : (reference ? reference.scope + ' 가게당 참고 월매출 <b>' + money(reference.monthly_sales_per_store) + '</b>' : '매출 자료 <b>없음</b>')) + '</span></div>' +
     '<div class="dbody">' + content + '</div>';
   if (state.tab === 'map'){
     for (const el of detail.querySelectorAll('.tg[data-show]')){
