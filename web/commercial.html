@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=89">
+<link rel="stylesheet" href="styles.css?v=90">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '89';
+  var PAGE_V = '90';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '89';
+const V = '90';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -141,6 +141,7 @@ function escapeHtml(v){
 }
 
 const fmt = n => n === null || n === undefined ? '—' : n.toLocaleString('ko-KR');
+const count = (n, unit) => (n === null || n === undefined ? 0 : n).toLocaleString('ko-KR') + unit;
 const withUnit = (n, unit) => n === null || n === undefined ? '자료 없음' : fmt(n) + unit;
 const pct = n => n === null || n === undefined ? '—' : Math.round(n) + '%';
 const money = n => {
@@ -194,7 +195,7 @@ function salesMissingText(){
 function referenceText(ref){
   if (!ref || !ref.monthly_sales_per_store) return '';
   return ref.scope + ' 기준 가게 1곳의 한 달 참고 매출 ' + money(ref.monthly_sales_per_store) +
-    (ref.customer_unit_price ? ', 손님 1번 참고 결제금액 ' + fmt(ref.customer_unit_price) + '원' : '');
+    (ref.customer_unit_price ? ', 손님 1명이 보통 쓰는 돈 ' + fmt(ref.customer_unit_price) + '원' : '');
 }
 
 function businessMeta(){
@@ -207,7 +208,7 @@ function topMarketList(items){
   return items.slice(0, 5).map(item =>
     '<li><b>' + escapeHtml(item.area_name || '이름 없음') + '</b><span>' +
     shortMoney(item.monthly_sales_per_store) + '/월</span><small>' +
-    escapeHtml([item.market_type_name, '가게 ' + fmt(item.stores) + '곳', item.customer_unit_price ? '손님 1번 결제금액 ' + fmt(item.customer_unit_price) + '원' : ''].filter(Boolean).join(' · ')) +
+    escapeHtml([item.market_type_name, count(item.stores, '곳'), item.customer_unit_price ? '손님 1명이 보통 쓰는 돈 ' + fmt(item.customer_unit_price) + '원' : ''].filter(Boolean).join(' · ')) +
     '</small></li>'
   ).join('');
 }
@@ -570,7 +571,7 @@ function nextChecks(r){
   const checks = [...(byBiz[state.biz] || []), ...common];
   if ((r.stores || 0) > 100) checks.unshift('선택 업종 점포가 많으므로 가격, 콘셉트, 회전율 차별화 가능성을 먼저 확인');
   if ((r.workers || 0) > (r.residents || 0) * 2) checks.unshift('평일 점심·퇴근 수요형인지, 주말 공백을 버틸 수 있는지 확인');
-  if ((r.residents || 0) > (r.workers || 0) * 2) checks.unshift('주거 수요형인지, 야간·주말 운영 시간과 손님 1번 결제금액이 맞는지 확인');
+  if ((r.residents || 0) > (r.workers || 0) * 2) checks.unshift('주거 수요형인지, 야간·주말 운영 시간과 손님 1명이 보통 쓰는 돈이 맞는지 확인');
   if (r.market_change && r.market_change.name) checks.unshift('상권 변화지표가 ' + r.market_change.name + '인지, 실제 임대료와 공실 분위기가 같은지 확인');
   if (r.apartment && r.apartment.complexes) checks.unshift('아파트 단지와 후보 점포 사이의 실제 보행 동선이 끊기지 않는지 확인');
   if (r.facilities && (r.facilities.bus_stops || r.facilities.subway_stations)) checks.unshift('대중교통 정류장과 후보 점포 입구가 시야 안에 이어지는지 확인');
@@ -832,7 +833,9 @@ function renderDetail(rows){
   const bizRef = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
   const reference = r.reference_sales || bizRef;
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
-  const item = r => '<li><b>' + r.business_name + '</b><span>' + (r.amount ? money(r.amount / 3) + '/월' : fmt(r.store_count) + '곳') + '</span></li>';
+  const item = r => '<li><b>' + r.business_name + '</b><span>' + (r.amount ? money(r.amount / 3) + '/월' : count(r.store_count, '곳')) + '</span></li>';
+  const relatedSalesTitle = topSales.length > 1 ? '이 동네에서 돈이 많이 도는 업종' : '선택 업종 매출 참고';
+  const relatedStoresTitle = topStores.length > 1 ? '이 동네에 가게가 많은 업종' : '선택 업종 가게 수 참고';
   const period = quarterLabel(DATA.view && DATA.view.quarter);
   const marketHypothesis = demandType(r) === '주거 수요형'
     ? '주거 반복 방문형 후보입니다. 단골·근거리 방문이 살아야 하는 업종에 더 맞습니다.'
@@ -858,20 +861,20 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">돈</p><p class="basis-note">' + (salesOk ? period + ' 카드매출 자료를 한 달 기준으로 바꿔 보여줍니다.' : salesMissingText()) + '</p>' +
         stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 전체 매출을 가게 수로 나눈 월평균입니다.' : '이 업종은 추정매출 대신 가게 수·손님 바탕·지도로 판단합니다.') +
-        stat('손님 1번 결제금액', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '—', salesOk ? '전체 매출을 결제 횟수로 나눈 값입니다.' : '매출 자료가 없어 계산하지 않습니다.') +
+        stat('손님 1명이 보통 쓰는 돈', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음', salesOk ? '평균입니다. 전체 매출을 결제 횟수로 나눈 값입니다.' : '매출 자료가 없어 계산하지 않습니다.') +
         (reference ? stat(reference.scope + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store), salesOk ? '개별 가게 매출이 아니라 시장 눈높이를 보는 보조값입니다.' : '행정동 후보 순위에는 쓰지 않는 보조 참고값입니다.') : '') +
-        (reference && reference.customer_unit_price ? stat(reference.scope + ' 손님 1번 참고 결제금액', fmt(reference.customer_unit_price) + '원', '넓은 권역의 총매출을 결제 횟수로 나눈 값입니다.') : '') +
+        (reference && reference.customer_unit_price ? stat(reference.scope + ' 손님 1명이 보통 쓰는 돈', fmt(reference.customer_unit_price) + '원', '평균입니다. 넓은 권역의 총매출을 결제 횟수로 나눈 값입니다.') : '') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p><p class="basis-note">가게 수·브랜드 가게·새로 생긴 가게·문 닫은 가게는 ' + period + ' 기준입니다.</p>' +
-        stat(BIZ[state.biz].label + ' 가게', fmt(r.stores) + '곳', '같은 행정동의 같은 업종 가게 수입니다.') +
-        stat('브랜드 가게', fmt(r.franchises) + '곳', '프랜차이즈 가게입니다. 많을수록 가격·인지도 경쟁이 셀 수 있습니다.') +
-        stat('새로 생긴 가게', fmt(r.open) + '곳', period + ' 안에 새로 생긴 가게 수입니다.') +
-        stat('문 닫은 가게', fmt(r.close) + '곳', period + ' 안에 문 닫은 가게 수입니다.') +
+        stat(BIZ[state.biz].label + ' 가게', count(r.stores, '곳'), '같은 행정동의 같은 업종 가게 수입니다.') +
+        stat('브랜드 가게', count(r.franchises, '곳'), '프랜차이즈 가게입니다. 많을수록 가격·인지도 경쟁이 셀 수 있습니다.') +
+        stat('새로 생긴 가게', count(r.open, '곳'), period + ' 안에 새로 생긴 가게 수입니다.') +
+        stat('문 닫은 가게', count(r.close, '곳'), period + ' 안에 문 닫은 가게 수입니다.') +
       '</div>' +
     '</div>' +
     '<div class="commercial-lists">' +
-      '<div><p class="grp-title">돈이 도는 업종</p><ol>' + (salesOk && topSales.length ? topSales.map(item).join('') : '<li>매출 자료 없음</li>') + '</ol></div>' +
-      '<div><p class="grp-title">가게가 많은 업종</p><ol>' + (topStores.length ? topStores.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
+      '<div><p class="grp-title">' + relatedSalesTitle + '</p><p class="basis-note">' + (topSales.length > 1 ? '현재 동네에서 매출이 큰 업종을 비교해 보여줍니다.' : '현재는 선택한 업종 자료만 연결되어 있어 1개만 보입니다.') + '</p><ol>' + (salesOk && topSales.length ? topSales.map(item).join('') : '<li>매출 자료 없음</li>') + '</ol></div>' +
+      '<div><p class="grp-title">' + relatedStoresTitle + '</p><p class="basis-note">' + (topStores.length > 1 ? '현재 동네에서 가게 수가 많은 업종을 비교해 보여줍니다.' : '현재는 선택한 업종 자료만 연결되어 있어 1개만 보입니다.') + '</p><ol>' + (topStores.length ? topStores.map(item).join('') : '<li>자료 없음</li>') + '</ol></div>' +
     '</div>';
   const demandTab =
     '<div class="groups">' +
