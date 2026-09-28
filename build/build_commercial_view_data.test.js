@@ -1,5 +1,5 @@
 const assert = require('assert');
-const {summarizeApartment, summarizeFacilities, summarizeMarketChange} = require('./build_commercial_view_data');
+const {summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales} = require('./build_commercial_view_data');
 
 const apartment = summarizeApartment({
   apartment_complexes: 42,
@@ -61,6 +61,20 @@ assert.deepStrictEqual(marketChange, {
   close_months: 55,
   seoul_operation_months: 105,
   seoul_close_months: 52
+});
+
+const referenceSales = summarizeReferenceSales(
+  [{business_code: 'CS100001', business_name: '한식음식점', amount: 900000000, count: 30000}],
+  [{business_code: 'CS100001', store_count: 30}],
+  {code: 'CS100001', label: '한식음식점'}
+);
+assert.deepStrictEqual(referenceSales, {
+  scope: '서울시',
+  amount: 900000000,
+  count: 30000,
+  stores: 30,
+  monthly_sales_per_store: 10000000,
+  customer_unit_price: 30000
 });
 
 console.log('build_commercial_view_data test ok');

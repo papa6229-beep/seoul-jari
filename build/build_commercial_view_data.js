@@ -114,6 +114,31 @@ function summarizeFacilities(row = {}){
   };
 }
 
+function matchesType(item, type){
+  if (!item) return false;
+  if (type.code && item.business_code === type.code) return true;
+  const words = type.words || [];
+  const name = String(item.business_name || '');
+  return words.length > 0 && words.some(word => name.includes(word));
+}
+
+function summarizeReferenceSales(salesRows, storeRows, type, scope = '서울시'){
+  const matchedSales = rows({rows: salesRows}).filter(item => matchesType(item, type));
+  const matchedStores = rows({rows: storeRows}).filter(item => matchesType(item, type));
+  const amount = addNumbers(...matchedSales.map(item => item.amount));
+  const count = addNumbers(...matchedSales.map(item => item.count));
+  const stores = addNumbers(...matchedStores.map(item => item.store_count));
+  if (!amount || !stores) return null;
+  return {
+    scope,
+    amount,
+    count: count || null,
+    stores,
+    monthly_sales_per_store: Math.round(amount / stores / 3),
+    customer_unit_price: amount && count ? Math.round(amount / count) : null
+  };
+}
+
 function compact(){
   const codes = readJson('admin-dong-codes.json');
   const floating = readJson('commercial-floating-population-dong.json');
@@ -125,6 +150,8 @@ function compact(){
   const changeIndex = readJsonOptional('commercial-change-index-dong.json');
   const apartments = readJsonOptional('commercial-apartment-dong.json');
   const facilities = readJsonOptional('commercial-facility-dong.json');
+  const megaSales = readJsonOptional('commercial-sales-mega.json');
+  const megaStores = readJsonOptional('commercial-stores-mega.json');
 
   const businessTypesById = new Map(Object.keys(GROUP_BIZ).map(key => [key, {
     id: key,
@@ -244,14 +271,19 @@ function compact(){
     }
   }
 
+  const enrichedBusinessTypes = Array.from(businessTypesById.values()).map(type => {
+    const referenceSales = summarizeReferenceSales(rows(megaSales), rows(megaStores), type, '서울시');
+    return referenceSales ? {...type, reference_sales: referenceSales} : type;
+  });
+
   const payload = {
     title: '서울 상권 화면용 행정동 통합 데이터',
     source: '서울신용보증재단 상권분석서비스 OpenAPI',
     quarter: sales.quarter || stores.quarter || floating.quarter || null,
     generated_at: new Date().toISOString(),
     business_types: [
-      ...Array.from(businessTypesById.values()).filter(item => item.kind === 'group'),
-      ...serviceTypes
+      ...enrichedBusinessTypes.filter(item => item.kind === 'group'),
+      ...enrichedBusinessTypes.filter(item => item.kind === 'service').sort((a, b) => a.label.localeCompare(b.label, 'ko-KR'))
     ],
     rows: Array.from(byCode.values())
   };
@@ -262,4 +294,4 @@ function compact(){
 
 if (require.main === module) compact();
 
-module.exports = {BIZ: GROUP_BIZ, compact, summarizeApartment, summarizeFacilities, summarizeMarketChange};
+module.exports = {BIZ: GROUP_BIZ, compact, summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales};

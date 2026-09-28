@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=76">
+<link rel="stylesheet" href="styles.css?v=77">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '76';
+  var PAGE_V = '77';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -70,7 +70,7 @@
 </div>
 
 <script>
-const V = '76';
+const V = '77';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -174,11 +174,16 @@ function hasMapData(){
 }
 
 function salesMissingText(){
-  return '이 업종은 상권분석서비스 추정매출이 제공되지 않아 점포 수·수요·지도 중심으로 봅니다.';
+  const ref = BIZ[state.biz] && BIZ[state.biz].reference_sales;
+  if (ref && ref.monthly_sales_per_store){
+    return '행정동 매출은 없지만 ' + ref.scope + ' 기준 점포 1곳 참고 월매출은 ' + money(ref.monthly_sales_per_store) + '입니다. 후보 비교는 점포 수·수요·지도 중심으로 봅니다.';
+  }
+  return '이 업종은 행정동 추정매출이 제공되지 않아 점포 수·수요·지도 중심으로 봅니다.';
 }
 
 function coverageLabel(cov){
   if (!cov) return '자료 상태 확인 중';
+  if (!cov.has_sales && cov.has_reference_sales) return '행정동 매출 없음 · 참고 매출 있음';
   return cov.coverage_label || [
     cov.has_sales ? '매출 있음' : '매출 없음',
     cov.has_stores ? '점포 있음' : '점포 없음',
@@ -188,6 +193,7 @@ function coverageLabel(cov){
 
 function coverageAction(cov){
   if (!cov) return '업종별 자료 상태를 불러오는 중입니다.';
+  if (!cov.has_sales && cov.has_reference_sales) return '행정동 후보 순위에는 쓰지 않고, 업종 규모를 설명하는 참고값으로만 보여줍니다.';
   return cov.recommended_action || (cov.has_sales
     ? '매출과 점포 데이터를 같이 볼 수 있습니다.'
     : '공공 매출은 미제공입니다. 점포·수요·지도 중심으로 먼저 봅니다.');
@@ -202,9 +208,10 @@ function renderCoverageBox(){
   const cov = coverageFor();
   const parts = cov ? [
     cov.has_sales ? '매출 ' + fmt(cov.sales_dongs) + '개 동' : '매출 없음',
+    cov.has_reference_sales ? '참고매출 ' + (cov.reference_sales_scopes || []).join('/') : '',
     cov.has_stores ? '점포 ' + fmt(cov.store_dongs) + '개 동' : '점포 없음',
     cov.has_map_points ? '지도핀 ' + fmt(cov.map_points) + '개' : '지도핀 없음'
-  ] : ['자료 확인 중'];
+  ].filter(Boolean) : ['자료 확인 중'];
   coverageBox.className = 'coverage-box ' + coverageClass(cov);
   coverageBox.innerHTML =
     '<span>데이터 상태</span>' +
@@ -216,15 +223,20 @@ function renderCoverageBox(){
 function applyBusinessTypes(){
   const types = Array.isArray(DATA.view && DATA.view.business_types) ? DATA.view.business_types : [];
   for (const item of types){
-    if (BIZ[item.id]) continue;
+    if (BIZ[item.id]){
+      if (item.reference_sales) BIZ[item.id].reference_sales = item.reference_sales;
+      continue;
+    }
     BIZ[item.id] = {
       label: item.label,
       words: item.words || [item.label],
       demand: ['유동인구', '직장인구', '상주인구', '소비지출'],
       caution: serviceCaution(item.label),
       kind: item.kind,
-      code: item.code
+      code: item.code,
+      reference_sales: item.reference_sales || null
     };
+    if (item.reference_sales) BIZ[item.id].reference_sales = item.reference_sales;
   }
   const groupOrder = ['추천 업종', '전체 업종'];
   const byGroup = new Map();
