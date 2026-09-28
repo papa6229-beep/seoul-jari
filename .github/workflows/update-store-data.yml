@@ -11,6 +11,10 @@ on:
         description: '테스트용 최대 페이지 수. 비우면 전체 수집'
         required: false
         default: ''
+      quarter:
+        description: '상권분석 기준분기 YYYYQ. 예: 20262. 비우면 직전 완료 분기'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -29,11 +33,26 @@ jobs:
         run: |
           node build/prep_stores.test.js
           node build/fetch_stores_api.test.js
+          node build/fetch_commercial_floating_population.test.js
+          node build/fetch_commercial_sales_dong.test.js
+          node build/fetch_commercial_stores_dong.test.js
+          node build/fetch_commercial_worker_population_dong.test.js
+          node build/fetch_commercial_resident_population_dong.test.js
+          node build/fetch_commercial_income_consumption_dong.test.js
+          node build/fetch_commercial_change_index_dong.test.js
+          node build/fetch_commercial_apartment_dong.test.js
+          node build/fetch_commercial_facility_dong.test.js
+          node build/fetch_commercial_regional_sales.test.js
+          node build/fetch_commercial_regional_stores.test.js
+          node build/build_commercial_view_data.test.js
+          node build/build_commercial_coverage.test.js
       - name: Fetch store data
         env:
           DATA_GO_KR_SERVICE_KEY: ${{ secrets.DATA_GO_KR_SERVICE_KEY }}
+          SEOUL_OPENAPI_KEY: ${{ secrets.SEOUL_OPENAPI_KEY }}
           LIMIT_GU: ${{ inputs.limit_gu }}
           MAX_PAGES: ${{ inputs.max_pages }}
+          TARGET_QUARTER: ${{ inputs.quarter }}
         run: |
           curl -sS --max-time 20 "https://apis.data.go.kr/B553077/api/open/sdsc2/storeListInDong?pageNo=1&numOfRows=1&divId=signguCd&key=11680&type=json&serviceKey=$DATA_GO_KR_SERVICE_KEY" | head -c 300
           echo
@@ -41,9 +60,24 @@ jobs:
           if [ -n "$LIMIT_GU" ]; then args+=("--limit-gu=$LIMIT_GU"); fi
           if [ -n "$MAX_PAGES" ]; then args+=("--max-pages=$MAX_PAGES"); fi
           node build/fetch_stores_api.js "${args[@]}"
+          commercial_args=()
+          if [ -n "$TARGET_QUARTER" ]; then commercial_args+=("--quarter=$TARGET_QUARTER"); fi
+          node build/fetch_commercial_floating_population.js "${commercial_args[@]}"
+          node build/fetch_commercial_sales_dong.js "${commercial_args[@]}"
+          node build/fetch_commercial_stores_dong.js "${commercial_args[@]}"
+          node build/fetch_commercial_worker_population_dong.js "${commercial_args[@]}"
+          node build/fetch_commercial_resident_population_dong.js "${commercial_args[@]}"
+          node build/fetch_commercial_income_consumption_dong.js "${commercial_args[@]}"
+          node build/fetch_commercial_change_index_dong.js "${commercial_args[@]}"
+          node build/fetch_commercial_apartment_dong.js "${commercial_args[@]}"
+          node build/fetch_commercial_facility_dong.js "${commercial_args[@]}"
+          node build/fetch_commercial_regional_sales.js "${commercial_args[@]}"
+          node build/fetch_commercial_regional_stores.js "${commercial_args[@]}"
+          node build/build_commercial_view_data.js
           node build/build_commercial_coverage.js
+          python3 build/prep_dates.py
       - name: Commit updated data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: '상가업소 API 데이터 갱신'
-          file_pattern: web/data/store-summary.json web/data/commercial-coverage.json
+          file_pattern: web/data/store-summary.json web/data/commercial-floating-population-dong.json web/data/commercial-sales-dong.json web/data/commercial-stores-dong.json web/data/commercial-worker-population-dong.json web/data/commercial-resident-population-dong.json web/data/commercial-income-consumption-dong.json web/data/commercial-change-index-dong.json web/data/commercial-apartment-dong.json web/data/commercial-facility-dong.json web/data/commercial-sales-signgu.json web/data/commercial-sales-mega.json web/data/commercial-sales-trdar.json web/data/commercial-sales-trdhl.json web/data/commercial-stores-signgu.json web/data/commercial-stores-mega.json web/data/commercial-stores-trdar.json web/data/commercial-stores-trdhl.json web/data/commercial-view-dong.json web/data/commercial-coverage.json web/data/dates.json
