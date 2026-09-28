@@ -10,8 +10,9 @@
       if (!d) return;
       var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
       var html = '<table class="dtbl"><tbody>' + d.items.map(function(it){
+        var link = it.url ? '<a href="' + esc(it.url) + '" target="_blank" rel="noopener">원천</a>' : '';
         return '<tr><th>' + esc(it.what) + '<small>' + esc(it.src) + '</small></th>' +
-               '<td><b>' + esc(it.when) + '</b>' + (it.more ? '<small>' + esc(it.more) + '</small>' : '') + '</td></tr>';
+               '<td><b>' + esc(it.when) + '</b>' + (it.more ? '<small>' + esc(it.more) + '</small>' : '') + link + '</td></tr>';
       }).join('') + '</tbody></table>' +
       '<p class="dnote">' + esc(d.built) + ' 에 받아 정리한 고정본입니다. 원천 기관이 새 자료를 내도 자동으로 바뀌지 않습니다.</p>';
       boxes.forEach(function(b){
