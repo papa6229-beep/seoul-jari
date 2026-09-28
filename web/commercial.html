@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=79">
+<link rel="stylesheet" href="styles.css?v=80">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '79';
+  var PAGE_V = '80';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -70,7 +70,7 @@
 </div>
 
 <script>
-const V = '79';
+const V = '80';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -265,10 +265,14 @@ function applyBusinessTypes(){
     };
     if (item.reference_sales) BIZ[item.id].reference_sales = item.reference_sales;
   }
-  const groupOrder = ['추천 업종', '전체 업종'];
+  const groupOrder = ['추천 업종', '매출 자료 있는 업종', '매출 자료 없는 업종'];
   const byGroup = new Map();
   for (const item of types){
-    const group = item.group || (item.kind === 'service' ? '전체 업종' : '추천 업종');
+    const cov = coverageFor(item.id);
+    let group = item.group || (item.kind === 'service' ? '전체 업종' : '추천 업종');
+    if (group === '전체 업종'){
+      group = cov && cov.has_sales ? '매출 자료 있는 업종' : '매출 자료 없는 업종';
+    }
     if (!byGroup.has(group)) byGroup.set(group, []);
     byGroup.get(group).push(item);
   }
@@ -278,7 +282,7 @@ function applyBusinessTypes(){
   biz.innerHTML = groupOrder.concat([...byGroup.keys()].filter(g => !groupOrder.includes(g))).filter(g => byGroup.has(g)).map(group => {
     const options = byGroup.get(group).map(item => {
       const cov = coverageFor(item.id);
-      const mark = cov && !cov.has_sales ? ' · 매출없음' : '';
+      const mark = cov && !cov.has_sales ? ' · 점포/지도 중심' : '';
       return '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.label + mark) + '</option>';
     }).join('');
     return '<optgroup label="' + escapeHtml(group) + '">' + options + '</optgroup>';
@@ -637,10 +641,12 @@ function markerCard(p){
         '<div class="li"><u>' + item.n + '</u>' +
           '<small>' + [item.c || BIZ[state.biz].label, item.a || ''].filter(Boolean).join(' · ') + '</small></div>'
       ).join('');
-      return '<b>같은 위치 ' + p.members.length + '곳</b>' + list;
+      const salesNote = p.sales_note ? '<span><b>매출</b> ' + p.sales_note + '</span>' : '';
+      return '<b>같은 위치 ' + p.members.length + '곳</b>' + salesNote + list;
     }
     const meta = [
       '<span><b>업종</b> ' + (p.c || BIZ[state.biz].label) + '</span>',
+      p.sales_note ? '<span><b>매출</b> ' + p.sales_note + '</span>' : '',
       p.a ? '<span><b>주소</b> ' + p.a + '</span>' : ''
     ].filter(Boolean).join('');
     return '<b>' + p.n + '</b>' + meta;
@@ -655,10 +661,15 @@ function markerCard(p){
 
 function businessPoints(row){
   const all = DATA.stores && DATA.stores.points ? DATA.stores.points : {};
+  const salesNote = row.sales_per_store_month
+    ? '개별 업체 매출 아님 · 이 동네 평균 ' + money(row.sales_per_store_month)
+    : (row.reference_sales && row.reference_sales.monthly_sales_per_store
+      ? '개별 업체 매출 아님 · ' + row.reference_sales.scope + ' 참고 ' + money(row.reference_sales.monthly_sales_per_store)
+      : '');
   for (const key of storeDongKeys(row)){
     const bucket = all[key] && all[key][state.biz];
     if (Array.isArray(bucket) && bucket.length){
-      return bucket.map(p => ({...p, t: 'b', k: state.biz}));
+      return bucket.map(p => ({...p, t: 'b', k: state.biz, sales_note: salesNote}));
     }
   }
   return [];
