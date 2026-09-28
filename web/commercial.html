@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=93">
+<link rel="stylesheet" href="styles.css?v=94">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '93';
+  var PAGE_V = '94';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '93';
+const V = '94';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -851,8 +851,14 @@ function renderDetail(rows){
   const bizRef = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
   const reference = r.reference_sales || bizRef;
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
-  const item = r => '<li><b>' + r.business_name + '</b><span>' + (r.amount ? money(r.amount / 3) + '/월' : withUnit(r.store_count, '곳')) + '</span></li>';
-  const relatedSalesTitle = '이 동네 매출 상위 업종';
+  const item = r => {
+    if (r.amount){
+      const perStore = r.stores ? ' · 가게당 월 ' + money(r.amount / r.stores / 3) : '';
+      return '<li><b>' + r.business_name + '</b><span>동네 전체 월 ' + money(r.amount / 3) + perStore + '</span></li>';
+    }
+    return '<li><b>' + r.business_name + '</b><span>' + withUnit(r.store_count, '곳') + '</span></li>';
+  };
+  const relatedSalesTitle = '이 동네 전체 월매출 상위 업종';
   const relatedStoresTitle = '이 동네 가게 수 상위 업종';
   const period = quarterLabel(DATA.view && DATA.view.quarter);
   const marketHypothesis = demandType(r) === '주거 수요형'
