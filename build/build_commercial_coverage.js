@@ -12,6 +12,11 @@ function readJson(file){
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
+function readOptional(name){
+  const file = path.join(DATA_DIR, name);
+  return fs.existsSync(file) ? readJson(file) : null;
+}
+
 function countMapDongs(points, id){
   let dongs = 0;
   let pointsCount = 0;
@@ -23,6 +28,16 @@ function countMapDongs(points, id){
     }
   }
   return {map_dongs: dongs, map_points: pointsCount};
+}
+
+function referenceSalesStatus(item){
+  const scopes = item.reference_sales_scopes || [];
+  if (item.has_sales || !scopes.length) return {};
+  return {
+    has_reference_sales: true,
+    reference_sales_label: '참고 매출 있음',
+    reference_sales_scopes: scopes
+  };
 }
 
 function coverageStatus(item){
@@ -61,11 +76,30 @@ function coverageStatus(item){
   };
 }
 
+function typeMatchesSalesRow(type, row){
+  if (type.code && row.business_code === type.code) return true;
+  const words = type.words || [];
+  const name = String(row.business_name || '');
+  return words.length > 0 && words.some(word => name.includes(word));
+}
+
+function referenceSalesScopes(type, regionalSales){
+  return regionalSales
+    .filter(item => item.payload && (item.payload.rows || []).some(row => typeMatchesSalesRow(type, row) && row.amount))
+    .map(item => item.scope);
+}
+
 function build(){
   const view = readJson(VIEW);
   const stores = fs.existsSync(STORES) ? readJson(STORES) : {};
   const rows = view.rows || [];
   const points = stores.points || {};
+  const regionalSales = [
+    {scope: 'signgu', payload: readOptional('commercial-sales-signgu.json')},
+    {scope: 'mega', payload: readOptional('commercial-sales-mega.json')},
+    {scope: 'trdar', payload: readOptional('commercial-sales-trdar.json')},
+    {scope: 'trdhl', payload: readOptional('commercial-sales-trdhl.json')}
+  ];
 
   const items = (view.business_types || []).map(type => {
     let salesDongs = 0;
@@ -85,6 +119,7 @@ function build(){
       }
     }
     const map = countMapDongs(points, type.id);
+    const referenceScopes = referenceSalesScopes(type, regionalSales);
     const item = {
       id: type.id,
       code: type.code || null,
@@ -100,7 +135,8 @@ function build(){
       map_dongs: map.map_dongs,
       map_points: map.map_points
     };
-    return {...item, ...coverageStatus(item)};
+    if (referenceScopes.length) item.reference_sales_scopes = referenceScopes;
+    return {...item, ...referenceSalesStatus(item), ...coverageStatus(item)};
   });
 
   const payload = {
@@ -124,4 +160,4 @@ function build(){
 
 if (require.main === module) build();
 
-module.exports = {build, countMapDongs, coverageStatus};
+module.exports = {build, countMapDongs, coverageStatus, referenceSalesStatus, referenceSalesScopes};

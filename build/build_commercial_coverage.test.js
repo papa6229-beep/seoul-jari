@@ -1,5 +1,14 @@
 const assert = require('assert');
-const {coverageStatus} = require('./build_commercial_coverage');
+const {coverageStatus, referenceSalesStatus} = require('./build_commercial_coverage');
+
+assert.deepEqual(referenceSalesStatus({
+  has_sales: false,
+  reference_sales_scopes: ['signgu', 'mega']
+}), {
+  has_reference_sales: true,
+  reference_sales_label: '참고 매출 있음',
+  reference_sales_scopes: ['signgu', 'mega']
+});
 
 assert.deepEqual(
   coverageStatus({has_sales: true, has_stores: true, has_map_points: true}),
