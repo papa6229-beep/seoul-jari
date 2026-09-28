@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=92">
+<link rel="stylesheet" href="styles.css?v=93">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '92';
+  var PAGE_V = '93';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '92';
+const V = '93';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -202,6 +202,14 @@ function referenceText(ref){
 function businessMeta(){
   return (DATA.view && Array.isArray(DATA.view.business_types) ? DATA.view.business_types : [])
     .find(item => item.id === state.biz) || {};
+}
+
+function bizLabel(id, item){
+  if (item && item.business_name) return item.business_name;
+  if (item && item.label) return item.label;
+  const meta = (DATA.view && Array.isArray(DATA.view.business_types) ? DATA.view.business_types : [])
+    .find(type => type.id === id);
+  return (meta && meta.label) || (BIZ[id] && BIZ[id].label) || id || '이름 없음';
 }
 
 function topMarketList(items){
@@ -345,7 +353,7 @@ function median(rows, key){
 function buildRows(){
   const base = latestRows(DATA.view).map(src => {
     const biz = (src.biz && src.biz[state.biz]) || {};
-    const allBiz = Object.values(src.biz || {});
+    const allBiz = Object.entries(src.biz || {});
     const demand = (src.floating || 0) + (src.workers || 0) * 800 + (src.residents || 0) * 250;
     const unitPrice = biz.sales && biz.sales_count ? Math.round(biz.sales / biz.sales_count) : null;
     return {
@@ -378,12 +386,12 @@ function buildRows(){
       sales_items: biz.sales_items || [],
       store_items: biz.store_items || [],
       all_sales_items: allBiz
-        .filter(item => item.sales)
-        .map(item => ({business_name: item.name, amount: item.sales, stores: item.stores}))
+        .filter(([, item]) => item.sales)
+        .map(([id, item]) => ({business_name: bizLabel(id, item), amount: item.sales, stores: item.stores}))
         .sort((a, z) => (z.amount || 0) - (a.amount || 0)),
       all_store_items: allBiz
-        .filter(item => item.stores)
-        .map(item => ({business_name: item.name, store_count: item.stores, sales: item.sales}))
+        .filter(([, item]) => item.stores)
+        .map(([id, item]) => ({business_name: bizLabel(id, item), store_count: item.stores, sales: item.sales}))
         .sort((a, z) => (z.store_count || 0) - (a.store_count || 0)),
       reference_sales: biz.reference_sales || null
     };
@@ -857,9 +865,9 @@ function renderDetail(rows){
       '<div><p class="grp-title">한눈에 판단</p>' +
         stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 전체 매출을 가게 수로 나눈 월평균입니다.' : salesMissingText()) +
         (reference ? stat(plainScope(reference.scope) + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store), '개별 가게 매출이 아니라 넓은 권역에서 가게 1곳이 한 달에 파는 금액을 참고로 보는 값입니다.') : '') +
-        stat('같은 업종 가게', fmt(r.stores) + '곳') +
+        stat('같은 업종 가게', withUnit(r.stores, '곳')) +
         stat('손님이 생기는 이유', demandType(r)) +
-        stat('자료 상태', salesOk ? '매출 있음' : '매출 없음', (mapOk ? '지도핀 ' + fmt(cov && cov.map_points) + '개 연결' : '지도핀 연결 부족')) +
+        stat('판단 포인트', scoreGuide(r)) +
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
         stat('매출', salesOk && r.sales_per_store_month ? '가게 1곳 월 ' + money(r.sales_per_store_month) : '자료 없음', salesOk ? period + ' 카드매출을 바탕으로 추정' : salesMissingText()) +
