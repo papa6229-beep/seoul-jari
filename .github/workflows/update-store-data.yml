@@ -35,6 +35,8 @@ jobs:
           LIMIT_GU: ${{ inputs.limit_gu }}
           MAX_PAGES: ${{ inputs.max_pages }}
         run: |
+          curl -sS --max-time 20 "https://apis.data.go.kr/B553077/api/open/sdsc2/storeListInDong?pageNo=1&numOfRows=1&divId=signguCd&key=11680&type=json&serviceKey=$DATA_GO_KR_SERVICE_KEY" | head -c 300
+          echo
           args=()
           if [ -n "$LIMIT_GU" ]; then args+=("--limit-gu=$LIMIT_GU"); fi
           if [ -n "$MAX_PAGES" ]; then args+=("--max-pages=$MAX_PAGES"); fi

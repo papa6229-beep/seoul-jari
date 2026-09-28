@@ -52,7 +52,13 @@ function itemsFromJson(json){
 }
 
 async function fetchJson(url, fetchImpl = fetch){
-  const res = await fetchImpl(url);
+  let res;
+  try {
+    res = await fetchImpl(url);
+  } catch (err) {
+    const cause = err && err.cause ? ` (${err.cause.code || err.cause.message || err.cause})` : '';
+    throw new Error('API 연결 실패: ' + (err.message || err) + cause);
+  }
   const text = await res.text();
   if (!res.ok) throw new Error('API HTTP ' + res.status + ': ' + text.slice(0, 200));
   try {
@@ -60,6 +66,23 @@ async function fetchJson(url, fetchImpl = fetch){
   } catch (err) {
     throw new Error('JSON 파싱 실패: ' + text.slice(0, 200));
   }
+}
+
+async function fetchJsonWithRetry(url, fetchImpl = fetch){
+  const tries = 4;
+  let lastError = null;
+  for (let i = 1; i <= tries; i++){
+    try {
+      return await fetchJson(url, fetchImpl);
+    } catch (err) {
+      lastError = err;
+      if (i === tries) break;
+      const waitMs = i * 2500;
+      console.warn(`API 호출 실패, ${waitMs / 1000}초 후 재시도 ${i}/${tries - 1}: ${err.message}`);
+      await new Promise(resolve => setTimeout(resolve, waitMs));
+    }
+  }
+  throw lastError;
 }
 
 function buildUrl({serviceKey, guCode, pageNo}){
@@ -78,7 +101,7 @@ async function fetchGu({serviceKey, guCode, guName, maxPages = Infinity, fetchIm
   let totalCount = null;
   for (let pageNo = 1; pageNo <= maxPages; pageNo++){
     const url = buildUrl({serviceKey, guCode, pageNo});
-    const json = await fetchJson(url, fetchImpl);
+    const json = await fetchJsonWithRetry(url, fetchImpl);
     const body = json.body || {};
     if (totalCount === null) totalCount = Number(body.totalCount || 0);
     const items = itemsFromJson(json);
