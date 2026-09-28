@@ -324,7 +324,7 @@ select.add-col{
 .commercial-row .place small,.commercial-row span small{display:block; color:var(--ink-3); font-size:12px; font-weight:600}
 .commercial-row span b{font-size:15.5px; font-variant-numeric:tabular-nums}
 .detail-tabs{
-  display:flex; gap:0; margin:0; border:1px solid var(--line); border-bottom:0;
+  display:flex; gap:0; margin:18px 0 0; border:1px solid var(--line); border-bottom:0;
   border-radius:10px 10px 0 0; overflow:hidden; background:#fbfaf7; width:max-content; max-width:100%;
 }
 .detail-tabs button{
@@ -333,6 +333,7 @@ select.add-col{
 }
 .detail-tabs button:last-child{border-right:0}
 .detail-tabs button[aria-pressed="true"]{background:var(--accent); color:#fff}
+.commercial-detail{margin-top:0; border-radius:0 12px 12px 12px}
 .commercial-detail .dhead{margin-top:18px}
 .commercial-why{
   margin-top:12px; border:1px solid var(--line); border-radius:10px; background:#fbfaf7;
