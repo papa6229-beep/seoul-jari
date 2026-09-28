@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=85">
+<link rel="stylesheet" href="styles.css?v=86">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '85';
+  var PAGE_V = '86';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '85';
+const V = '86';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -141,6 +141,7 @@ function escapeHtml(v){
 }
 
 const fmt = n => n === null || n === undefined ? '—' : n.toLocaleString('ko-KR');
+const withUnit = (n, unit) => n === null || n === undefined ? '자료 없음' : fmt(n) + unit;
 const pct = n => n === null || n === undefined ? '—' : Math.round(n) + '%';
 const money = n => {
   if (!n) return '—';
@@ -851,11 +852,11 @@ function renderDetail(rows){
     '<div class="groups">' +
         '<div><p class="grp-title">손님 바탕</p><p class="basis-note">' + period + ' 기준으로 지나다니는 사람, 일하러 오는 사람, 사는 사람을 봅니다.</p>' +
           stat('손님이 생기는 이유', demandType(r), demandTone(r)) +
-          stat('지나다니는 사람', fmt(r.floating), '하루 동안 이 동네에 머문 사람 규모입니다.') +
-          stat('점심 유동', fmt(r.lunch_flow), '점심 시간대 방문·체류 수요 참고') +
-          stat('저녁 유동', fmt(r.evening_flow), '퇴근 이후와 저녁 운영 수요 참고') +
-          stat('일하러 오는 사람', fmt(r.workers), '평일 낮 손님의 바탕입니다.') +
-          stat('사는 사람', fmt(r.residents), '저녁·주말 손님의 바탕입니다.') +
+          stat('지나다니는 사람', withUnit(r.floating, '명'), '하루 동안 이 동네에 머문 사람 규모입니다.') +
+          stat('점심 유동', withUnit(r.lunch_flow, '명'), '점심 시간대 방문·체류 수요 참고') +
+          stat('저녁 유동', withUnit(r.evening_flow, '명'), '퇴근 이후와 저녁 운영 수요 참고') +
+          stat('일하러 오는 사람', withUnit(r.workers, '명'), '평일 낮 손님의 바탕입니다.') +
+          stat('사는 사람', withUnit(r.residents, '명'), '저녁·주말 손님의 바탕입니다.') +
         '</div>' +
         '<div><p class="grp-title">소비</p><p class="basis-note">소비지출은 업종별 지출 여력을 보는 보조지표입니다.</p>' +
           stat('총 소비지출', money(r.spending), '행정동 전체 소비 규모') +
@@ -863,13 +864,13 @@ function renderDetail(rows){
           stat('교육 소비', money(r.education_spending), '학원·교습소 업종이면 특히 참고') +
         '</div>' +
       '<div><p class="grp-title">가구</p><p class="basis-note">동네 생활권의 반복 수요를 가늠하는 보조 기준입니다.</p>' +
-        stat('가구 수', fmt(r.households), '거주 기반 수요의 크기') +
+        stat('가구 수', withUnit(r.households, '가구'), '거주 기반 수요의 크기') +
         stat('아파트 단지', r.apartment ? fmt(r.apartment.complexes) + '개' : '자료 없음', apartmentTone(r)) +
         stat('평균 아파트 시세', r.apartment ? money(r.apartment.average_market_price) : '자료 없음', '주거지 구매력과 객단가 여력을 보는 참고 지표') +
       '</div>' +
       '<div><p class="grp-title">집객시설</p><p class="basis-note">시설 수는 동네 안 반복 방문 이유가 얼마나 있는지 보는 보조 기준입니다.</p>' +
         stat('전체 시설', r.facilities ? fmt(r.facilities.total) + '개' : '자료 없음', facilityTone(r)) +
-        stat('대중교통', r.facilities ? '지하철 ' + fmt(r.facilities.subway_stations) + ' · 버스 ' + fmt(r.facilities.bus_stops) : '자료 없음', '정류장 수가 많아도 후보 점포 앞 동선과 연결되어야 의미가 있습니다.') +
+        stat('대중교통', r.facilities ? '지하철 ' + fmt(r.facilities.subway_stations) + '곳 · 버스 ' + fmt(r.facilities.bus_stops) + '곳' : '자료 없음', '정류장 수가 많아도 후보 점포 앞 동선과 연결되어야 의미가 있습니다.') +
         stat('학교·대학', r.facilities ? fmt(r.facilities.schools) + '곳' : '자료 없음', '학원·간식·생활형 업종의 보조 수요') +
       '</div>' +
     '</div>';
