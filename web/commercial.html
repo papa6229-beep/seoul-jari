@@ -1365,6 +1365,7 @@ function render(){
   if (state.page < 1) state.page = 1;
   const pageStart = (state.page - 1) * state.pageSize;
   const list = rows.slice(pageStart, pageStart + state.pageSize);
+  if (!state.picked && list[0]) state.picked = list[0].code;
   const salesColumnTitle = hasSalesData() ? '가게 1곳 월평균 매출' : (currentReferenceSales() ? '1곳 추정 월평균 매출' : '가게 1곳 월평균 매출');
   const pager = rows.length > state.pageSize
     ? '<div class="commercial-pager">' +
@@ -1388,6 +1389,7 @@ function render(){
   for (const el of table.querySelectorAll('[data-page]')){
     el.onclick = () => {
       state.page += el.dataset.page === 'next' ? 1 : -1;
+      state.picked = '';
       render();
     };
   }
@@ -1395,6 +1397,7 @@ function render(){
     el.onclick = () => {
       state.sortDir = el.dataset.sortDir;
       state.page = 1;
+      state.picked = '';
       render();
     };
   }
