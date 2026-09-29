@@ -14,7 +14,7 @@
     {
       "id": "cafe",
       "code": null,
-      "label": "개인 카페",
+      "label": "카페·간식",
       "kind": "group",
       "has_sales": true,
       "has_stores": true,

@@ -32,7 +32,7 @@
     <div class="field">
       <label for="biz">업종</label>
       <select class="pick" id="biz">
-        <option value="cafe">개인 카페</option>
+        <option value="cafe">카페·간식</option>
       </select>
     </div>
 
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '103';
+const V = '104';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -83,7 +83,7 @@ const FILES = {
 };
 const BIZ = {
   cafe: {
-    label: '개인 카페',
+    label: '카페·간식',
     words: ['커피', '음료', '제과', '패스트푸드'],
     demand: ['유동인구', '20~40대 상주·직장인', '식료품·음식 소비'],
     caution: '카페는 임대료와 체류 동선 영향이 큽니다. 매출이 높아도 경쟁 점포 수를 같이 봅니다.'
@@ -223,7 +223,7 @@ function normalizeBizName(name){
 
 function tasisAliasName(id, label){
   if (id === 'cafe' || id === 'svc_CS100010') return '커피음료점';
-  if (label === '개인 카페' || label === '커피-음료') return '커피음료점';
+  if (label === '카페·간식' || label === '개인 카페' || label === '커피-음료') return '커피음료점';
   return '';
 }
 
@@ -632,6 +632,12 @@ function franchiseShareText(row){
   };
 }
 
+function groupScopeNote(){
+  return state.biz === 'cafe'
+    ? '커피·음료, 제과점, 패스트푸드가 함께 들어간 묶음입니다. 커피만 보려면 업종에서 커피-음료를 선택하세요.'
+    : '';
+}
+
 function marketChangeTone(r){
   const m = r.market_change;
   if (!m || !m.name) return '상권 변화지표가 아직 연결되지 않았습니다.';
@@ -718,7 +724,7 @@ function nextChecks(r){
     '네이버지도와 현장 방문으로 동일 업종 체감 밀도를 확인'
   ];
   const byBiz = {
-    cafe: ['테이크아웃 동선과 앉아서 머무는 좌석 수요 중 어느 쪽인지 구분', '아침·점심·저녁 피크가 각각 살아있는지 주변 직장·주거 동선을 확인', '프랜차이즈와 개인 카페가 섞인 위치에서는 메뉴 단가와 회전율 차별화 필요'],
+    cafe: ['테이크아웃 동선과 앉아서 머무는 좌석 수요 중 어느 쪽인지 구분', '아침·점심·저녁 피크가 각각 살아있는지 주변 직장·주거 동선을 확인', '프랜차이즈와 독립 매장이 섞인 위치에서는 메뉴 단가와 회전율 차별화 필요'],
     food: ['점심 회전율, 배달 반경, 저녁 매출 가능성을 따로 확인', '주방 배기·냄새·상하수도 조건을 임대차 전에 확인', '같은 가격대 식사 업종이 몰린 골목인지 현장 메뉴판으로 비교'],
     fitness: ['층고, 샤워실, 방음, 환기, 엘리베이터, 주차 가능 여부를 먼저 확인', '퇴근 후 18~22시 접근성과 여성 이용자 동선을 현장에서 확인', 'PT·필라테스는 주변 결제금액과 강사 확보 가능성이 매출을 크게 좌우'],
     academy: ['학교·아파트·버스정류장 동선을 이어서 보는 것이 우선', '같은 과목 학원 밀도와 학년별 수요를 기존 입지 분석 화면과 같이 확인', '차량 승하차, 엘리베이터, 소음 민원 가능성을 확인'],
@@ -1023,6 +1029,7 @@ function renderDetail(rows){
   const summaryTab =
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 판단</p>' +
+        (groupScopeNote() ? stat('업종 범위', groupScopeNote()) : '') +
         stat(localOneStoreTitle, salesOk ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
         (!salesOk && tasis ? stat(seoulOneStoreTitle, manwonMoney(tasis.row.avg_monthly_sales_manwon)) : '') +
         (reference && salesOk ? stat(referenceScope + ' 가게 1곳 참고 월매출', money(reference.monthly_sales_per_store)) : '') +
