@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '97';
+const V = '98';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -347,14 +347,11 @@ function applyBusinessTypes(){
     };
     if (item.reference_sales) BIZ[item.id].reference_sales = item.reference_sales;
   }
-  const groupOrder = ['추천 업종', '매출 자료 있는 업종', '매출 자료 없는 업종'];
+  const groupOrder = ['추천 업종', '전체 업종'];
   const byGroup = new Map();
   for (const item of types){
-    const cov = coverageFor(item.id);
     let group = item.group || (item.kind === 'service' ? '전체 업종' : '추천 업종');
-    if (group === '전체 업종'){
-      group = cov && cov.has_sales ? '매출 자료 있는 업종' : '매출 자료 없는 업종';
-    }
+    if (group === '매출 자료 있는 업종' || group === '매출 자료 없는 업종') group = '전체 업종';
     if (!byGroup.has(group)) byGroup.set(group, []);
     byGroup.get(group).push(item);
   }
@@ -362,11 +359,9 @@ function applyBusinessTypes(){
     byGroup.set('추천 업종', Object.keys(BIZ).map(id => ({id, label: BIZ[id].label})));
   }
   biz.innerHTML = groupOrder.concat([...byGroup.keys()].filter(g => !groupOrder.includes(g))).filter(g => byGroup.has(g)).map(group => {
-    const options = byGroup.get(group).map(item => {
-      const cov = coverageFor(item.id);
-      const mark = cov && !cov.has_sales ? ' · 점포/지도 중심' : '';
-      return '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.label + mark) + '</option>';
-    }).join('');
+    const options = byGroup.get(group).map(item =>
+      '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.label) + '</option>'
+    ).join('');
     return '<optgroup label="' + escapeHtml(group) + '">' + options + '</optgroup>';
   }).join('');
   if (!BIZ[state.biz]) state.biz = 'cafe';
