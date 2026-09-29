@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=114">
+<link rel="stylesheet" href="styles.css?v=115">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '114';
+  var PAGE_V = '115';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '114';
+const V = '115';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -89,7 +89,7 @@ const BIZ = {
     caution: '카페는 임대료와 체류 동선 영향이 큽니다. 매출이 높아도 경쟁 점포 수를 같이 봅니다.'
   },
   cafe: {
-    label: '카페·제과·패스트푸드',
+    label: '카페·간식 묶음',
     words: ['커피', '음료', '제과', '패스트푸드'],
     demand: ['유동인구', '20~40대 상주·직장인', '식료품·음식 소비'],
     caution: '카페는 임대료와 체류 동선 영향이 큽니다. 매출이 높아도 경쟁 점포 수를 같이 봅니다.'
@@ -122,7 +122,11 @@ const BIZ = {
 
 const state = {
   biz: new URLSearchParams(location.search).get('biz') || 'svc_CS100010',
-  dong: '', q: '', sort: 'sales_per_store_month', picked: '', tab: 'summary',
+  dong: new URLSearchParams(location.search).get('dong') || '',
+  q: '',
+  sort: new URLSearchParams(location.search).get('sort') || 'sales_per_store_month',
+  picked: new URLSearchParams(location.search).get('dong') || '',
+  tab: new URLSearchParams(location.search).get('tab') || 'summary',
   sortDir: 'desc', page: 1, pageSize: 10,
   show: {business: true, school: false, academy: false, apartment: true, shop: true}
 };
@@ -450,7 +454,7 @@ function applyBusinessTypes(){
   }
   biz.innerHTML = groupOrder.concat([...byGroup.keys()].filter(g => !groupOrder.includes(g))).filter(g => byGroup.has(g)).map(group => {
     const options = byGroup.get(group).map(item =>
-      '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.label) + '</option>'
+      '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.id === 'cafe' ? '카페·간식 묶음' : item.label) + '</option>'
     ).join('');
     return '<optgroup label="' + escapeHtml(group) + '">' + options + '</optgroup>';
   }).join('');
@@ -650,6 +654,7 @@ function renderSummary(rows){
     mapOk ? '지도 지점 ' + fmt(cov && cov.map_points) + '개' : '지도 지점 없음'
   ].filter(Boolean).join(' · ');
   summary.innerHTML = '';
+  if (state.dong || rows.length <= 1) return;
   const insight = document.createElement('section');
   insight.className = 'commercial-insight';
   insight.innerHTML =
@@ -1004,11 +1009,15 @@ function setMapSelection(p){
 
 function businessPoints(row){
   const all = DATA.stores && DATA.stores.points ? DATA.stores.points : {};
+  const reference = row.reference_sales || currentReferenceSales();
+  const estimatedSales = estimatedMonthlySales(row, reference);
   const salesNote = row.sales_per_store_month
     ? '개별 가게 매출 아님 · 이 동네 ' + BIZ[state.biz].label + ' 가게 1곳의 한 달 평균 매출 ' + money(row.sales_per_store_month)
-    : (row.reference_sales && row.reference_sales.monthly_sales_per_store
-      ? '개별 가게 매출 아님 · ' + plainScope(row.reference_sales.scope) + ' 기준 가게 1곳의 한 달 참고 매출 ' + money(row.reference_sales.monthly_sales_per_store)
-      : '');
+    : (estimatedSales
+      ? '개별 가게 매출 아님 · 이 동네 조건을 반영한 1곳 추정 월평균 매출 ' + money(estimatedSales)
+      : (reference && reference.monthly_sales_per_store
+        ? '개별 가게 매출 아님 · ' + plainScope(reference.scope) + ' 기준 가게 1곳의 한 달 참고 매출 ' + money(reference.monthly_sales_per_store)
+        : ''));
   for (const key of storeDongKeys(row)){
     const bucket = all[key] && all[key][state.biz];
     if (Array.isArray(bucket) && bucket.length){
