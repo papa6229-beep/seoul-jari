@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=113">
+<link rel="stylesheet" href="styles.css?v=114">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '113';
+  var PAGE_V = '114';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '113';
+const V = '114';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -317,6 +317,10 @@ function estimatedMonthlySales(row, reference){
   return Math.round(reference.monthly_sales_per_store * (row.estimate_factor || 1));
 }
 
+function isAggregateBusinessId(id){
+  return ['cafe', 'food', 'fitness', 'academy', 'unmanned'].includes(id);
+}
+
 function tasisReferenceCard(tasis, compact){
   if (!tasis || !tasis.row) return '';
   const row = tasis.row;
@@ -536,6 +540,7 @@ function buildRows(){
       all_sales_items: allBiz
         .filter(([, item]) => item.sales && item.stores)
         .map(([id, item]) => ({
+          id,
           business_name: bizLabel(id, item),
           amount: item.sales,
           stores: item.stores,
@@ -544,7 +549,7 @@ function buildRows(){
         .sort((a, z) => (z.monthly_per_store || 0) - (a.monthly_per_store || 0)),
       all_store_items: allBiz
         .filter(([, item]) => item.stores)
-        .map(([id, item]) => ({business_name: bizLabel(id, item), store_count: item.stores, sales: item.sales}))
+        .map(([id, item]) => ({id, business_name: bizLabel(id, item), store_count: item.stores, sales: item.sales}))
         .sort((a, z) => (z.store_count || 0) - (a.store_count || 0)),
       reference_sales: biz.reference_sales || null
     };
@@ -690,9 +695,11 @@ function scoreLabel(r){
 function mainCaution(row){
   if (!row) return '자료 확인 필요';
   const referenceMonthly = row.reference_sales && row.reference_sales.monthly_sales_per_store;
+  const salesRatio = row.sales_per_store_month && referenceMonthly ? row.sales_per_store_month / referenceMonthly : null;
   const salesRankStrong = rowSalesValue(row) && referenceMonthly && rowSalesValue(row) >= referenceMonthly * 1.5 && row.score < 45;
+  if (salesRatio && salesRatio >= 2.5) return '매출 높음 · 이유 확인';
   if (salesRankStrong) return '매출만 높고 종합 판단은 낮음';
-  if ((row.franchises || 0) && row.stores && row.franchises / row.stores >= .7) return '브랜드 경쟁 강함';
+  if ((row.franchises || 0) && row.stores && row.franchises <= row.stores && row.franchises / row.stores >= .7) return '브랜드 경쟁 강함';
   if ((row.stores || 0) >= 100) return '같은 업종 많음';
   return scoreLabel(row);
 }
@@ -712,6 +719,14 @@ function competitionGuide(r){
 
 function franchiseShareText(row){
   if (!row || !row.stores || row.franchises === null || row.franchises === undefined) return null;
+  if (row.franchises > row.stores){
+    return {
+      count: fmt(row.franchises) + '곳',
+      share: '원자료 확인',
+      label: '브랜드 자료 확인',
+      guide: '브랜드·프랜차이즈 수가 전체 가게 수보다 크게 잡혀 있습니다. 원자료 집계 기준이 달라 비율 판단은 보류합니다.'
+    };
+  }
   const pctText = Math.round((row.franchises / row.stores) * 100);
   const share = row.franchises / row.stores;
   const label = share >= .7 ? '브랜드 강함' : (share >= .35 ? '브랜드 섞임' : '독립매장 중심');
@@ -732,8 +747,24 @@ function franchiseShareText(row){
 
 function groupScopeNote(){
   return state.biz === 'cafe'
-    ? '커피·음료, 제과점, 패스트푸드점을 합친 묶음입니다. 커피만 보려면 업종에서 커피-음료를 선택하세요.'
+    ? '커피·음료, 제과점, 패스트푸드점을 합친 넓은 묶음입니다. 커피 창업 판단은 업종에서 커피-음료를 선택해 보세요.'
     : '';
+}
+
+function broadBusinessNote(){
+  if (state.biz === 'cafe') return '묶음 안의 업종 차이가 커서 평균이 크게 튈 수 있습니다. 커피만 볼 때는 커피-음료 기준을 우선 보세요.';
+  return '';
+}
+
+function salesReferenceTone(row){
+  const referenceMonthly = row && row.reference_sales && row.reference_sales.monthly_sales_per_store;
+  if (!row || !row.sales_per_store_month || !referenceMonthly) return '';
+  const ratio = row.sales_per_store_month / referenceMonthly;
+  const label = scopeLabel(row.reference_sales.scope, row);
+  if (ratio >= 2.5) return label + '보다 매우 높게 잡힌 동네입니다. 대형 매장, 프랜차이즈, 특수 입지 영향인지 확인해야 합니다.';
+  if (ratio >= 1.5) return label + '보다 높게 잡힌 동네입니다. 유동 동선과 직접 경쟁을 같이 확인하세요.';
+  if (ratio <= .5) return label + '보다 낮게 잡힌 동네입니다. 수요가 약한지, 매장이 너무 많은지 확인하세요.';
+  return label + '와 큰 차이 없이 볼 수 있는 동네입니다.';
 }
 
 function marketChangeTone(r){
@@ -1100,8 +1131,13 @@ function renderDetail(rows){
     return;
   }
   state.picked = r.code;
-  const topSales = (r.all_sales_items && r.all_sales_items.length ? r.all_sales_items : r.sales_items).slice().sort((a, b) => (b.amount || 0) - (a.amount || 0)).slice(0, 3);
-  const topStores = (r.all_store_items && r.all_store_items.length ? r.all_store_items : r.store_items).slice().sort((a, b) => (b.store_count || 0) - (a.store_count || 0)).slice(0, 3);
+  const topSales = (r.all_sales_items && r.all_sales_items.length ? r.all_sales_items : r.sales_items)
+    .filter(item => !isAggregateBusinessId(item.id))
+    .filter(item => (item.stores || 0) >= 3)
+    .slice().sort((a, b) => (b.monthly_per_store || 0) - (a.monthly_per_store || 0)).slice(0, 3);
+  const topStores = (r.all_store_items && r.all_store_items.length ? r.all_store_items : r.store_items)
+    .filter(item => !isAggregateBusinessId(item.id))
+    .slice().sort((a, b) => (b.store_count || 0) - (a.store_count || 0)).slice(0, 3);
   const hasDongSales = rowHasSales(r);
   const hasAnySales = businessHasAnySales();
   const mapOk = hasMapData();
@@ -1128,6 +1164,8 @@ function renderDetail(rows){
   const referenceNote = reference
     ? '동네 조건을 반영한 추정치입니다. 실제 카드매출 통계는 아닙니다.'
     : '';
+  const referenceTone = salesReferenceTone(r);
+  const broadNote = broadBusinessNote();
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
   const noteStat = (k, v) => '<div class="stat stat-note"><span class="k">' + k + '</span><span class="note-v">' + escapeHtml(v) + '</span></div>';
   const item = r => {
@@ -1148,9 +1186,10 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 판단</p>' +
         (groupScopeNote() ? noteStat('업종 범위', groupScopeNote()) : '') +
+        (broadNote ? noteStat('먼저 확인', broadNote) : '') +
         stat(localOneStoreTitle, hasDongSales ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
         (!hasDongSales && visibleTasis ? stat(seoulOneStoreTitle, manwonMoney(visibleTasis.row.avg_monthly_sales_manwon)) : '') +
-        (showReferenceLine && !hasDongSales ? stat(referenceScope + ' 가게 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store)) : '') +
+        (showReferenceLine ? stat(referenceScope + ' 가게 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
         stat('같은 업종 가게', withUnit(r.stores, '곳')) +
         stat('손님이 생기는 이유', demandType(r)) +
         stat('주의할 점', mainCaution(r)) +
@@ -1165,7 +1204,7 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">매출</p>' +
         stat(localOneStoreTitle, hasDongSales ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
-        (showReferenceLine && !hasDongSales ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store)) : '') +
+        (showReferenceLine ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
         (hasDongSales ? stat('손님 1명이 보통 쓰는 돈', r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음') : '') +
         (!hasDongSales && reference && reference.customer_unit_price ? stat(referenceScope + ' 참고 객단가', fmt(reference.customer_unit_price) + '원') : '') +
       '</div>' +
