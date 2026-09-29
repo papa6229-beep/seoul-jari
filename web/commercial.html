@@ -847,8 +847,9 @@ function filteredRows(){
   out = out.filter(r => r.score || r.sales || r.stores || r.floating || r.workers || r.residents);
   const key = state.sort;
   out = out.slice().sort((a, b) => {
-    const av = key === 'sales_per_store_month' ? (a.sales_per_store_month || a.estimated_sales_per_store_month || 0) : (a[key] || 0);
-    const bv = key === 'sales_per_store_month' ? (b.sales_per_store_month || b.estimated_sales_per_store_month || 0) : (b[key] || 0);
+    const av = key === 'sales_per_store_month' ? (a.sales_per_store_month || a.estimated_sales_per_store_month || null) : (a[key] || 0);
+    const bv = key === 'sales_per_store_month' ? (b.sales_per_store_month || b.estimated_sales_per_store_month || null) : (b[key] || 0);
+    if (key === 'sales_per_store_month' && !av !== !bv) return av ? -1 : 1;
     const diff = state.sortDir === 'asc' ? av - bv : bv - av;
     return diff || a.code.localeCompare(b.code);
   });
