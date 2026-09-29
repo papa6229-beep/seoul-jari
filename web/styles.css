@@ -347,6 +347,33 @@ select.add-col{
 .commercial-lists li{padding:6px 0; border-bottom:1px dashed #e4e1da}
 .commercial-lists li b{font-weight:700}
 .commercial-lists li span{float:right; color:var(--accent); font-weight:800; font-variant-numeric:tabular-nums}
+.tasis-card{
+  grid-column:1 / -1; margin:18px 0 2px; border:1px solid #d8d0b9; border-radius:10px;
+  background:#fffdf0; padding:16px 18px; color:var(--ink); box-shadow:0 8px 18px rgba(80,70,44,.06);
+}
+.tasis-card.compact{margin:10px 0 0; padding:12px 13px; box-shadow:none}
+.tasis-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+.tasis-head span{font-size:13px; color:#806332; font-weight:800}
+.tasis-head b{font-size:20px; color:var(--ink); word-break:keep-all}
+.tasis-head em{
+  font-style:normal; margin-left:auto; border:1px solid #e0cf9b; background:#fff7ce; color:#7a5720;
+  border-radius:999px; padding:3px 9px; font-size:12px; font-weight:800; white-space:nowrap;
+}
+.tasis-metrics{display:grid; grid-template-columns:repeat(5,1fr); gap:10px}
+.tasis-card.compact .tasis-metrics{grid-template-columns:repeat(3,1fr); gap:8px}
+.tasis-metrics span{
+  display:block; min-width:0; border-top:1px solid #e8dfc7; padding-top:9px;
+}
+.tasis-metrics b{
+  display:block; color:var(--accent); font-size:21px; line-height:1.2; font-variant-numeric:tabular-nums;
+  word-break:keep-all;
+}
+.tasis-card.compact .tasis-metrics b{font-size:17px}
+.tasis-metrics small{
+  display:block; margin-top:3px; color:#6f6652; font-size:12.2px; font-weight:800; word-break:keep-all;
+}
+.tasis-card p{margin:12px 0 0; color:#5c5648; font-size:13px; line-height:1.55; word-break:keep-all}
+.tasis-card .tasis-note{margin-top:5px; color:#806332}
 .market-rank{margin:0; padding-left:20px}
 .market-rank li{padding:8px 0; border-bottom:1px dashed #e4e1da; line-height:1.35}
 .market-rank li:last-child{border-bottom:0}
@@ -397,6 +424,8 @@ select.add-col{
   .commercial-row .rank{position:absolute; left:14px; top:18px; width:22px}
   .commercial-row .place{grid-column:1 / -1}
   .commercial-lists{grid-template-columns:1fr}
+  .tasis-metrics,.tasis-card.compact .tasis-metrics{grid-template-columns:1fr}
+  .tasis-head em{margin-left:0}
 }
 
 
