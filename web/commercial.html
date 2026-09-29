@@ -846,10 +846,20 @@ function filteredRows(){
   if (q) out = out.filter(r => (r.full_name + ' ' + r.gu + ' ' + r.name).includes(q));
   out = out.filter(r => r.score || r.sales || r.stores || r.floating || r.workers || r.residents);
   const key = state.sort;
+  if (key === 'sales_per_store_month'){
+    const salesValue = r => r.sales_per_store_month || r.estimated_sales_per_store_month || 0;
+    const withSales = out.filter(r => salesValue(r));
+    const withoutSales = out.filter(r => !salesValue(r));
+    withSales.sort((a, b) => {
+      const diff = state.sortDir === 'asc' ? salesValue(a) - salesValue(b) : salesValue(b) - salesValue(a);
+      return diff || a.code.localeCompare(b.code);
+    });
+    withoutSales.sort((a, b) => a.code.localeCompare(b.code));
+    return withSales.concat(withoutSales);
+  }
   out = out.slice().sort((a, b) => {
-    const av = key === 'sales_per_store_month' ? (a.sales_per_store_month || a.estimated_sales_per_store_month || null) : (a[key] || 0);
-    const bv = key === 'sales_per_store_month' ? (b.sales_per_store_month || b.estimated_sales_per_store_month || null) : (b[key] || 0);
-    if (key === 'sales_per_store_month' && !av !== !bv) return av ? -1 : 1;
+    const av = a[key] || 0;
+    const bv = b[key] || 0;
     const diff = state.sortDir === 'asc' ? av - bv : bv - av;
     return diff || a.code.localeCompare(b.code);
   });
