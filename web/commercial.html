@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=109">
+<link rel="stylesheet" href="styles.css?v=110">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '109';
+  var PAGE_V = '110';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '109';
+const V = '110';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -362,20 +362,20 @@ function topMarketList(items){
 
 function coverageLabel(cov){
   if (!cov) return '자료 상태 확인 중';
-  if (!cov.has_sales && cov.has_reference_sales) return '행정동 매출 없음 · 참고 매출 있음';
+  if (!cov.has_sales && cov.has_reference_sales) return '행정동 매출 없음 · 서울 평균 참고 가능';
   return cov.coverage_label || [
-    cov.has_sales ? '매출 있음' : '매출 없음',
-    cov.has_stores ? '점포 있음' : '점포 없음',
-    cov.has_map_points ? '지도 있음' : '지도 없음'
+    cov.has_sales ? '행정동 매출 있음' : '행정동 매출 없음',
+    cov.has_stores ? '가게 수 있음' : '가게 수 없음',
+    cov.has_map_points ? '지도 지점 있음' : '지도 지점 없음'
   ].join(' · ');
 }
 
 function coverageAction(cov){
   if (!cov) return '업종별 자료 상태를 불러오는 중입니다.';
-  if (!cov.has_sales && cov.has_reference_sales) return '행정동 후보 순위에는 쓰지 않고, 업종 규모를 설명하는 참고값으로만 보여줍니다.';
+  if (!cov.has_sales && cov.has_reference_sales) return '서울 평균 매출을 기준으로 동네 조건을 반영해 추정값을 보여줍니다.';
   return cov.recommended_action || (cov.has_sales
-    ? '매출과 점포 데이터를 같이 볼 수 있습니다.'
-    : '공공 매출은 미제공입니다. 점포·수요·지도 중심으로 먼저 봅니다.');
+    ? '행정동별 매출과 가게 수를 같이 볼 수 있습니다.'
+    : '행정동 매출은 없어서 가게 수와 수요부터 비교합니다.');
 }
 
 function coverageClass(cov){
@@ -387,10 +387,10 @@ function renderCoverageBox(){
   if (typeof coverageBox === 'undefined' || !coverageBox) return;
   const cov = coverageFor();
   const parts = cov ? [
-    cov.has_sales ? '매출 ' + fmt(cov.sales_dongs) + '개 동' : '매출 없음',
-    cov.has_reference_sales ? '참고매출 ' + (cov.reference_sales_scopes || []).join('/') : '',
-    cov.has_stores ? '점포 ' + fmt(cov.store_dongs) + '개 동' : '점포 없음',
-    cov.has_map_points ? '지도핀 ' + fmt(cov.map_points) + '개' : '지도핀 없음'
+    cov.has_sales ? '행정동 매출 ' + fmt(cov.sales_dongs) + '개 동' : '행정동 매출 없음',
+    cov.has_reference_sales ? '서울 평균 참고 가능' : '',
+    cov.has_stores ? '가게 수 ' + fmt(cov.store_dongs) + '개 동' : '가게 수 없음',
+    cov.has_map_points ? '지도 지점 ' + fmt(cov.map_points) + '개' : '지도 지점 없음'
   ].filter(Boolean) : ['자료 확인 중'];
   coverageBox.className = 'coverage-box ' + coverageClass(cov);
   coverageBox.innerHTML =
@@ -627,7 +627,7 @@ function renderSummary(rows){
     '<small>' + rowSalesNote(row) + ' · 점포 ' + fmt(row.stores) + '곳</small></button>' : '';
   const status = cov ? coverageLabel(cov) : [
     salesOk ? '매출자료 있음' : '매출자료 없음',
-    mapOk ? '지도핀 ' + fmt(cov && cov.map_points) + '개' : '지도핀 없음'
+    mapOk ? '지도 지점 ' + fmt(cov && cov.map_points) + '개' : '지도 지점 없음'
   ].filter(Boolean).join(' · ');
   summary.innerHTML = '';
   const insight = document.createElement('section');
@@ -1163,12 +1163,12 @@ function renderDetail(rows){
   const analysisTab =
     explainRow(r, rows) +
     '<div class="groups">' +
-      '<div><p class="grp-title">입지 가설</p>' +
-        stat('운영 타입', demandType(r), marketHypothesis) +
+      '<div><p class="grp-title">판단 근거</p>' +
+        stat('장사 성격', demandType(r), marketHypothesis) +
         stat('상권 흐름', marketChangeLabel(r), marketChangeTone(r)) +
-        stat('매출 가설', hasDongSales ? '월평균 ' + money(r.sales_per_store_month) : (estimatedSales ? r.name + ' 1곳 월평균 ' + money(estimatedSales) + ' 추정' : '자료 없음'), hasDongSales ? '이 매출이 가능한 자리인지 입구 위치와 유동 방향을 현장에서 확인해야 합니다.' : (estimatedSales ? referenceNote : '매출 자료가 없으므로 점포 수와 수요 기반으로 먼저 걸러봅니다.')) +
+        stat('매출 판단', hasDongSales ? '월평균 ' + money(r.sales_per_store_month) : (estimatedSales ? r.name + ' 1곳 월평균 ' + money(estimatedSales) + ' 추정' : '자료 없음'), hasDongSales ? '이 매출이 가능한 자리인지 입구 위치와 유동 방향을 현장에서 확인해야 합니다.' : (estimatedSales ? referenceNote : '매출 자료가 없으므로 점포 수와 수요 기반으로 먼저 걸러봅니다.')) +
         (visibleTasis ? stat('서울 평균 참고', manwonMoney(visibleTasis.row.avg_monthly_sales_manwon), '국세청 생활업종 기준입니다. 이 동네 매출이 아니라 서울 전체 평균입니다.') : '') +
-        stat('경쟁 가설', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '점포 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
+        stat('경쟁 판단', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '가게 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
       '</div>' +
       '<div><p class="grp-title">생활권 해석</p>' +
         stat('주거 기반', r.apartment ? fmt(r.apartment.complexes) + '개 단지' : '자료 없음', apartmentTone(r)) +
@@ -1180,7 +1180,7 @@ function renderDetail(rows){
         stat('두 번째', '임대료 확인', '가게 1곳 월평균 매출이 높아도 임대료·권리금이 높으면 후보에서 제외될 수 있습니다.') +
         stat('세 번째', '시간대 확인', demandTone(r)) +
       '</div>' +
-      '<div><p class="grp-title">서울 안 강한 상권</p><p class="basis-note">선택 업종 가게 1곳의 한 달 매출이 높게 잡힌 상권입니다. 후보 동네와 비교하는 참고용입니다.</p><ol class="market-rank">' + topMarketList(meta.top_markets) + '</ol></div>' +
+      '<div><p class="grp-title">서울 안 강한 상권</p><p class="basis-note">선택 업종 가게 1곳의 월평균 매출이 높게 잡힌 상권입니다. 후보 동네와 비교하는 참고용입니다.</p><ol class="market-rank">' + topMarketList(meta.top_markets) + '</ol></div>' +
       '<div><p class="grp-title">주변 생활권 참고</p><p class="basis-note">상권배후지 기준으로 같은 업종이 강하게 잡힌 곳입니다.</p><ol class="market-rank">' + topMarketList(meta.top_hinterlands) + '</ol></div>' +
     '</div>';
   const mapTab =
