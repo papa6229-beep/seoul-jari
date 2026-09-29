@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=108">
+<link rel="stylesheet" href="styles.css?v=109">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '108';
+  var PAGE_V = '109';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '108';
+const V = '109';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -1250,7 +1250,7 @@ function render(){
     '<button type="button" data-sort-dir="asc" aria-pressed="' + (state.sortDir === 'asc') + '">낮은순</button>' +
   '</div>';
   document.querySelectorAll('.commercial-sortdir').forEach(el => el.remove());
-  table.innerHTML = '<div class="commercial-head"><span></span><span>동네</span><span>' + salesColumnTitle + '</span><span>같은 업종 가게</span><span>수요 성격</span><span>후보 판단</span></div>' +
+  table.innerHTML = '<div class="commercial-head"><span></span><span>동네</span><span>' + salesColumnTitle + '</span><span>같은 업종 가게 수</span><span>수요 성격</span><span>후보 판단</span></div>' +
     (list.length ? list.map((row, idx) => rowHtml(row, pageStart + idx + 1)).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>') +
     pager;
   table.insertAdjacentHTML('beforebegin', sortDirControl);
