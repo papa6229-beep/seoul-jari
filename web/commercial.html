@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=106">
+<link rel="stylesheet" href="styles.css?v=107">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '106';
+  var PAGE_V = '107';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '106';
+const V = '107';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -201,6 +201,14 @@ function rowHasSales(row){
 function rowSalesValue(row){
   if (!row) return 0;
   return row.sales_per_store_month || row.estimated_sales_per_store_month || 0;
+}
+
+function rowSalesKind(row){
+  if (!row) return {label: '자료 없음', cls: 'none'};
+  if (row.sales_per_store_month) return {label: '실제 평균', cls: 'actual'};
+  if (row.estimated_sales_per_store_month) return {label: '추정', cls: 'estimated'};
+  if (row.reference_sales && row.reference_sales.monthly_sales_per_store) return {label: '참고', cls: 'reference'};
+  return {label: '자료 없음', cls: 'none'};
 }
 
 function businessHasAnySales(){
@@ -610,7 +618,8 @@ function renderSummary(rows){
   const highDemand = rows.slice().sort((a, z) => ((z.residents || 0) + (z.workers || 0)) - ((a.residents || 0) + (a.workers || 0)))[0];
   const rowSalesNote = row => {
     if (row.sales_per_store_month) return '가게 1곳 월평균 ' + money(row.sales_per_store_month);
-    if (row.reference_sales && row.reference_sales.monthly_sales_per_store) return plainScope(row.reference_sales.scope) + ' 참고 ' + money(row.reference_sales.monthly_sales_per_store);
+    if (row.estimated_sales_per_store_month) return '1곳 추정 월평균 ' + money(row.estimated_sales_per_store_month);
+    if (row.reference_sales && row.reference_sales.monthly_sales_per_store) return plainScope(row.reference_sales.scope) + ' 참고 월평균 ' + money(row.reference_sales.monthly_sales_per_store);
     return '매출 자료 없음';
   };
   const card = (title, row, desc, cls) => row ? '<button type="button" class="insight-card ' + (cls || '') + '" data-pick="' + row.code + '">' +
@@ -661,6 +670,12 @@ function scoreLabel(r){
   if ((r.score || 0) >= 70) return '좋은 후보';
   if ((r.score || 0) >= 45) return '현장 확인 필요';
   return '더 확인 필요';
+}
+
+function scoreShortLabel(r){
+  if ((r.score || 0) >= 70) return '좋음';
+  if ((r.score || 0) >= 45) return '보통';
+  return '낮음';
 }
 
 function competitionGuide(r){
@@ -743,15 +758,15 @@ function filteredRows(){
 
 function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
-  const reference = r.reference_sales || currentReferenceSales();
-  const salesValue = r.sales_per_store_month || r.estimated_sales_per_store_month || (reference && reference.monthly_sales_per_store);
+  const salesValue = r.sales_per_store_month || r.estimated_sales_per_store_month || 0;
+  const salesKind = rowSalesKind(r);
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + i + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b></span>' +
-    '<span><b>' + (salesValue ? money(salesValue) : '자료 없음') + '</b></span>' +
+    '<span><b>' + (salesValue ? money(salesValue) : '자료 없음') + '</b><small class="row-badge ' + salesKind.cls + '">' + salesKind.label + '</small></span>' +
     '<span><b>' + fmt(r.stores) + '곳</b></span>' +
     '<span><b>' + demandType(r) + '</b></span>' +
-    '<span><b>' + fmt(r.score) + '</b></span>' +
+    '<span><b>' + scoreShortLabel(r) + '</b><small>' + fmt(r.score) + '점</small></span>' +
   '</button>';
 }
 
@@ -1094,7 +1109,7 @@ function renderDetail(rows){
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
         stat('매출 자료', hasDongSales ? period + ' 카드매출 기준' : (hasAnySales ? '이 행정동 실제 매출 없음' : '이 업종 행정동 매출 없음')) +
-        stat('비교 기준', hasDongSales ? '행정동 실제 평균' : '참고값 또는 점포·수요 기준') +
+        stat('비교 기준', hasDongSales ? '행정동 실제 평균' : (estimatedSales ? '참고값에 동네 조건 반영' : '점포·수요 기준')) +
         stat('현장 확인', '입구 위치·차량 동선') +
       '</div>' +
     '</div>';
@@ -1103,8 +1118,8 @@ function renderDetail(rows){
       '<div><p class="grp-title">매출</p>' +
         stat(localOneStoreTitle, hasDongSales ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
         (showReferenceLine && !hasDongSales ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store)) : '') +
-        stat('손님 1명이 보통 쓰는 돈', hasDongSales && r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음') +
-        (reference && reference.customer_unit_price ? stat(referenceScope + ' 손님 1명이 보통 쓰는 돈', fmt(reference.customer_unit_price) + '원') : '') +
+        (hasDongSales ? stat('손님 1명이 보통 쓰는 돈', r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음') : '') +
+        (!hasDongSales && reference && reference.customer_unit_price ? stat(referenceScope + ' 참고 객단가', fmt(reference.customer_unit_price) + '원') : '') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p>' +
         stat(BIZ[state.biz].label + ' 가게 수', withUnit(r.stores, '곳')) +
@@ -1122,7 +1137,7 @@ function renderDetail(rows){
   const demandTab =
     '<div class="groups">' +
         '<div><p class="grp-title">인구 흐름</p>' +
-          stat('수요 유형', demandType(r)) +
+          stat('수요 성격', demandType(r)) +
           stat('하루 생활인구', withUnit(r.floating, '명')) +
           stat('점심 시간대 인구', withUnit(r.lunch_flow, '명')) +
           stat('저녁 시간대 인구', withUnit(r.evening_flow, '명')) +
@@ -1130,9 +1145,9 @@ function renderDetail(rows){
           stat('거주인구', withUnit(r.residents, '명')) +
         '</div>' +
         '<div><p class="grp-title">소비 규모</p>' +
-          stat('전체 소비금액', money(r.spending)) +
-          stat('음식 소비금액', money(r.food_spending)) +
-          stat('교육 소비금액', money(r.education_spending)) +
+          stat('동네 전체 소비금액', money(r.spending)) +
+          stat('동네 음식 소비금액', money(r.food_spending)) +
+          stat('동네 교육 소비금액', money(r.education_spending)) +
         '</div>' +
       '<div><p class="grp-title">주거 기반</p>' +
         stat('거주 가구', withUnit(r.households, '가구')) +
@@ -1151,7 +1166,7 @@ function renderDetail(rows){
       '<div><p class="grp-title">입지 가설</p>' +
         stat('운영 타입', demandType(r), marketHypothesis) +
         stat('상권 흐름', marketChangeLabel(r), marketChangeTone(r)) +
-        stat('매출 가설', hasDongSales ? '월평균 ' + money(r.sales_per_store_month) : (estimatedSales ? r.name + ' 1곳 월평균 ' + money(estimatedSales) + ' 추정' : '자료 없음'), hasDongSales ? '이 수준을 내려면 실제 후보 점포가 지도 핀의 중심 동선에 붙어 있어야 합니다.' : (estimatedSales ? referenceNote : '매출 자료가 없으므로 지도상 점포 밀도와 수요 기반으로 먼저 걸러봅니다.')) +
+        stat('매출 가설', hasDongSales ? '월평균 ' + money(r.sales_per_store_month) : (estimatedSales ? r.name + ' 1곳 월평균 ' + money(estimatedSales) + ' 추정' : '자료 없음'), hasDongSales ? '이 매출이 가능한 자리인지 입구 위치와 유동 방향을 현장에서 확인해야 합니다.' : (estimatedSales ? referenceNote : '매출 자료가 없으므로 점포 수와 수요 기반으로 먼저 걸러봅니다.')) +
         (visibleTasis ? stat('서울 평균 참고', manwonMoney(visibleTasis.row.avg_monthly_sales_manwon), '국세청 생활업종 기준입니다. 이 동네 매출이 아니라 서울 전체 평균입니다.') : '') +
         stat('경쟁 가설', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '점포 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
       '</div>' +
@@ -1235,7 +1250,7 @@ function render(){
     '<button type="button" data-sort-dir="asc" aria-pressed="' + (state.sortDir === 'asc') + '">낮은순</button>' +
   '</div>';
   document.querySelectorAll('.commercial-sortdir').forEach(el => el.remove());
-  table.innerHTML = '<div class="commercial-head"><span></span><span>동네</span><span>' + salesColumnTitle + '</span><span>같은 업종 가게</span><span>수요 유형</span><span>후보 점수</span></div>' +
+  table.innerHTML = '<div class="commercial-head"><span></span><span>동네</span><span>' + salesColumnTitle + '</span><span>같은 업종 가게</span><span>수요 성격</span><span>후보 판단</span></div>' +
     (list.length ? list.map((row, idx) => rowHtml(row, pageStart + idx + 1)).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>') +
     pager;
   table.insertAdjacentHTML('beforebegin', sortDirControl);
