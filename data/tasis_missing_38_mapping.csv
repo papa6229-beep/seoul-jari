@@ -1,0 +1,39 @@
+﻿missing_industry_name,match_status,tasis_industry_code,tasis_industry_name,source,sales_tax_year,business_count_year,avg_annual_sales_manwon,avg_monthly_sales_manwon,business_count,note
+가정용품임대,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+건축물청소,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+게스트하우스,broader_category,047,펜션ㆍ게스트하우스,NTS_TASIS_LIVING_BUSINESS,2024,2025,6161,513.416667,2750,펜션과 게스트하우스가 함께 묶인 TASIS 업종입니다.
+기타법무서비스,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+기타오락장,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+녹음실,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+독서실,exact,055,독서실,NTS_TASIS_LIVING_BUSINESS,2024,2025,6639,553.25,1676,
+동물병원,exact,087,동물병원,NTS_TASIS_LIVING_BUSINESS,2024,2025,55469,4622.416667,942,
+모터사이클및부품,equivalent,022,이륜자동차판매점,NTS_TASIS_LIVING_BUSINESS,2024,2025,11746,978.833333,457,TASIS 적용범위가 모터사이클 및 부품 판매업입니다.
+모터사이클수리,broader_category,067,자동차수리점,NTS_TASIS_LIVING_BUSINESS,2024,2025,20699,1724.916667,5106,자동차수리점은 이륜차 수리보다 넓은 범주입니다.
+미용재료,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+법무사사무소,equivalent,081,법무사,NTS_TASIS_LIVING_BUSINESS,2024,2025,16652,1387.666667,2217,
+변리사사무소,equivalent,082,변리사,NTS_TASIS_LIVING_BUSINESS,2024,2025,50262,4188.5,838,
+변호사사무소,equivalent,083,변호사,NTS_TASIS_LIVING_BUSINESS,2024,2025,47511,3959.25,5043,
+복권방,broader_category,008,담배ㆍ복권소매업,NTS_TASIS_LIVING_BUSINESS,2024,2025,10030,835.833333,2199,담배 소매와 복권 소매가 함께 묶여 있습니다.
+볼링장,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+비디오/서적임대,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+사진관,equivalent,059,사진촬영업,NTS_TASIS_LIVING_BUSINESS,2024,2025,9228,769,6850,
+세무사사무소,equivalent,084,세무사,NTS_TASIS_LIVING_BUSINESS,2024,2025,30493,2541.083333,6610,
+악기,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+여행사,exact,064,여행사,NTS_TASIS_LIVING_BUSINESS,2024,2025,8458,704.833333,5804,
+예술품,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+유아의류,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+의류임대,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+자동차부품,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+재생용품 판매점,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+전자게임장,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+주류도매,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+주유소,exact,026,주유소,NTS_TASIS_LIVING_BUSINESS,2024,2025,533994,44499.5,388,
+중고가구,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+중고차판매,equivalent,027,중고차판매점,NTS_TASIS_LIVING_BUSINESS,2024,2025,81542,6795.166667,495,
+컴퓨터학원,broader_category,071,교습학원,NTS_TASIS_LIVING_BUSINESS,2024,2025,19462,1621.833333,11552,컴퓨터학원만 분리되지 않고 교습학원 전체입니다.
+통번역서비스,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+통신기기수리,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+한복점,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+회계사사무소,equivalent,079,공인회계사,NTS_TASIS_LIVING_BUSINESS,2024,2025,41362,3446.833333,990,
+DVD방,no_match,,,,,,,,,TASIS 100대 생활업종 직접 대응 없음
+고시원,broader_category,041,여관ㆍ모텔,NTS_TASIS_LIVING_BUSINESS,2024,2025,25737,2144.75,1374,고시원 직접 업종이 아니라 숙박업 일부 참고값입니다.
