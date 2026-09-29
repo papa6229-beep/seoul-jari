@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=111">
+<link rel="stylesheet" href="styles.css?v=112">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '111';
+  var PAGE_V = '112';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '111';
+const V = '112';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -687,6 +687,16 @@ function scoreLabel(r){
   return '더 확인 필요';
 }
 
+function mainCaution(row){
+  if (!row) return '자료 확인 필요';
+  const referenceMonthly = row.reference_sales && row.reference_sales.monthly_sales_per_store;
+  const salesRankStrong = rowSalesValue(row) && referenceMonthly && rowSalesValue(row) >= referenceMonthly * 1.5 && row.score < 45;
+  if (salesRankStrong) return '매출만 높고 종합 판단은 낮음';
+  if ((row.franchises || 0) && row.stores && row.franchises / row.stores >= .7) return '브랜드 경쟁 강함';
+  if ((row.stores || 0) >= 100) return '같은 업종 많음';
+  return scoreLabel(row);
+}
+
 function scoreShortLabel(r){
   if ((r.score || 0) >= 70) return '좋음';
   if ((r.score || 0) >= 45) return '보통';
@@ -703,12 +713,20 @@ function competitionGuide(r){
 function franchiseShareText(row){
   if (!row || !row.stores || row.franchises === null || row.franchises === undefined) return null;
   const pctText = Math.round((row.franchises / row.stores) * 100);
+  const share = row.franchises / row.stores;
+  const label = share >= .7 ? '브랜드 강함' : (share >= .35 ? '브랜드 섞임' : '독립매장 중심');
+  const guide = share >= .7
+    ? '브랜드·프랜차이즈가 많은 동네입니다. 개인 매장은 가격보다 메뉴·입지 차별화가 중요합니다.'
+    : share >= .35
+      ? '브랜드와 개인 매장이 섞인 동네입니다. 같은 손님층을 두고 직접 비교될 가능성이 큽니다.'
+      : row.franchises
+        ? '개인 매장 비중이 더 큰 동네입니다. 다만 핵심 위치의 브랜드 매장은 따로 확인해야 합니다.'
+        : '이 동네 자료에서는 브랜드·프랜차이즈 가게가 잡히지 않았습니다.';
   return {
     count: fmt(row.franchises) + '곳',
     share: pctText + '%',
-    guide: row.franchises
-      ? '프랜차이즈 매출은 따로 제공되지 않아 가게 수 비중으로만 비교합니다.'
-      : '이 동네 자료에서는 브랜드·프랜차이즈 가게가 잡히지 않았습니다.'
+    label,
+    guide
   };
 }
 
@@ -1121,7 +1139,7 @@ function renderDetail(rows){
         (showReferenceLine && !hasDongSales ? stat(referenceScope + ' 가게 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store)) : '') +
         stat('같은 업종 가게', withUnit(r.stores, '곳')) +
         stat('손님이 생기는 이유', demandType(r)) +
-        stat('주의할 점', scoreLabel(r)) +
+        stat('주의할 점', mainCaution(r)) +
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
         stat('매출 자료', hasDongSales ? period + ' 카드매출 기준' : (hasAnySales ? '이 행정동 실제 매출 없음' : '이 업종 행정동 매출 없음')) +
@@ -1140,7 +1158,7 @@ function renderDetail(rows){
       '<div><p class="grp-title">경쟁</p>' +
         stat(BIZ[state.biz].label + ' 가게 수', withUnit(r.stores, '곳')) +
         stat('브랜드·프랜차이즈 가게', withUnit(r.franchises, '곳')) +
-        (franchise ? stat('브랜드·프랜차이즈 비중', franchise.share, franchise.guide) : '') +
+        (franchise ? stat('브랜드 경쟁', franchise.label + ' · ' + franchise.share, franchise.guide) : '') +
         stat('새로 생긴 가게', withUnit(r.open, '곳')) +
         stat('문 닫은 가게', withUnit(r.close, '곳')) +
       '</div>' +
@@ -1182,6 +1200,7 @@ function renderDetail(rows){
       '<div><p class="grp-title">판단 근거</p>' +
         stat('장사 성격', demandType(r), marketHypothesis) +
         stat('상권 흐름', marketChangeLabel(r), marketChangeTone(r)) +
+        stat('주의 신호', mainCaution(r), scoreGuide(r)) +
         stat('매출 판단', hasDongSales ? '월평균 ' + money(r.sales_per_store_month) : (estimatedSales ? r.name + ' 1곳 월평균 ' + money(estimatedSales) + ' 추정' : '자료 없음'), hasDongSales ? '이 매출이 가능한 자리인지 입구 위치와 유동 방향을 현장에서 확인해야 합니다.' : (estimatedSales ? referenceNote : '매출 자료가 없으므로 점포 수와 수요 기반으로 먼저 걸러봅니다.')) +
         (visibleTasis ? stat('서울 평균 참고', manwonMoney(visibleTasis.row.avg_monthly_sales_manwon), '국세청 생활업종 기준입니다. 이 동네 매출이 아니라 서울 전체 평균입니다.') : '') +
         stat('경쟁 판단', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '가게 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
