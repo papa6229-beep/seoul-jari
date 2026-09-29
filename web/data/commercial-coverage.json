@@ -14,7 +14,7 @@
     {
       "id": "cafe",
       "code": null,
-      "label": "카페·간식",
+      "label": "카페·제과·패스트푸드",
       "kind": "group",
       "has_sales": true,
       "has_stores": true,
