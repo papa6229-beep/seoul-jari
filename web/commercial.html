@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '102';
+const V = '103';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -221,6 +221,12 @@ function normalizeBizName(name){
     .toLowerCase();
 }
 
+function tasisAliasName(id, label){
+  if (id === 'cafe' || id === 'svc_CS100010') return '커피음료점';
+  if (label === '개인 카페' || label === '커피-음료') return '커피음료점';
+  return '';
+}
+
 function tasisForCurrentBusiness(){
   const payload = DATA.tasis || {};
   const rows = Array.isArray(payload.rows) ? payload.rows : [];
@@ -228,15 +234,16 @@ function tasisForCurrentBusiness(){
   const label = BIZ[state.biz] && BIZ[state.biz].label;
   if (!label) return null;
   const mapped = mappings.find(item => item.missing_industry_name === label && item.tasis_industry_code);
+  const alias = tasisAliasName(state.biz, label);
   const code = mapped && String(mapped.tasis_industry_code).padStart(3, '0');
   const row = code
     ? rows.find(item => String(item.industry_code).padStart(3, '0') === code)
-    : rows.find(item => normalizeBizName(item.industry_name) === normalizeBizName(label));
+    : rows.find(item => normalizeBizName(item.industry_name) === normalizeBizName(alias || label));
   if (!row) return null;
   return {
     row,
-    status: mapped ? mapped.match_status : 'exact',
-    note: mapped ? mapped.note : '',
+    status: mapped ? mapped.match_status : (alias ? 'equivalent' : 'exact'),
+    note: mapped ? mapped.note : (alias ? label + '와 정확히 같은 분류는 아니지만 가까운 국세청 생활업종입니다.' : ''),
     label
   };
 }
@@ -613,6 +620,18 @@ function competitionGuide(r){
   return '선택 업종 점포가 많은 편입니다. 가격·콘셉트·노출 위치로 이길 수 있는지 먼저 봐야 합니다.';
 }
 
+function franchiseShareText(row){
+  if (!row || !row.stores || row.franchises === null || row.franchises === undefined) return null;
+  const pctText = Math.round((row.franchises / row.stores) * 100);
+  return {
+    count: fmt(row.franchises) + '곳',
+    share: pctText + '%',
+    guide: row.franchises
+      ? '프랜차이즈 매출은 따로 제공되지 않아 가게 수 비중으로만 비교합니다.'
+      : '이 동네 자료에서는 브랜드·프랜차이즈 가게가 잡히지 않았습니다.'
+  };
+}
+
 function marketChangeTone(r){
   const m = r.market_change;
   if (!m || !m.name) return '상권 변화지표가 아직 연결되지 않았습니다.';
@@ -982,6 +1001,7 @@ function renderDetail(rows){
     ? '국세청 기준 서울 평균 ' + BIZ[state.biz].label + ' 1곳 평균 월매출'
     : oneStoreTitle;
   const estimatedTitle = r.name + ' ' + BIZ[state.biz].label + ' 1곳 추정 월매출';
+  const franchise = franchiseShareText(r);
   const referenceNote = reference
     ? referenceScope + ' 가게 1곳 평균 월매출에 이 동네 수요·소비·경쟁을 반영한 추정치입니다. 실제 카드매출 통계는 아닙니다.'
     : '';
@@ -1019,15 +1039,15 @@ function renderDetail(rows){
   const salesTab =
     '<div class="groups">' +
       '<div><p class="grp-title">매출</p>' +
-        stat(oneStoreTitle, salesOk ? money(r.sales_per_store_month) : (reference ? money(reference.monthly_sales_per_store) : '자료 없음')) +
-        (!salesOk && r.estimated_sales_per_store_month ? stat(estimatedTitle, money(r.estimated_sales_per_store_month)) : '') +
+        stat(localOneStoreTitle, salesOk ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
+        (reference ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월매출', money(reference.monthly_sales_per_store)) : '') +
         stat('손님 1명이 보통 쓰는 돈', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음') +
-        (reference && salesOk ? stat(referenceScope + ' 가게 1곳 참고 월매출', money(reference.monthly_sales_per_store)) : '') +
         (reference && reference.customer_unit_price ? stat(referenceScope + ' 손님 1명이 보통 쓰는 돈', fmt(reference.customer_unit_price) + '원') : '') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p>' +
         stat(BIZ[state.biz].label + ' 가게 수', withUnit(r.stores, '곳')) +
         stat('브랜드·프랜차이즈 가게', withUnit(r.franchises, '곳')) +
+        (franchise ? stat('브랜드·프랜차이즈 비중', franchise.share, franchise.guide) : '') +
         stat('새로 생긴 가게', withUnit(r.open, '곳')) +
         stat('문 닫은 가게', withUnit(r.close, '곳')) +
       '</div>' +
