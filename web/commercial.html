@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '98';
+const V = '99';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -192,9 +192,9 @@ function hasMapData(){
 
 function salesMissingText(){
   const picked = ROWS.find(r => r.code === state.picked);
-  const ref = (picked && picked.reference_sales) || (BIZ[state.biz] && BIZ[state.biz].reference_sales);
+  const ref = (picked && picked.reference_sales) || currentReferenceSales();
   if (ref && ref.monthly_sales_per_store){
-    return '행정동 매출은 없지만 ' + plainScope(ref.scope) + ' 기준 가게 1곳의 한 달 참고 매출은 ' + money(ref.monthly_sales_per_store) + '입니다. 후보 비교는 가게 수·수요·지도 중심으로 봅니다.';
+    return '행정동 실제 매출은 없지만 ' + plainScope(ref.scope) + ' 가게당 월매출을 이 동네 가게 수에 곱해 동네 추정 월매출을 보여줍니다.';
   }
   return '이 업종은 행정동 추정매출이 제공되지 않아 가게 수·수요·지도 중심으로 봅니다.';
 }
@@ -238,6 +238,26 @@ function tasisStatusText(status){
   if (status === 'equivalent') return '거의 같은 업종';
   if (status === 'broader_category') return '넓은 업종 참고';
   return '국세청 참고';
+}
+
+function tasisReferenceValue(tasis){
+  if (!tasis || !tasis.row || !Number.isFinite(tasis.row.avg_monthly_sales_manwon)) return null;
+  return {
+    scope: '국세청 서울 평균',
+    monthly_sales_per_store: Math.round(tasis.row.avg_monthly_sales_manwon * 10000),
+    industry_name: tasis.row.industry_name,
+    status: tasis.status
+  };
+}
+
+function currentReferenceSales(){
+  const biz = BIZ[state.biz] || {};
+  return biz.reference_sales || tasisReferenceValue(tasisForCurrentBusiness());
+}
+
+function estimatedMonthlySales(row, reference){
+  if (!row || !reference || !reference.monthly_sales_per_store || !row.stores) return null;
+  return Math.round(reference.monthly_sales_per_store * row.stores);
 }
 
 function tasisReferenceCard(tasis, compact){
@@ -618,11 +638,12 @@ function filteredRows(){
 function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
   const storeLabel = r.stores ? '가게 ' + fmt(r.stores) + '곳' : '가게 수 자료 없음';
-  const salesOk = hasSalesData();
-  const salesValue = r.sales_per_store_month || (r.reference_sales && r.reference_sales.monthly_sales_per_store);
+  const reference = r.reference_sales || currentReferenceSales();
+  const estimatedSales = estimatedMonthlySales(r, reference);
+  const salesValue = r.sales_per_store_month || estimatedSales || (reference && reference.monthly_sales_per_store);
   const salesLabel = r.sales_per_store_month
     ? BIZ[state.biz].label + ' 가게당 월매출'
-    : (r.reference_sales ? r.reference_sales.scope + ' 가게당 참고 월매출' : '매출 미제공');
+    : (estimatedSales ? reference.scope + ' 기준 동네 추정 월매출' : (reference ? reference.scope + ' 가게당 참고 월매출' : '매출 미제공'));
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + (i + 1) + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b><small>' + r.code + ' · ' + storeLabel + '</small></span>' +
@@ -921,9 +942,13 @@ function renderDetail(rows){
   const mapOk = hasMapData();
   const cov = coverageFor();
   const meta = businessMeta();
-  const bizRef = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
-  const reference = r.reference_sales || bizRef;
   const tasis = tasisForCurrentBusiness();
+  const bizRef = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
+  const reference = r.reference_sales || bizRef || tasisReferenceValue(tasis);
+  const estimatedSales = estimatedMonthlySales(r, reference);
+  const referenceNote = reference
+    ? plainScope(reference.scope) + ' 가게당 월매출에 이 동네 가게 수를 곱한 추정치입니다. 실제 카드매출 통계는 아닙니다.'
+    : '';
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
   const item = r => {
     if (r.amount){
@@ -942,15 +967,16 @@ function renderDetail(rows){
   const summaryTab =
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 판단</p>' +
-        stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 전체 매출을 가게 수로 나눈 월평균입니다.' : salesMissingText()) +
+        stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : (reference ? money(reference.monthly_sales_per_store) : '자료 없음'), salesOk ? '동네 전체 매출을 가게 수로 나눈 월평균입니다.' : (reference ? plainScope(reference.scope) + ' 기준 참고값입니다.' : salesMissingText())) +
+        (!salesOk && estimatedSales ? stat('동네 전체 추정 월매출', money(estimatedSales), referenceNote) : '') +
         (!salesOk && tasis ? tasisReferenceCard(tasis, true) : '') +
-        (reference ? stat(plainScope(reference.scope) + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store), '개별 가게 매출이 아니라 넓은 권역에서 가게 1곳이 한 달에 파는 금액을 참고로 보는 값입니다.') : '') +
+        (reference && salesOk ? stat(plainScope(reference.scope) + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store), '개별 가게 매출이 아니라 넓은 권역에서 가게 1곳이 한 달에 파는 금액을 참고로 보는 값입니다.') : '') +
         stat('같은 업종 가게', withUnit(r.stores, '곳')) +
         stat('손님이 생기는 이유', demandType(r)) +
         stat('주의할 점', scoreLabel(r)) +
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
-        stat('매출', salesOk && r.sales_per_store_month ? '가게 1곳 월 ' + money(r.sales_per_store_month) : '자료 없음', salesOk ? period + ' 카드매출을 바탕으로 추정' : salesMissingText()) +
+        stat('매출', salesOk && r.sales_per_store_month ? '가게 1곳 월 ' + money(r.sales_per_store_month) : (estimatedSales ? '동네 전체 월 ' + money(estimatedSales) + ' 추정' : '자료 없음'), salesOk ? period + ' 카드매출을 바탕으로 추정' : (estimatedSales ? referenceNote : salesMissingText())) +
         stat('경쟁', r.stores ? fmt(r.stores) + '곳' : '자료 없음', competitionGuide(r)) +
         stat('수요', demandType(r), demandTone(r)) +
       '</div>' +
@@ -958,9 +984,10 @@ function renderDetail(rows){
   const salesTab =
     '<div class="groups">' +
       '<div><p class="grp-title">매출</p>' +
-        stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음') +
+        stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : (reference ? money(reference.monthly_sales_per_store) : '자료 없음'), salesOk ? '' : (reference ? plainScope(reference.scope) + ' 기준 참고값' : '')) +
+        (!salesOk && estimatedSales ? stat('동네 전체 추정 월매출', money(estimatedSales), referenceNote) : '') +
         stat('손님 1명이 보통 쓰는 돈', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음') +
-        (reference ? stat(plainScope(reference.scope) + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store)) : '') +
+        (reference && salesOk ? stat(plainScope(reference.scope) + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store)) : '') +
         (reference && reference.customer_unit_price ? stat(plainScope(reference.scope) + ' 손님 1명이 보통 쓰는 돈', fmt(reference.customer_unit_price) + '원') : '') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p>' +
@@ -1007,7 +1034,7 @@ function renderDetail(rows){
       '<div><p class="grp-title">입지 가설</p>' +
         stat('운영 타입', demandType(r), marketHypothesis) +
         stat('상권 흐름', marketChangeLabel(r), marketChangeTone(r)) +
-        stat('매출 가설', salesOk && r.sales_per_store_month ? '월 ' + money(r.sales_per_store_month) : '자료 없음', salesOk ? '이 수준을 내려면 실제 후보 점포가 지도 핀의 중심 동선에 붙어 있어야 합니다.' : '매출 자료가 없으므로 지도상 점포 밀도와 수요 기반으로 먼저 걸러봅니다.') +
+        stat('매출 가설', salesOk && r.sales_per_store_month ? '월 ' + money(r.sales_per_store_month) : (estimatedSales ? '동네 전체 월 ' + money(estimatedSales) + ' 추정' : '자료 없음'), salesOk ? '이 수준을 내려면 실제 후보 점포가 지도 핀의 중심 동선에 붙어 있어야 합니다.' : (estimatedSales ? referenceNote : '매출 자료가 없으므로 지도상 점포 밀도와 수요 기반으로 먼저 걸러봅니다.')) +
         (tasis ? stat('서울 평균 참고', manwonMoney(tasis.row.avg_monthly_sales_manwon), '국세청 생활업종 기준입니다. 이 동네 매출이 아니라 서울 전체 평균입니다.') : '') +
         stat('경쟁 가설', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '점포 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
       '</div>' +
@@ -1039,9 +1066,11 @@ function renderDetail(rows){
   const content = {summary: summaryTab, sales: salesTab, demand: demandTab, analysis: analysisTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;
   const leadText = r.sales_per_store_month
     ? '가게당 월매출 <b>' + money(r.sales_per_store_month) + '</b>'
-    : (reference
-      ? plainScope(reference.scope) + ' 가게당 참고 월매출 <b>' + money(reference.monthly_sales_per_store) + '</b>'
-      : (tasis ? '국세청 서울 평균 월매출 <b>' + manwonMoney(tasis.row.avg_monthly_sales_manwon) + '</b>' : '매출 자료 <b>없음</b>'));
+    : (estimatedSales
+      ? '동네 전체 추정 월매출 <b>' + money(estimatedSales) + '</b>'
+      : (reference
+        ? plainScope(reference.scope) + ' 가게당 참고 월매출 <b>' + money(reference.monthly_sales_per_store) + '</b>'
+        : (tasis ? '국세청 서울 평균 월매출 <b>' + manwonMoney(tasis.row.avg_monthly_sales_manwon) + '</b>' : '매출 자료 <b>없음</b>')));
   detailTabs.innerHTML = TABS.map(t => '<button type="button" aria-pressed="' + (state.tab === t.k) + '" data-tab="' + t.k + '">' + t.l + '</button>').join('');
   for (const el of detailTabs.querySelectorAll('button')){
     el.onclick = () => { state.tab = el.dataset.tab; render(); };
@@ -1074,7 +1103,8 @@ function render(){
   renderSummary(rows);
   dataAlert();
   const list = rows.slice(0, 10);
-  table.innerHTML = '<div class="commercial-head"><span></span><span>동네</span><span>가게당 월매출</span><span>같은 업종 가게</span><span>수요 유형</span><span>후보 점수</span></div>' +
+  const salesColumnTitle = hasSalesData() ? '가게당 월매출' : (currentReferenceSales() ? '동네 추정 월매출' : '가게당 월매출');
+  table.innerHTML = '<div class="commercial-head"><span></span><span>동네</span><span>' + salesColumnTitle + '</span><span>같은 업종 가게</span><span>수요 유형</span><span>후보 점수</span></div>' +
     (list.length ? list.map(rowHtml).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>');
   for (const el of table.querySelectorAll('.commercial-row')){
     el.onclick = () => { state.picked = el.dataset.code; render(); };
