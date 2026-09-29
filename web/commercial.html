@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=95">
+<link rel="stylesheet" href="styles.css?v=96">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '95';
+  var PAGE_V = '96';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '95';
+const V = '96';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -129,7 +129,7 @@ const SORTS = [
 ];
 const TABS = [
   {k:'summary', l:'요약'},
-  {k:'sales', l:'돈·경쟁'},
+  {k:'sales', l:'매출·경쟁'},
   {k:'demand', l:'수요'},
   {k:'analysis', l:'분석'},
   {k:'map', l:'지도'},
@@ -490,6 +490,12 @@ function scoreGuide(r){
   if ((r.score || 0) >= 70) return '서울 행정동 중 매출·수요·경쟁 조건이 함께 강한 후보입니다.';
   if ((r.score || 0) >= 45) return '조건은 보통 이상입니다. 실제 임대료와 보행 동선을 같이 보면 판단이 쉬워집니다.';
   return '한두 지표만 보고 들어가기보다 현장 조건을 먼저 확인해야 하는 후보입니다.';
+}
+
+function scoreLabel(r){
+  if ((r.score || 0) >= 70) return '좋은 후보';
+  if ((r.score || 0) >= 45) return '현장 확인 필요';
+  return '보수적으로 검토';
 }
 
 function competitionGuide(r){
@@ -877,7 +883,7 @@ function renderDetail(rows){
         (reference ? stat(plainScope(reference.scope) + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store), '개별 가게 매출이 아니라 넓은 권역에서 가게 1곳이 한 달에 파는 금액을 참고로 보는 값입니다.') : '') +
         stat('같은 업종 가게', withUnit(r.stores, '곳')) +
         stat('손님이 생기는 이유', demandType(r)) +
-        stat('판단 포인트', scoreGuide(r)) +
+        stat('주의할 점', scoreLabel(r)) +
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
         stat('매출', salesOk && r.sales_per_store_month ? '가게 1곳 월 ' + money(r.sales_per_store_month) : '자료 없음', salesOk ? period + ' 카드매출을 바탕으로 추정' : salesMissingText()) +
@@ -887,17 +893,17 @@ function renderDetail(rows){
     '</div>';
   const salesTab =
     '<div class="groups">' +
-      '<div><p class="grp-title">돈</p><p class="basis-note">' + (salesOk ? period + ' 카드매출 자료를 한 달 기준으로 바꿔 보여줍니다.' : salesMissingText()) + '</p>' +
-        stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음', salesOk ? '동네 전체 매출을 가게 수로 나눈 월평균입니다.' : '이 업종은 추정매출 대신 가게 수·수요·지도로 판단합니다.') +
-        stat('손님 1명이 보통 쓰는 돈', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음', salesOk ? '평균입니다. 전체 매출을 결제 횟수로 나눈 값입니다.' : '매출 자료가 없어 계산하지 않습니다.') +
-        (reference ? stat(plainScope(reference.scope) + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store), salesOk ? '개별 가게 매출이 아니라 시장 눈높이를 보는 보조값입니다.' : '행정동 후보 순위에는 쓰지 않는 보조 참고값입니다.') : '') +
-        (reference && reference.customer_unit_price ? stat(plainScope(reference.scope) + ' 손님 1명이 보통 쓰는 돈', fmt(reference.customer_unit_price) + '원', '평균입니다. 넓은 권역의 총매출을 결제 횟수로 나눈 값입니다.') : '') +
+      '<div><p class="grp-title">매출</p>' +
+        stat(BIZ[state.biz].label + ' 가게당 월매출', salesOk ? money(r.sales_per_store_month) : '자료 없음') +
+        stat('손님 1명이 보통 쓰는 돈', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음') +
+        (reference ? stat(plainScope(reference.scope) + ' 가게당 참고 월매출', money(reference.monthly_sales_per_store)) : '') +
+        (reference && reference.customer_unit_price ? stat(plainScope(reference.scope) + ' 손님 1명이 보통 쓰는 돈', fmt(reference.customer_unit_price) + '원') : '') +
       '</div>' +
-      '<div><p class="grp-title">경쟁</p><p class="basis-note">가게 수·브랜드 가게·새로 생긴 가게·문 닫은 가게는 ' + period + ' 기준입니다.</p>' +
-        stat(BIZ[state.biz].label + ' 가게 수', withUnit(r.stores, '곳'), '같은 동네에 있는 같은 업종 가게 수입니다.') +
-        stat('브랜드·프랜차이즈 가게', withUnit(r.franchises, '곳'), '자료상 브랜드/프랜차이즈로 분류된 가게 수입니다. 0곳이면 이 자료에서는 잡히지 않았다는 뜻입니다.') +
-        stat('새로 생긴 가게', withUnit(r.open, '곳'), period + ' 자료상 새로 생긴 가게 수입니다. 자료가 비어 있으면 자료 없음으로 표시합니다.') +
-        stat('문 닫은 가게', withUnit(r.close, '곳'), period + ' 자료상 문 닫은 가게 수입니다. 자료가 비어 있으면 자료 없음으로 표시합니다.') +
+      '<div><p class="grp-title">경쟁</p>' +
+        stat(BIZ[state.biz].label + ' 가게 수', withUnit(r.stores, '곳')) +
+        stat('브랜드·프랜차이즈 가게', withUnit(r.franchises, '곳')) +
+        stat('새로 생긴 가게', withUnit(r.open, '곳')) +
+        stat('문 닫은 가게', withUnit(r.close, '곳')) +
       '</div>' +
     '</div>' +
     '<div class="commercial-lists">' +
