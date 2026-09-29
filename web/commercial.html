@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=110">
+<link rel="stylesheet" href="styles.css?v=111">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '110';
+  var PAGE_V = '111';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -32,7 +32,7 @@
     <div class="field">
       <label for="biz">업종</label>
       <select class="pick" id="biz">
-        <option value="cafe">카페·제과·패스트푸드</option>
+        <option value="svc_CS100010">커피-음료</option>
       </select>
     </div>
 
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '110';
+const V = '111';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -82,6 +82,12 @@ const FILES = {
   tasis: 'tasis-living-business-seoul.json'
 };
 const BIZ = {
+  svc_CS100010: {
+    label: '커피-음료',
+    words: ['커피', '음료'],
+    demand: ['유동인구', '20~40대 상주·직장인', '식료품·음식 소비'],
+    caution: '카페는 임대료와 체류 동선 영향이 큽니다. 매출이 높아도 경쟁 점포 수를 같이 봅니다.'
+  },
   cafe: {
     label: '카페·제과·패스트푸드',
     words: ['커피', '음료', '제과', '패스트푸드'],
@@ -115,7 +121,7 @@ const BIZ = {
 };
 
 const state = {
-  biz: new URLSearchParams(location.search).get('biz') || 'cafe',
+  biz: new URLSearchParams(location.search).get('biz') || 'svc_CS100010',
   dong: '', q: '', sort: 'sales_per_store_month', picked: '', tab: 'summary',
   sortDir: 'desc', page: 1, pageSize: 10,
   show: {business: true, school: false, academy: false, apartment: true, shop: true}
@@ -303,7 +309,7 @@ function estimateFactor(row, ranges){
   const core = norm(row.core_people || 0, ranges.core_people.min, ranges.core_people.max) / 100;
   const competition = norm(row.stores || 0, ranges.stores.min, ranges.stores.max, true) / 100;
   const raw = demand * .42 + spending * .24 + core * .18 + competition * .16;
-  return Math.max(.55, Math.min(1.65, .65 + raw * .9));
+  return Math.max(.75, Math.min(1.35, .72 + raw * .72));
 }
 
 function estimatedMonthlySales(row, reference){
@@ -419,12 +425,21 @@ function applyBusinessTypes(){
     if (item.reference_sales) BIZ[item.id].reference_sales = item.reference_sales;
   }
   const groupOrder = ['추천 업종', '전체 업종'];
+  const preferredRecommended = ['svc_CS100010', 'cafe', 'food', 'fitness', 'academy', 'unmanned'];
   const byGroup = new Map();
   for (const item of types){
     let group = item.group || (item.kind === 'service' ? '전체 업종' : '추천 업종');
     if (group === '매출 자료 있는 업종' || group === '매출 자료 없는 업종') group = '전체 업종';
+    if (item.id === 'svc_CS100010') group = '추천 업종';
     if (!byGroup.has(group)) byGroup.set(group, []);
     byGroup.get(group).push(item);
+  }
+  if (byGroup.has('추천 업종')){
+    byGroup.get('추천 업종').sort((a, b) => {
+      const ai = preferredRecommended.indexOf(a.id);
+      const bi = preferredRecommended.indexOf(b.id);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
   }
   if (!types.length){
     byGroup.set('추천 업종', Object.keys(BIZ).map(id => ({id, label: BIZ[id].label})));
@@ -435,7 +450,7 @@ function applyBusinessTypes(){
     ).join('');
     return '<optgroup label="' + escapeHtml(group) + '">' + options + '</optgroup>';
   }).join('');
-  if (!BIZ[state.biz]) state.biz = 'cafe';
+  if (!BIZ[state.biz]) state.biz = 'svc_CS100010';
 }
 
 function applyDongOptions(){
@@ -790,6 +805,7 @@ function nextChecks(r){
     '네이버지도와 현장 방문으로 동일 업종 체감 밀도를 확인'
   ];
   const byBiz = {
+    svc_CS100010: ['테이크아웃 동선과 앉아서 머무는 좌석 수요 중 어느 쪽인지 구분', '아침·점심·저녁 피크가 각각 살아있는지 주변 직장·주거 동선을 확인', '프랜차이즈와 독립 매장이 섞인 위치에서는 메뉴 단가와 회전율 차별화 필요'],
     cafe: ['테이크아웃 동선과 앉아서 머무는 좌석 수요 중 어느 쪽인지 구분', '아침·점심·저녁 피크가 각각 살아있는지 주변 직장·주거 동선을 확인', '프랜차이즈와 독립 매장이 섞인 위치에서는 메뉴 단가와 회전율 차별화 필요'],
     food: ['점심 회전율, 배달 반경, 저녁 매출 가능성을 따로 확인', '주방 배기·냄새·상하수도 조건을 임대차 전에 확인', '같은 가격대 식사 업종이 몰린 골목인지 현장 메뉴판으로 비교'],
     fitness: ['층고, 샤워실, 방음, 환기, 엘리베이터, 주차 가능 여부를 먼저 확인', '퇴근 후 18~22시 접근성과 여성 이용자 동선을 현장에서 확인', 'PT·필라테스는 주변 결제금액과 강사 확보 가능성이 매출을 크게 좌우'],
@@ -1078,7 +1094,7 @@ function renderDetail(rows){
   const estimatedTitle = r.name + ' ' + BIZ[state.biz].label + ' 1곳 추정 월평균 매출';
   const franchise = franchiseShareText(r);
   const referenceNote = reference
-    ? referenceScope + ' 가게 1곳 월평균 매출에 이 동네 수요·소비·경쟁을 반영한 추정치입니다. 실제 카드매출 통계는 아닙니다.'
+    ? referenceScope + ' 가게 1곳 월평균 매출에 이 동네 수요·소비·경쟁을 반영한 추정치입니다. 실제 카드매출 통계는 아닙니다. 추정 보정폭은 참고값의 75~135% 안으로 제한합니다.'
     : '';
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
   const noteStat = (k, v) => '<div class="stat stat-note"><span class="k">' + k + '</span><span class="note-v">' + escapeHtml(v) + '</span></div>';
