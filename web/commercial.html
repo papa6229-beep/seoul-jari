@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=112">
+<link rel="stylesheet" href="styles.css?v=113">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '112';
+  var PAGE_V = '113';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '112';
+const V = '113';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -816,7 +816,19 @@ function explainRow(r, rows){
   return '<div class="commercial-why"><b>왜 이 후보인가</b><p>' + bits.join(' · ') + '.</p><p class="warn">' + caution + '</p></div>';
 }
 
-function nextChecks(r){
+function dataBasisNotes(ctx){
+  const notes = [];
+  if (!ctx || !ctx.hasDongSales){
+    if (ctx && ctx.estimatedSales) notes.push('추정 매출은 참고 월평균 매출에 동네 수요·소비·경쟁 조건을 반영한 값입니다.');
+    if (ctx && ctx.estimatedSales) notes.push('추정 보정폭은 참고값의 75~135% 안으로 제한합니다.');
+    if (ctx && ctx.visibleTasis) notes.push('국세청 값은 서울 전체 평균 참고자료이며, 선택한 행정동의 실제 카드매출은 아닙니다.');
+  } else {
+    notes.push('행정동 월평균 매출은 2026년 2분기 카드매출 기준입니다.');
+  }
+  return notes;
+}
+
+function nextChecks(r, ctx){
   const common = [
     '역 출구, 횡단보도, 버스정류장 기준 실제 보행 동선을 확인',
     '1층 가시성, 전면 폭, 권리금, 월세를 같은 기준으로 비교',
@@ -837,7 +849,9 @@ function nextChecks(r){
   if (r.market_change && r.market_change.name) checks.unshift('상권 변화지표가 ' + r.market_change.name + '인지, 실제 임대료와 공실 분위기가 같은지 확인');
   if (r.apartment && r.apartment.complexes) checks.unshift('아파트 단지와 후보 점포 사이의 실제 보행 동선이 끊기지 않는지 확인');
   if (r.facilities && (r.facilities.bus_stops || r.facilities.subway_stations)) checks.unshift('대중교통 정류장과 후보 점포 입구가 시야 안에 이어지는지 확인');
-  return '<div class="commercial-checks"><p class="grp-title">다음 확인사항 <small>' + BIZ[state.biz].label + ' 기준</small></p><ul>' + checks.slice(0, 7).map(v => '<li>' + v + '</li>').join('') + '</ul></div>';
+  const basis = dataBasisNotes(ctx);
+  return '<div class="commercial-checks"><p class="grp-title">다음 확인사항 <small>' + BIZ[state.biz].label + ' 기준</small></p><ul>' + checks.slice(0, 7).map(v => '<li>' + v + '</li>').join('') + '</ul></div>' +
+    (basis.length ? '<div class="commercial-checks"><p class="grp-title">자료 기준</p><ul>' + basis.map(v => '<li>' + v + '</li>').join('') + '</ul></div>' : '');
 }
 
 function mapToggle(key, label, pin){
@@ -1112,7 +1126,7 @@ function renderDetail(rows){
   const estimatedTitle = r.name + ' ' + BIZ[state.biz].label + ' 1곳 추정 월평균 매출';
   const franchise = franchiseShareText(r);
   const referenceNote = reference
-    ? referenceScope + ' 가게 1곳 월평균 매출에 이 동네 수요·소비·경쟁을 반영한 추정치입니다. 실제 카드매출 통계는 아닙니다. 추정 보정폭은 참고값의 75~135% 안으로 제한합니다.'
+    ? '동네 조건을 반영한 추정치입니다. 실제 카드매출 통계는 아닙니다.'
     : '';
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
   const noteStat = (k, v) => '<div class="stat stat-note"><span class="k">' + k + '</span><span class="note-v">' + escapeHtml(v) + '</span></div>';
@@ -1229,7 +1243,7 @@ function renderDetail(rows){
       '</div>' +
       '<aside class="map-selection" id="mapSelection"><span>선택한 장소</span><p>지도에서 핀을 누르면 상호명, 업종, 주소 같은 정보를 여기에서 볼 수 있습니다.</p></aside>' +
     '</div>';
-  const checksTab = nextChecks(r);
+  const checksTab = nextChecks(r, {hasDongSales, estimatedSales, visibleTasis});
   const content = {summary: summaryTab, sales: salesTab, demand: demandTab, analysis: analysisTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;
   const leadText = r.sales_per_store_month
     ? '가게 1곳 월평균 매출 <b>' + money(r.sales_per_store_month) + '</b>'
