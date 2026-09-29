@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '100';
+const V = '101';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -198,7 +198,7 @@ function salesMissingText(){
   const picked = ROWS.find(r => r.code === state.picked);
   const ref = (picked && picked.reference_sales) || currentReferenceSales();
   if (ref && ref.monthly_sales_per_store){
-    return '행정동 실제 매출은 없지만 ' + scopeLabel(ref.scope, picked) + ' 가게 1곳 평균 월매출을 선택한 행정동의 가게 수에 곱해 추정 월매출을 보여줍니다.';
+    return '행정동 실제 매출은 없지만 ' + scopeLabel(ref.scope, picked) + ' 가게 1곳 평균 월매출을 참고값으로 보여줍니다.';
   }
   return '이 업종은 행정동 추정매출이 제공되지 않아 가게 수·수요·지도 중심으로 봅니다.';
 }
@@ -581,7 +581,7 @@ function scoreGuide(r){
 function scoreLabel(r){
   if ((r.score || 0) >= 70) return '좋은 후보';
   if ((r.score || 0) >= 45) return '현장 확인 필요';
-  return '보수적으로 검토';
+  return '더 확인 필요';
 }
 
 function competitionGuide(r){
@@ -950,6 +950,12 @@ function renderDetail(rows){
   const oneStoreTitle = salesOk
     ? BIZ[state.biz].label + ' 가게 1곳 평균 월매출'
     : (reference ? referenceScope + ' ' + BIZ[state.biz].label + ' 가게 1곳 평균 월매출' : BIZ[state.biz].label + ' 가게 1곳 평균 월매출');
+  const localOneStoreTitle = salesOk
+    ? r.name + ' ' + BIZ[state.biz].label + ' 1곳 평균 월매출'
+    : '국세청 기준 ' + r.name + ' ' + BIZ[state.biz].label + ' 1곳 추정 월매출';
+  const seoulOneStoreTitle = tasis
+    ? '국세청 기준 서울 평균 ' + BIZ[state.biz].label + ' 1곳 평균 월매출'
+    : oneStoreTitle;
   const estimatedTitle = r.name + ' ' + BIZ[state.biz].label + ' ' + fmt(r.stores || 0) + '곳 추정 월매출';
   const referenceNote = reference
     ? referenceScope + ' 가게 1곳 평균 월매출에 이 동네 가게 수를 곱한 추정치입니다. 실제 카드매출 통계는 아닙니다.'
@@ -972,18 +978,17 @@ function renderDetail(rows){
   const summaryTab =
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 판단</p>' +
-        stat(oneStoreTitle, salesOk ? money(r.sales_per_store_month) : (reference ? money(reference.monthly_sales_per_store) : '자료 없음')) +
-        (!salesOk && estimatedSales ? stat(estimatedTitle, money(estimatedSales)) : '') +
-        (!salesOk && tasis ? tasisReferenceCard(tasis, true) : '') +
+        stat(localOneStoreTitle, salesOk ? money(r.sales_per_store_month) : (reference ? money(reference.monthly_sales_per_store) : '자료 없음')) +
+        (!salesOk && tasis ? stat(seoulOneStoreTitle, manwonMoney(tasis.row.avg_monthly_sales_manwon)) : '') +
         (reference && salesOk ? stat(referenceScope + ' 가게 1곳 참고 월매출', money(reference.monthly_sales_per_store)) : '') +
         stat('같은 업종 가게', withUnit(r.stores, '곳')) +
         stat('손님이 생기는 이유', demandType(r)) +
         stat('주의할 점', scoreLabel(r)) +
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
-        stat('매출', salesOk && r.sales_per_store_month ? '가게 1곳 평균 월 ' + money(r.sales_per_store_month) : (estimatedSales ? r.name + ' 전체 월 ' + money(estimatedSales) + ' 추정' : '자료 없음')) +
-        stat('경쟁', r.stores ? fmt(r.stores) + '곳' : '자료 없음') +
-        stat('수요', demandType(r)) +
+        stat('매출 자료', salesOk ? period + ' 카드매출 기준' : '이 행정동 실제 매출 없음') +
+        stat('비교 기준', salesOk ? '행정동 실제 평균' : '서울 평균으로 추정') +
+        stat('현장 확인', '입구 위치·차량 동선') +
       '</div>' +
     '</div>';
   const salesTab =
@@ -1071,11 +1076,9 @@ function renderDetail(rows){
   const content = {summary: summaryTab, sales: salesTab, demand: demandTab, analysis: analysisTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;
   const leadText = r.sales_per_store_month
     ? '가게 1곳 평균 월매출 <b>' + money(r.sales_per_store_month) + '</b>'
-    : (estimatedSales
-      ? r.name + ' 전체 추정 월매출 <b>' + money(estimatedSales) + '</b>'
-      : (reference
-        ? referenceScope + ' 가게 1곳 참고 월매출 <b>' + money(reference.monthly_sales_per_store) + '</b>'
-        : (tasis ? '국세청 서울 평균 월매출 <b>' + manwonMoney(tasis.row.avg_monthly_sales_manwon) + '</b>' : '매출 자료 <b>없음</b>')));
+    : (reference
+      ? r.name + ' 1곳 추정 월매출 <b>' + money(reference.monthly_sales_per_store) + '</b>'
+      : (tasis ? '국세청 서울 평균 월매출 <b>' + manwonMoney(tasis.row.avg_monthly_sales_manwon) + '</b>' : '매출 자료 <b>없음</b>'));
   detailTabs.innerHTML = TABS.map(t => '<button type="button" aria-pressed="' + (state.tab === t.k) + '" data-tab="' + t.k + '">' + t.l + '</button>').join('');
   for (const el of detailTabs.querySelectorAll('button')){
     el.onclick = () => { state.tab = el.dataset.tab; render(); };
