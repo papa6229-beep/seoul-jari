@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=115">
+<link rel="stylesheet" href="styles.css?v=116">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '115';
+  var PAGE_V = '116';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '115';
+const V = '116';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -685,6 +685,36 @@ function demandTone(r){
   return '직장·주거 수요가 섞여 있어 시간대별 운영 전략을 나눠 봐야 하는 동네입니다.';
 }
 
+function demandSummary(row){
+  const type = demandType(row);
+  const parts = [];
+  if (type === '주거 수요형') parts.push('주거 반복 방문을 먼저 보는 동네입니다');
+  else if (type === '직장 수요형') parts.push('평일 점심·퇴근 수요를 먼저 보는 동네입니다');
+  else parts.push('주거와 직장 수요가 섞인 동네입니다');
+  if ((row.evening_flow || 0) > (row.lunch_flow || 0) * 1.2) parts.push('저녁 시간대 흐름이 더 큽니다');
+  else if ((row.lunch_flow || 0) > (row.evening_flow || 0) * 1.2) parts.push('점심 시간대 흐름이 더 큽니다');
+  if (row.facilities && row.facilities.bus_stops) parts.push('버스정류장 ' + fmt(row.facilities.bus_stops) + '곳');
+  return parts.join(' · ');
+}
+
+function demandSpendingStats(row, stat){
+  const label = BIZ[state.biz].label;
+  if (state.biz === 'academy' || /학원|교습/.test(label)){
+    return stat('교육 소비금액', money(row.education_spending), '학원·교습소 판단에서 먼저 보는 소비 항목입니다.') +
+      stat('동네 전체 소비금액', money(row.spending));
+  }
+  if (state.biz === 'fitness' || /스포츠|필라테스|PT/.test(label)){
+    return stat('여가 소비금액', money(row.leisure_spending), '운동·취미 업종 판단에서 먼저 보는 소비 항목입니다.') +
+      stat('동네 전체 소비금액', money(row.spending));
+  }
+  if (state.biz === 'cafe' || state.biz === 'svc_CS100010' || state.biz === 'food' || /음식|카페|커피|분식|제과|패스트푸드/.test(label)){
+    return stat('음식 소비금액', money(row.food_spending), '카페·음식 업종 판단에서 먼저 보는 소비 항목입니다.') +
+      stat('동네 전체 소비금액', money(row.spending));
+  }
+  return stat('동네 전체 소비금액', money(row.spending)) +
+    stat('음식 소비금액', money(row.food_spending));
+}
+
 function scoreGuide(r){
   if ((r.score || 0) >= 70) return '서울 행정동 중 매출·수요·경쟁 조건이 함께 강한 후보입니다.';
   if ((r.score || 0) >= 45) return '조건은 보통 이상입니다. 실제 임대료와 보행 동선을 같이 보면 판단이 쉬워집니다.';
@@ -999,7 +1029,7 @@ function setMapSelection(p){
   const panel = document.getElementById('mapSelection');
   if (!panel) return;
   if (!p){
-    panel.innerHTML = '<span>선택한 장소</span><p>지도에서 핀을 누르면 상호명, 업종, 주소 같은 정보를 여기에서 볼 수 있습니다.</p>';
+    panel.innerHTML = '<span>선택한 장소</span><p>지도에서 같은 업종 핀과 주변 상가·아파트 위치를 같이 보세요. 핀을 누르면 상호명, 업종, 주소가 나옵니다.</p>';
     return;
   }
   panel.innerHTML =
@@ -1232,8 +1262,11 @@ function renderDetail(rows){
     '</div>';
   const demandTab =
     '<div class="groups">' +
+      '<div><p class="grp-title">수요 해석</p>' +
+        stat('먼저 볼 수요', demandType(r), demandSummary(r)) +
+        stat('현장 확인', '시간대별 손님 흐름', demandTone(r)) +
+      '</div>' +
         '<div><p class="grp-title">인구 흐름</p>' +
-          stat('수요 성격', demandType(r)) +
           stat('하루 생활인구', withUnit(r.floating, '명')) +
           stat('점심 시간대 인구', withUnit(r.lunch_flow, '명')) +
           stat('저녁 시간대 인구', withUnit(r.evening_flow, '명')) +
@@ -1241,9 +1274,7 @@ function renderDetail(rows){
           stat('거주인구', withUnit(r.residents, '명')) +
         '</div>' +
         '<div><p class="grp-title">소비 규모</p>' +
-          stat('동네 전체 소비금액', money(r.spending)) +
-          stat('동네 음식 소비금액', money(r.food_spending)) +
-          stat('동네 교육 소비금액', money(r.education_spending)) +
+          demandSpendingStats(r, stat) +
         '</div>' +
       '<div><p class="grp-title">주거 기반</p>' +
         stat('거주 가구', withUnit(r.households, '가구')) +
@@ -1289,7 +1320,7 @@ function renderDetail(rows){
         mapToggle('shop', '상가', 'g3') +
         '<span class="hint" id="mapcount"></span>' +
       '</div>' +
-      '<aside class="map-selection" id="mapSelection"><span>선택한 장소</span><p>지도에서 핀을 누르면 상호명, 업종, 주소 같은 정보를 여기에서 볼 수 있습니다.</p></aside>' +
+      '<aside class="map-selection" id="mapSelection"><span>선택한 장소</span><p>지도에서 같은 업종 핀과 주변 상가·아파트 위치를 같이 보세요. 핀을 누르면 상호명, 업종, 주소가 나옵니다.</p></aside>' +
     '</div>';
   const checksTab = nextChecks(r, {hasDongSales, estimatedSales, visibleTasis});
   const content = {summary: summaryTab, sales: salesTab, demand: demandTab, analysis: analysisTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;
