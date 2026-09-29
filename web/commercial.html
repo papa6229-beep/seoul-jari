@@ -1358,14 +1358,14 @@ function render(){
   sortHelp.textContent = !hasSalesData() && currentSort.k === 'stores'
     ? salesMissingText() + ' 지금은 점포 수 기준으로 보여줍니다.'
     : currentSort.help;
-  renderSummary(rows);
-  dataAlert();
   const totalPages = Math.max(1, Math.ceil(rows.length / state.pageSize));
   if (state.page > totalPages) state.page = totalPages;
   if (state.page < 1) state.page = 1;
   const pageStart = (state.page - 1) * state.pageSize;
   const list = rows.slice(pageStart, pageStart + state.pageSize);
   if (!state.picked && list[0]) state.picked = list[0].code;
+  renderSummary(rows);
+  dataAlert();
   const salesColumnTitle = hasSalesData() ? '가게 1곳 월평균 매출' : (currentReferenceSales() ? '1곳 추정 월평균 매출' : '가게 1곳 월평균 매출');
   const pager = rows.length > state.pageSize
     ? '<div class="commercial-pager">' +
