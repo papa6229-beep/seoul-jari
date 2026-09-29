@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '101';
+const V = '102';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -171,7 +171,7 @@ const quarterLabel = q => {
 };
 
 function syncSegments(){
-  if (!hasSalesData() && state.sort === 'sales_per_store_month') state.sort = 'stores';
+  if (!hasComparableSalesData() && state.sort === 'sales_per_store_month') state.sort = 'stores';
   sortPick.value = state.sort;
 }
 
@@ -187,6 +187,10 @@ function coverageFor(id = state.biz){
 function hasSalesData(){
   const c = coverageFor();
   return c ? !!c.has_sales : ROWS.some(r => r.sales);
+}
+
+function hasComparableSalesData(){
+  return hasSalesData() || ROWS.some(r => r.estimated_sales_per_store_month);
 }
 
 function hasMapData(){
@@ -259,9 +263,19 @@ function currentReferenceSales(){
   return biz.reference_sales || tasisReferenceValue(tasisForCurrentBusiness());
 }
 
+function estimateFactor(row, ranges){
+  if (!row || !ranges) return 1;
+  const demand = norm(row.demand_raw, ranges.demand_raw.min, ranges.demand_raw.max) / 100;
+  const spending = norm(row.spending || 0, ranges.spending.min, ranges.spending.max) / 100;
+  const core = norm(row.core_people || 0, ranges.core_people.min, ranges.core_people.max) / 100;
+  const competition = norm(row.stores || 0, ranges.stores.min, ranges.stores.max, true) / 100;
+  const raw = demand * .42 + spending * .24 + core * .18 + competition * .16;
+  return Math.max(.55, Math.min(1.65, .65 + raw * .9));
+}
+
 function estimatedMonthlySales(row, reference){
-  if (!row || !reference || !reference.monthly_sales_per_store || !row.stores) return null;
-  return Math.round(reference.monthly_sales_per_store * row.stores);
+  if (!row || !reference || !reference.monthly_sales_per_store) return null;
+  return Math.round(reference.monthly_sales_per_store * (row.estimate_factor || 1));
 }
 
 function tasisReferenceCard(tasis, compact){
@@ -491,15 +505,23 @@ function buildRows(){
   const ranges = {};
   ['demand_raw','sales','stores','spending','core_people','workers','residents'].forEach(k => {
     const vals = base.map(r => r[k]).filter(v => Number.isFinite(v));
-    ranges[k] = {min: Math.min(...vals), max: Math.max(...vals)};
+    ranges[k] = vals.length ? {min: Math.min(...vals), max: Math.max(...vals)} : {min: 0, max: 0};
   });
   base.forEach(r => {
     const demand = norm(r.demand_raw, ranges.demand_raw.min, ranges.demand_raw.max);
     const revenue = norm(r.sales || 0, ranges.sales.min, ranges.sales.max);
     const spending = norm(r.spending || 0, ranges.spending.min, ranges.spending.max);
+    const core = norm(r.core_people || 0, ranges.core_people.min, ranges.core_people.max);
     const competition = norm(r.stores || 0, ranges.stores.min, ranges.stores.max, true);
+    const reference = r.reference_sales || currentReferenceSales();
+    r.estimate_factor = estimateFactor(r, ranges);
+    r.estimated_sales_per_store_month = !r.sales_per_store_month && reference
+      ? estimatedMonthlySales(r, reference)
+      : null;
     r.competition_score = Math.round(competition);
-    r.score = Math.round(demand * .32 + revenue * .28 + spending * .18 + competition * .22);
+    r.score = r.sales
+      ? Math.round(demand * .32 + revenue * .28 + spending * .18 + competition * .22)
+      : Math.round(demand * .36 + spending * .24 + core * .16 + competition * .24);
   });
   ROWS = base;
 }
@@ -635,15 +657,18 @@ function filteredRows(){
   if (q) out = out.filter(r => (r.full_name + ' ' + r.gu + ' ' + r.name).includes(q));
   out = out.filter(r => r.score || r.sales || r.stores || r.floating || r.workers || r.residents);
   const key = state.sort;
-  out = out.slice().sort((a, b) => (b[key] || 0) - (a[key] || 0) || a.code.localeCompare(b.code));
+  out = out.slice().sort((a, b) => {
+    const av = key === 'sales_per_store_month' ? (a.sales_per_store_month || a.estimated_sales_per_store_month || 0) : (a[key] || 0);
+    const bv = key === 'sales_per_store_month' ? (b.sales_per_store_month || b.estimated_sales_per_store_month || 0) : (b[key] || 0);
+    return bv - av || a.code.localeCompare(b.code);
+  });
   return out;
 }
 
 function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
   const reference = r.reference_sales || currentReferenceSales();
-  const estimatedSales = estimatedMonthlySales(r, reference);
-  const salesValue = r.sales_per_store_month || estimatedSales || (reference && reference.monthly_sales_per_store);
+  const salesValue = r.sales_per_store_month || r.estimated_sales_per_store_month || (reference && reference.monthly_sales_per_store);
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + (i + 1) + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b></span>' +
@@ -952,13 +977,13 @@ function renderDetail(rows){
     : (reference ? referenceScope + ' ' + BIZ[state.biz].label + ' 가게 1곳 평균 월매출' : BIZ[state.biz].label + ' 가게 1곳 평균 월매출');
   const localOneStoreTitle = salesOk
     ? r.name + ' ' + BIZ[state.biz].label + ' 1곳 평균 월매출'
-    : '국세청 기준 ' + r.name + ' ' + BIZ[state.biz].label + ' 1곳 추정 월매출';
+    : r.name + ' ' + BIZ[state.biz].label + ' 1곳 추정 월매출';
   const seoulOneStoreTitle = tasis
     ? '국세청 기준 서울 평균 ' + BIZ[state.biz].label + ' 1곳 평균 월매출'
     : oneStoreTitle;
-  const estimatedTitle = r.name + ' ' + BIZ[state.biz].label + ' ' + fmt(r.stores || 0) + '곳 추정 월매출';
+  const estimatedTitle = r.name + ' ' + BIZ[state.biz].label + ' 1곳 추정 월매출';
   const referenceNote = reference
-    ? referenceScope + ' 가게 1곳 평균 월매출에 이 동네 가게 수를 곱한 추정치입니다. 실제 카드매출 통계는 아닙니다.'
+    ? referenceScope + ' 가게 1곳 평균 월매출에 이 동네 수요·소비·경쟁을 반영한 추정치입니다. 실제 카드매출 통계는 아닙니다.'
     : '';
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
   const item = r => {
@@ -978,7 +1003,7 @@ function renderDetail(rows){
   const summaryTab =
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 판단</p>' +
-        stat(localOneStoreTitle, salesOk ? money(r.sales_per_store_month) : (reference ? money(reference.monthly_sales_per_store) : '자료 없음')) +
+        stat(localOneStoreTitle, salesOk ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
         (!salesOk && tasis ? stat(seoulOneStoreTitle, manwonMoney(tasis.row.avg_monthly_sales_manwon)) : '') +
         (reference && salesOk ? stat(referenceScope + ' 가게 1곳 참고 월매출', money(reference.monthly_sales_per_store)) : '') +
         stat('같은 업종 가게', withUnit(r.stores, '곳')) +
@@ -987,7 +1012,7 @@ function renderDetail(rows){
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
         stat('매출 자료', salesOk ? period + ' 카드매출 기준' : '이 행정동 실제 매출 없음') +
-        stat('비교 기준', salesOk ? '행정동 실제 평균' : '서울 평균으로 추정') +
+        stat('비교 기준', salesOk ? '행정동 실제 평균' : '서울 평균에 동네 수요를 반영') +
         stat('현장 확인', '입구 위치·차량 동선') +
       '</div>' +
     '</div>';
@@ -995,7 +1020,7 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">매출</p>' +
         stat(oneStoreTitle, salesOk ? money(r.sales_per_store_month) : (reference ? money(reference.monthly_sales_per_store) : '자료 없음')) +
-        (!salesOk && estimatedSales ? stat(estimatedTitle, money(estimatedSales)) : '') +
+        (!salesOk && r.estimated_sales_per_store_month ? stat(estimatedTitle, money(r.estimated_sales_per_store_month)) : '') +
         stat('손님 1명이 보통 쓰는 돈', salesOk && r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음') +
         (reference && salesOk ? stat(referenceScope + ' 가게 1곳 참고 월매출', money(reference.monthly_sales_per_store)) : '') +
         (reference && reference.customer_unit_price ? stat(referenceScope + ' 손님 1명이 보통 쓰는 돈', fmt(reference.customer_unit_price) + '원') : '') +
@@ -1044,7 +1069,7 @@ function renderDetail(rows){
       '<div><p class="grp-title">입지 가설</p>' +
         stat('운영 타입', demandType(r), marketHypothesis) +
         stat('상권 흐름', marketChangeLabel(r), marketChangeTone(r)) +
-        stat('매출 가설', salesOk && r.sales_per_store_month ? '월 ' + money(r.sales_per_store_month) : (estimatedSales ? r.name + ' 전체 월 ' + money(estimatedSales) + ' 추정' : '자료 없음'), salesOk ? '이 수준을 내려면 실제 후보 점포가 지도 핀의 중심 동선에 붙어 있어야 합니다.' : (estimatedSales ? referenceNote : '매출 자료가 없으므로 지도상 점포 밀도와 수요 기반으로 먼저 걸러봅니다.')) +
+        stat('매출 가설', salesOk && r.sales_per_store_month ? '월 ' + money(r.sales_per_store_month) : (estimatedSales ? r.name + ' 1곳 월 ' + money(estimatedSales) + ' 추정' : '자료 없음'), salesOk ? '이 수준을 내려면 실제 후보 점포가 지도 핀의 중심 동선에 붙어 있어야 합니다.' : (estimatedSales ? referenceNote : '매출 자료가 없으므로 지도상 점포 밀도와 수요 기반으로 먼저 걸러봅니다.')) +
         (tasis ? stat('서울 평균 참고', manwonMoney(tasis.row.avg_monthly_sales_manwon), '국세청 생활업종 기준입니다. 이 동네 매출이 아니라 서울 전체 평균입니다.') : '') +
         stat('경쟁 가설', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '점포 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
       '</div>' +
@@ -1076,8 +1101,8 @@ function renderDetail(rows){
   const content = {summary: summaryTab, sales: salesTab, demand: demandTab, analysis: analysisTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;
   const leadText = r.sales_per_store_month
     ? '가게 1곳 평균 월매출 <b>' + money(r.sales_per_store_month) + '</b>'
-    : (reference
-      ? r.name + ' 1곳 추정 월매출 <b>' + money(reference.monthly_sales_per_store) + '</b>'
+    : (r.estimated_sales_per_store_month
+      ? r.name + ' 1곳 추정 월매출 <b>' + money(r.estimated_sales_per_store_month) + '</b>'
       : (tasis ? '국세청 서울 평균 월매출 <b>' + manwonMoney(tasis.row.avg_monthly_sales_manwon) + '</b>' : '매출 자료 <b>없음</b>'));
   detailTabs.innerHTML = TABS.map(t => '<button type="button" aria-pressed="' + (state.tab === t.k) + '" data-tab="' + t.k + '">' + t.l + '</button>').join('');
   for (const el of detailTabs.querySelectorAll('button')){
@@ -1111,7 +1136,7 @@ function render(){
   renderSummary(rows);
   dataAlert();
   const list = rows.slice(0, 10);
-  const salesColumnTitle = hasSalesData() ? '가게 1곳 평균 월매출' : (currentReferenceSales() ? '행정동 추정 월매출' : '가게 1곳 평균 월매출');
+  const salesColumnTitle = hasSalesData() ? '가게 1곳 평균 월매출' : (currentReferenceSales() ? '1곳 추정 월매출' : '가게 1곳 평균 월매출');
   table.innerHTML = '<div class="commercial-head"><span></span><span>동네</span><span>' + salesColumnTitle + '</span><span>같은 업종 가게</span><span>수요 유형</span><span>후보 점수</span></div>' +
     (list.length ? list.map(rowHtml).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>');
   for (const el of table.querySelectorAll('.commercial-row')){
@@ -1127,7 +1152,7 @@ biz.onchange = e => {
   state.biz = e.target.value;
   state.picked = '';
   buildRows();
-  if (!hasSalesData() && state.sort === 'sales_per_store_month') state.sort = 'stores';
+  if (!hasComparableSalesData() && state.sort === 'sales_per_store_month') state.sort = 'stores';
   render();
 };
 q.oninput = e => { state.q = e.target.value; state.picked = ''; render(); };
