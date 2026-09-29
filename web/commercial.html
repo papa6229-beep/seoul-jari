@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=107">
+<link rel="stylesheet" href="styles.css?v=108">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '107';
+  var PAGE_V = '108';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '107';
+const V = '108';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -177,7 +177,7 @@ function syncSegments(){
 }
 
 function serviceCaution(label){
-  return label + ' 세부 업종 기준으로 매출·점포·수요를 봅니다. 매출이 없는 업종은 점포 밀도와 지도 핀을 먼저 봅니다.';
+  return label + ' 기준으로 매출·가게 수·수요를 봅니다. 행정동 매출이 없으면 가게 수와 수요부터 비교합니다.';
 }
 
 function coverageFor(id = state.biz){
@@ -226,7 +226,7 @@ function salesMissingText(){
   if (ref && ref.monthly_sales_per_store){
     return '행정동 실제 매출은 없지만 ' + scopeLabel(ref.scope, picked) + ' 가게 1곳 월평균 매출을 참고값으로 보여줍니다.';
   }
-  return '이 업종은 행정동 추정매출이 제공되지 않아 가게 수·수요·지도 중심으로 봅니다.';
+  return '이 업종은 행정동 매출이 없어 가게 수와 수요부터 비교합니다.';
 }
 
 function referenceText(ref){
@@ -635,7 +635,7 @@ function renderSummary(rows){
   insight.innerHTML =
     '<div class="insight-title"><b>먼저 볼 동네</b><span>카드를 누르면 아래 내용이 바뀝니다.</span></div>' +
     '<div class="insight-grid">' +
-      card(salesOk ? '돈이 크게 도는 곳' : '가게가 많이 모인 곳', best, salesOk ? '같은 업종 가게 1곳의 월평균 매출이 가장 높게 잡힌 동네입니다.' : '매출 자료가 없어 같은 업종 가게가 많이 모인 곳부터 봅니다.', '') +
+      card(salesOk ? '월평균 매출 높은 곳' : '가게가 많이 모인 곳', best, salesOk ? '같은 업종 가게 1곳의 월평균 매출이 가장 높게 잡힌 동네입니다.' : '매출 자료가 없어 같은 업종 가게가 많이 모인 곳부터 봅니다.', '') +
       card('경쟁이 덜한 곳', lowComp, '같은 업종 가게가 상대적으로 적은 동네입니다.', 'niche') +
       card('수요 기반이 큰 곳', highDemand, '거주인구와 직장인구가 많은 동네입니다.', 'risk') +
     '</div>';
