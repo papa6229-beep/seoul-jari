@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
-const {linkedDongs, storeKeys, pointsFor} = require('./commercial-map-data');
+const {linkedDongs, storeKeys, placeNames, pointsFor} = require('./commercial-map-data');
 
 test('links legacy statistics to only the verified current dong names', () => {
   assert.deepEqual(linkedDongs('11230536'), ['용두동', '신설동']);
@@ -27,4 +27,12 @@ test('keeps existing single-dong fallback behavior', () => {
   const points = {'송파구/잠실동': {cafe: [{n: '잠실 카페'}]}};
   assert.deepEqual(pointsFor(points, {code: '11710670', gu: '송파구', name: '잠실2동'}, 'cafe').map(p => p.n),
     ['잠실 카페']);
+});
+
+test('uses the matching legal dong for Yeouido nearby places', () => {
+  assert.deepEqual(placeNames({gu: '영등포구', name: '여의동'}), ['여의도동']);
+  assert.deepEqual(placeNames({gu: '송파구', name: '잠실2동'}), ['잠실2동', '잠실동']);
+  const index = require('./data/places/index.json');
+  const entry = index.dongs['서울/영등포구/' + placeNames({gu: '영등포구', name: '여의동'})[0]];
+  assert.equal(entry.f, '서울_영등포구_여의도동');
 });

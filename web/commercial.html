@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=133">
+<link rel="stylesheet" href="styles.css?v=134">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '133';
+  var PAGE_V = '134';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -72,11 +72,11 @@
   </main>
 </div>
 
-<script src="dong-sales-estimate.js?v=133"></script>
-<script src="commercial-reference.js?v=133"></script>
-<script src="commercial-map-data.js?v=133"></script>
+<script src="dong-sales-estimate.js?v=134"></script>
+<script src="commercial-reference.js?v=134"></script>
+<script src="commercial-map-data.js?v=134"></script>
 <script>
-const V = '133';
+const V = '134';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -985,22 +985,13 @@ function mapToggle(key, label, pin){
 const PLACE_CACHE = {};
 let kakaoReady = false, commercialMap = null, commercialOverlays = [], commercialMapKey = '';
 
-function cleanPlaceName(v){
-  return (v || '').replace(/[^0-9A-Za-z가-힣]+/g, '');
-}
-
-function legalDongName(name){
-  return (name || '').replace(/(\d+(?:\.\d+)*)동$/, '동');
-}
-
 function placeFileFor(row){
   const idx = DATA.places && DATA.places.dongs ? DATA.places.dongs : {};
-  const names = [row.name, legalDongName(row.name)];
-  for (const name of names){
+  for (const name of CommercialMapData.placeNames(row)){
     const key = '서울/' + row.gu + '/' + name;
     if (idx[key] && idx[key].f) return idx[key].f + '.json';
   }
-  return cleanPlaceName('서울') + '_' + cleanPlaceName(row.gu) + '_' + cleanPlaceName(legalDongName(row.name)) + '.json';
+  return null;
 }
 
 function loadKakao(){
@@ -1013,6 +1004,7 @@ function loadKakao(){
 
 function loadPlaces(row){
   const file = placeFileFor(row);
+  if (!file) return Promise.resolve(null);
   if (PLACE_CACHE[file]) return Promise.resolve(PLACE_CACHE[file]);
   return fetch('data/places/' + encodeURIComponent(file) + '?v=' + V, {cache:'no-store'})
     .then(r => r.ok ? r.json() : null)
@@ -1146,6 +1138,10 @@ function drawCommercialMap(row, keepView){
     }
     return loadKakao().then(() => {
       const contextItems = data && Array.isArray(data.items) ? data.items : [];
+      for (const [key, type] of [['academy', 'a'], ['apartment', 'p'], ['shop', 'g']]){
+        const toggle = document.querySelector('.commercial-map-legend [data-show="' + key + '"]');
+        if (toggle) toggle.style.display = contextItems.some(p => p.t === type) ? '' : 'none';
+      }
       const context = contextItems.filter(p => p.t === 'p' || p.t === 'g' || (state.biz === 'academy' && p.t === 'a'));
       const pts = bizPts.concat(context).filter(p => state.show[mapKind(p)] !== false);
       if (!pts.length){
@@ -1213,9 +1209,9 @@ function drawCommercialMap(row, keepView){
         count.textContent = [
           pointLabel,
           competitionLabel,
-          !linked && state.biz === 'academy' ? '학원참고 ' + n('a') : '',
-          !linked ? '아파트 ' + n('p') : '',
-          !linked ? '상가 ' + n('g') : ''
+          !linked && n('a') ? '학원참고 ' + n('a') : '',
+          !linked && n('p') ? '아파트 ' + n('p') : '',
+          !linked && n('g') ? '상가 ' + n('g') : ''
         ].filter(Boolean).join(' · ');
       }
     });
@@ -1384,15 +1380,16 @@ function renderDetail(rows){
       (meta.top_hinterlands && meta.top_hinterlands.length ? '<div><p class="grp-title">주변 생활권 참고</p><p class="basis-note">상권배후지 기준으로 같은 업종이 강하게 잡힌 곳입니다.</p><ol class="market-rank">' + topMarketList(meta.top_hinterlands) + '</ol></div>' : '') +
     '</div>';
   const linkedMapDongs = CommercialMapData.linkedDongs(r.code);
+  const hasNearbyPlaces = !linkedMapDongs && Boolean(placeFileFor(r));
   const mapScopeNote = linkedMapDongs
     ? '<p class="basis-note">매출·가게 수는 원자료의 ' + escapeHtml(r.name) + ' 기준입니다. 지도 업소 위치는 현재 ' + escapeHtml(linkedMapDongs.join('·')) + ' 기준이며, 범위가 다른 주변 장소는 표시하지 않습니다.</p>'
-    : '';
+    : (hasNearbyPlaces ? '' : '<p class="basis-note">주변 아파트·상가 위치 자료는 이 동네에 연결되지 않았습니다.</p>');
   const mapTab = mapScopeNote +
     '<div class="maparea"><div id="map"></div>' +
       '<div class="maplegend commercial-map-legend">' +
         mapToggle('business', mapBusinessLabel(), 'b1') +
-        (!linkedMapDongs && state.biz === 'academy' ? mapToggle('academy', '기존 학원 참고', 'a1') : '') +
-        (linkedMapDongs ? '' : mapToggle('apartment', '아파트', 'p3') + mapToggle('shop', '상가', 'g3')) +
+        (hasNearbyPlaces && state.biz === 'academy' ? mapToggle('academy', '기존 학원 참고', 'a1') : '') +
+        (hasNearbyPlaces ? mapToggle('apartment', '아파트', 'p3') + mapToggle('shop', '상가', 'g3') : '') +
         '<span class="hint" id="mapcount"></span>' +
       '</div>' +
       '<aside class="map-selection" id="mapSelection"><span>선택한 장소</span><p>지도 지점을 선택하면 상호명과 주소가 나옵니다.</p></aside>' +

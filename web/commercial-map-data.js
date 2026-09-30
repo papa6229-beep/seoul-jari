@@ -19,11 +19,16 @@
     return [...new Set(names.map(name => row.gu + '/' + name))];
   }
 
+  function placeNames(row){
+    if (row.gu === '영등포구' && row.name === '여의동') return ['여의도동'];
+    return [...new Set([row.name, row.name.replace(/(\d+(?:\.\d+)*)동$/, '동')])];
+  }
+
   function pointsFor(all, row, business){
     const linked = linkedDongs(row.code);
     const lists = storeKeys(row).map(key => all[key]?.[business]).filter(list => Array.isArray(list) && list.length);
     return linked ? lists.flat() : (lists[0] || []);
   }
 
-  return {linkedDongs, storeKeys, pointsFor};
+  return {linkedDongs, storeKeys, placeNames, pointsFor};
 });
