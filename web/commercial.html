@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=129">
+<link rel="stylesheet" href="styles.css?v=130">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '129';
+  var PAGE_V = '130';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -72,9 +72,9 @@
   </main>
 </div>
 
-<script src="dong-sales-estimate.js?v=129"></script>
+<script src="dong-sales-estimate.js?v=130"></script>
 <script>
-const V = '129';
+const V = '130';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -693,32 +693,34 @@ function renderSummary(rows){
 function demandType(r){
   const worker = r.workers || 0;
   const resident = r.residents || 0;
-  if (worker > resident * 2) return '직장 수요형';
-  if (resident > worker * 2) return '주거 수요형';
-  return '혼합 수요형';
+  if (!worker && !resident) return '인구 자료 없음';
+  if (worker > resident * 2) return '직장인구 우세';
+  if (resident > worker * 2) return '거주인구 우세';
+  return '거주·직장 비슷';
 }
 
 function demandTone(r){
   const type = demandType(r);
-  if (type === '직장 수요형') return '평일 점심·퇴근 시간대 수요를 먼저 봐야 하는 동네입니다.';
-  if (type === '주거 수요형') return '동네 거주민의 반복 방문과 저녁·주말 수요를 먼저 봐야 하는 동네입니다.';
-  return '직장·주거 수요가 섞여 있어 시간대별 운영 전략을 나눠 봐야 하는 동네입니다.';
+  if (state.biz === 'svc_CS300042') return '주유소 손님은 거주·직장인구보다 차량 흐름과 진입 방향을 현장에서 확인해야 합니다.';
+  if (type === '인구 자료 없음') return '이 동네의 거주·직장인구 자료가 없어 실제 손님 흐름을 현장에서 확인해야 합니다.';
+  return '인구 구성만으로 이 업종의 손님을 알 수 없습니다. 실제 방문 시간과 이동 동선을 확인하세요.';
 }
 
 function demandSummary(row){
   const type = demandType(row);
   const parts = [];
-  if (type === '주거 수요형') parts.push('주거 반복 방문을 먼저 보는 동네입니다');
-  else if (type === '직장 수요형') parts.push('평일 점심·퇴근 수요를 먼저 보는 동네입니다');
-  else parts.push('주거와 직장 수요가 섞인 동네입니다');
-  if ((row.evening_flow || 0) > (row.lunch_flow || 0) * 1.2) parts.push('저녁 시간대 흐름이 더 큽니다');
-  else if ((row.lunch_flow || 0) > (row.evening_flow || 0) * 1.2) parts.push('점심 시간대 흐름이 더 큽니다');
-  if (row.facilities && row.facilities.bus_stops) parts.push('버스정류장 ' + fmt(row.facilities.bus_stops) + '곳');
+  if (type === '인구 자료 없음') return '거주·직장인구 자료가 없습니다.';
+  parts.push('거주인구 ' + withUnit(row.residents, '명') + ' · 직장인구 ' + withUnit(row.workers, '명'));
+  if (row.evening_flow && row.lunch_flow){
+    if (row.evening_flow > row.lunch_flow * 1.2) parts.push('저녁 유동인구가 점심보다 많음');
+    else if (row.lunch_flow > row.evening_flow * 1.2) parts.push('점심 유동인구가 저녁보다 많음');
+  }
   return parts.join(' · ');
 }
 
 function demandSpendingStats(row, stat){
   const label = BIZ[state.biz].label;
+  if (state.biz === 'svc_CS300042') return stat('동네 전체 소비금액', money(row.spending), '주유 지출이나 주유소 매출이 아닙니다.');
   if (state.biz === 'academy' || /학원|교습/.test(label)){
     return stat('교육 소비금액', money(row.education_spending), '학원·교습소 판단에서 먼저 보는 소비 항목입니다.') +
       stat('동네 전체 소비금액', money(row.spending));
@@ -731,20 +733,18 @@ function demandSpendingStats(row, stat){
     return stat('음식 소비금액', money(row.food_spending), '카페·음식 업종 판단에서 먼저 보는 소비 항목입니다.') +
       stat('동네 전체 소비금액', money(row.spending));
   }
-  return stat('동네 전체 소비금액', money(row.spending)) +
-    stat('음식 소비금액', money(row.food_spending));
+  return stat('동네 전체 소비금액', money(row.spending));
 }
 
 function scoreGuide(r){
-  if ((r.score || 0) >= 70) return r.sales ? '서울 행정동 중 매출·수요·경쟁 조건이 함께 강한 후보입니다.' : '카드매출 자료는 없지만 수요·경쟁 조건이 강한 후보입니다.';
-  if ((r.score || 0) >= 45) return '조건은 보통 이상입니다. 실제 임대료와 보행 동선을 같이 보면 판단이 쉬워집니다.';
-  return '한두 지표만 보고 들어가기보다 현장 조건을 먼저 확인해야 하는 후보입니다.';
+  return '같은 업종 카드매출, 인구, 소비, 점포 수를 비교한 참고 신호입니다. 개별 가게의 성과를 뜻하지 않습니다.';
 }
 
 function scoreLabel(r){
-  if ((r.score || 0) >= 70) return '좋은 후보';
-  if ((r.score || 0) >= 45) return '현장 확인 필요';
-  return '더 확인 필요';
+  const scope = '매출·인구·소비·경쟁';
+  if ((r.score || 0) >= 70) return scope + ' 지표 높음';
+  if ((r.score || 0) >= 45) return scope + ' 지표 보통';
+  return scope + ' 지표 낮음';
 }
 
 function mainCaution(row){
@@ -754,14 +754,14 @@ function mainCaution(row){
   const salesRatio = comparable && row.sales_per_store_month && referenceMonthly ? row.sales_per_store_month / referenceMonthly : null;
   const salesRankStrong = comparable && row.sales_per_store_month && referenceMonthly && row.sales_per_store_month >= referenceMonthly * 1.5 && row.score < 45;
   if (salesRatio && salesRatio >= 2.5) return '매출 높음 · 이유 확인';
-  if (salesRankStrong) return '매출만 높고 종합 판단은 낮음';
+  if (salesRankStrong) return '매출 높음 · 다른 지표 낮음';
   if ((row.franchises || 0) && row.stores && row.franchises <= row.stores && row.franchises / row.stores >= .7) return '브랜드 경쟁 강함';
   if (competitionStoreValue(row) >= 100) return '같은 업종 많음';
   return scoreLabel(row);
 }
 
 function scoreShortLabel(r){
-  if ((r.score || 0) >= 70) return '좋음';
+  if ((r.score || 0) >= 70) return '높음';
   if ((r.score || 0) >= 45) return '보통';
   return '낮음';
 }
@@ -868,8 +868,7 @@ function marketChangeLabel(r){
 function apartmentTone(r){
   const a = r.apartment;
   if (!a) return '아파트 자료가 아직 연결되지 않았습니다.';
-  const high = a.high_price_households ? '고가 단지 세대 ' + fmt(a.high_price_households) + '세대가 포함됩니다. ' : '';
-  return '아파트 단지 ' + fmt(a.complexes) + '개, 평균 면적 ' + fmt(a.average_area) + '㎡, 평균 시세 ' + money(a.average_market_price) + ' 수준입니다. ' + high + '주거 반복 수요와 손님 결제 여력을 볼 때 참고합니다.';
+  return '아파트 단지 ' + fmt(a.complexes) + '개, 평균 면적 ' + fmt(a.average_area) + '㎡, 평균 시세 ' + money(a.average_market_price) + ' 수준입니다. 이 업종의 실제 고객 수를 뜻하지는 않습니다.';
 }
 
 function facilityTone(r){
@@ -877,9 +876,7 @@ function facilityTone(r){
   if (!f) return '집객시설 자료가 아직 연결되지 않았습니다.';
   const transit = [f.subway_stations ? '지하철 ' + fmt(f.subway_stations) + '곳' : '', f.bus_stops ? '버스정류장 ' + fmt(f.bus_stops) + '곳' : ''].filter(Boolean).join(' · ');
   const base = '집객시설 ' + fmt(f.total) + '개' + (transit ? ', ' + transit : '') + ' 기준입니다.';
-  if ((f.schools || 0) >= 5) return base + ' 학교·교육시설이 많은 편이라 학원, 간식, 생활형 업종에서 추가로 볼 만합니다.';
-  if ((f.hospitals || 0) || (f.pharmacies || 0)) return base + ' 병원·약국 주변 반복 방문 수요를 같이 확인할 만합니다.';
-  return base + ' 지도에서 실제 보행 동선과 시설 위치가 이어지는지 확인해야 합니다.';
+  return base + ' 이 업종과의 관련성은 시설 위치와 실제 이동 동선을 확인해야 합니다.';
 }
 
 function filteredRows(){
@@ -911,18 +908,22 @@ function filteredRows(){
 
 function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
+  const showScore = hasSalesData();
   const salesValue = rowSalesValue(r);
   const salesKind = rowSalesKind(r);
   const showSalesBadge = !!salesValue && !(salesKind.cls === 'estimated' && !hasSalesData());
   const salesText = r.estimated_sales_per_store_month && !r.sales_per_store_month
     ? DongSalesEstimate.approxMoney(salesValue) : money(salesValue);
-  return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
+  const salesLabel = r.estimated_sales_per_store_month && !r.sales_per_store_month ? '1곳 추정 월평균 매출' : '1곳 월평균 매출';
+  return '<button type="button" class="commercial-row' + (showScore ? '' : ' no-score') + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + i + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b></span>' +
-    '<span><b>' + (salesValue ? salesText : '자료 없음') + '</b>' + (showSalesBadge ? '<small class="row-badge ' + salesKind.cls + '">' + salesKind.label + '</small>' : '') + '</span>' +
-    '<span><b>' + competitionCountText(r) + '</b></span>' +
-    '<span><b>' + demandType(r) + '</b></span>' +
-    '<span><b>' + scoreShortLabel(r) + '</b><small>' + fmt(r.score) + '점</small></span>' +
+    '<span data-label="' + salesLabel + '"><b>' + (salesValue ? salesText : '자료 없음') + '</b>' + (showSalesBadge ? '<small class="row-badge ' + salesKind.cls + '">' + salesKind.label + '</small>' : '') + '</span>' +
+    '<span data-label="같은 업종 가게"><b>' + competitionCountText(r) + '</b></span>' +
+    '<span data-label="인구 구성"><b>' + demandType(r) + '</b></span>' +
+    (showScore ? (r.sales
+      ? '<span data-label="동네 참고 지표"><b>' + scoreShortLabel(r) + '</b></span>'
+      : '<span data-label="동네 참고 지표"><b>비교 불가</b></span>') : '') +
   '</button>';
 }
 
@@ -930,14 +931,14 @@ function explainRow(r, rows){
   const b = BIZ[state.biz];
   const bits = [
     r.sales ? level(r.sales, rows, 'sales', '매출 자료가 있는 동네 중 이 업종 전체 매출이 높은 편입니다', '매출 자료가 있는 동네 중 이 업종 전체 매출이 중간 이상입니다', '이 업종 전체 매출은 자료가 있는 동네 중 낮은 편입니다') : '이 동네의 카드매출 자료는 없습니다',
-    level(r.workers, rows, 'workers', '직장인구가 많아 평일 수요가 강합니다', '직장인구가 일정 수준 있습니다', '직장인구 신호는 약합니다'),
-    level(r.residents, rows, 'residents', '상주인구 기반 수요도 큽니다', '상주인구 기반 수요가 보통입니다', '상주인구 기반 수요는 제한적입니다')
+    level(r.workers, rows, 'workers', '직장인구가 많은 편입니다', '직장인구가 중간 수준입니다', '직장인구가 적은 편입니다'),
+    level(r.residents, rows, 'residents', '거주인구가 많은 편입니다', '거주인구가 중간 수준입니다', '거주인구가 적은 편입니다')
   ];
   const totalStores = competitionStoreValue(r);
   const caution = totalStores
     ? b.label + ' 관련 점포가 ' + competitionCountText(r) + '이라 경쟁 강도는 별도 확인이 필요합니다.'
     : b.label + ' 관련 점포 수가 낮게 잡혀 현장 확인이 필요합니다.';
-  return '<div class="commercial-why"><b>왜 이 후보인가</b><p>' + bits.join(' · ') + '.</p><p class="warn">' + caution + '</p></div>';
+  return '<div class="commercial-why"><b>동네 지표</b><p>' + bits.join(' · ') + '.</p><p class="warn">' + caution + ' 인구만으로 이 업종의 손님 수를 알 수는 없습니다.</p></div>';
 }
 
 function dataBasisNotes(ctx){
@@ -958,7 +959,12 @@ function dataBasisNotes(ctx){
 }
 
 function nextChecks(r, ctx){
-  const common = [
+  const isGasStation = state.biz === 'svc_CS300042';
+  const common = isGasStation ? [
+    '후보지와 맞닿은 도로에서 주유소 진입·출차가 가능한지 확인',
+    '차량 통행량과 유턴·좌회전 가능 여부를 시간대별로 확인',
+    '주변 주유소의 가격과 진입 대기 공간을 현장에서 비교'
+  ] : [
     '역 출구, 횡단보도, 버스정류장 기준 실제 보행 동선을 확인',
     '1층 가시성, 전면 폭, 권리금, 월세를 같은 기준으로 비교',
     '네이버지도와 현장 방문으로 동일 업종 체감 밀도를 확인'
@@ -973,11 +979,11 @@ function nextChecks(r, ctx){
   };
   const checks = [...(byBiz[state.biz] || []), ...common];
   if (competitionStoreValue(r) > 100) checks.unshift('선택 업종 점포가 많으므로 가격, 콘셉트, 회전율 차별화 가능성을 먼저 확인');
-  if ((r.workers || 0) > (r.residents || 0) * 2) checks.unshift('평일 점심·퇴근 수요형인지, 주말 공백을 버틸 수 있는지 확인');
-  if ((r.residents || 0) > (r.workers || 0) * 2) checks.unshift('주거 수요형인지, 야간·주말 운영 시간과 손님 1명이 보통 쓰는 돈이 맞는지 확인');
-  if (r.market_change && r.market_change.name) checks.unshift('상권 변화지표가 ' + r.market_change.name + '인지, 실제 임대료와 공실 분위기가 같은지 확인');
-  if (r.apartment && r.apartment.complexes) checks.unshift('아파트 단지와 후보 점포 사이의 실제 보행 동선이 끊기지 않는지 확인');
-  if (r.facilities && (r.facilities.bus_stops || r.facilities.subway_stations)) checks.unshift('대중교통 정류장과 후보 점포 입구가 시야 안에 이어지는지 확인');
+  if (!isGasStation && r.residents && r.workers && r.workers > r.residents * 2) checks.unshift('직장인구가 더 많습니다. 실제 방문객과 주말 영업 여건을 확인');
+  if (!isGasStation && r.residents && r.workers && r.residents > r.workers * 2) checks.unshift('거주인구가 더 많습니다. 실제 방문객과 운영 시간을 확인');
+  if (r.market_change && r.market_change.name && !isGasStation) checks.unshift('동네 상권 흐름(' + marketChangeLabel(r) + ')이 실제 임대료와 공실 분위기에도 나타나는지 확인');
+  if (!isGasStation && r.apartment && r.apartment.complexes) checks.unshift('아파트 단지와 후보 점포 사이의 실제 보행 동선이 끊기지 않는지 확인');
+  if (!isGasStation && r.facilities && (r.facilities.bus_stops || r.facilities.subway_stations)) checks.unshift('대중교통 정류장과 후보 점포 입구가 시야 안에 이어지는지 확인');
   const basis = dataBasisNotes(ctx);
   return '<div class="commercial-checks"><p class="grp-title">다음 확인사항 <small>' + BIZ[state.biz].label + ' 기준</small></p><ul>' + checks.slice(0, 7).map(v => '<li>' + v + '</li>').join('') + '</ul></div>' +
     (basis.length ? '<div class="commercial-checks"><p class="grp-title">자료 기준</p><ul>' + basis.map(v => '<li>' + v + '</li>').join('') + '</ul></div>' : '');
@@ -1254,6 +1260,7 @@ function renderDetail(rows){
     .filter(item => !isAggregateBusinessId(item.id))
     .slice().sort((a, b) => (b.store_count || 0) - (a.store_count || 0)).slice(0, 3);
   const hasDongSales = rowHasSales(r);
+  const isGasStation = state.biz === 'svc_CS300042';
   const estimatedSales = r.estimate_details;
   const localSalesValue = hasDongSales ? money(r.sales_per_store_month)
     : (estimatedSales ? DongSalesEstimate.approxMoney(estimatedSales.monthly_won) : '자료 없음');
@@ -1294,11 +1301,6 @@ function renderDetail(rows){
   const relatedSalesTitle = '이 동네 1곳 월평균 매출 상위 업종';
   const relatedStoresTitle = '이 동네 가게 수 상위 업종';
   const period = quarterLabel(DATA.view && DATA.view.quarter);
-  const marketHypothesis = demandType(r) === '주거 수요형'
-    ? '주거 반복 방문형 후보입니다. 단골·근거리 방문이 살아야 하는 업종에 더 맞습니다.'
-    : demandType(r) === '직장 수요형'
-      ? '평일 시간대 장사 후보입니다. 점심·퇴근 피크를 잡는 운영이 중요합니다.'
-      : '혼합 수요 후보입니다. 낮과 저녁의 상품 구성을 다르게 볼 만합니다.';
   const summaryTab =
     '<div class="groups">' +
       '<div><p class="grp-title">한눈에 판단</p>' +
@@ -1308,13 +1310,12 @@ function renderDetail(rows){
         (!hasDongSales && visibleTasis ? stat(seoulOneStoreTitle, manwonMoney(visibleTasis.row.avg_monthly_sales_manwon)) : '') +
         (showReferenceLine ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
         stat('같은 업종 가게', competitionCountText(r)) +
-        stat('손님이 생기는 이유', demandType(r)) +
-        stat('주의할 점', mainCaution(r)) +
+        stat('동네 인구 구성', demandType(r)) +
+        (hasDongSales ? stat('주의할 점', mainCaution(r)) : '') +
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
         stat('매출 자료', r.sales_incomplete ? '묶음의 일부 업종 매출 없음' : (hasDongSales ? period + ' 카드매출 기반 평균' : (estimatedSales ? '국세청 서울 평균 기반 추정' : (hasAnySales ? '이 행정동 카드매출 자료 없음' : '이 업종 행정동 매출 없음')))) +
-        stat('비교 기준', hasDongSales ? '행정동 카드매출 기반 평균' : (estimatedSales ? '서울 평균 + 동네 다른 업종 매출' : '점포·수요 기준')) +
-        stat('현장 확인', '입구 위치·차량 동선') +
+        stat('현장 확인', state.biz === 'svc_CS300042' ? '차량 진입·도로 동선' : '입구 위치·보행 동선') +
       '</div>' +
     '</div>';
   const salesTab =
@@ -1343,7 +1344,7 @@ function renderDetail(rows){
   const demandTab =
     '<div class="groups">' +
       '<div><p class="grp-title">수요 해석</p>' +
-        stat('먼저 볼 수요', demandType(r), demandSummary(r)) +
+        stat('동네 인구 구성', demandType(r), demandSummary(r)) +
         stat('현장 확인', '시간대별 손님 흐름', demandTone(r)) +
       '</div>' +
         '<div><p class="grp-title">인구 흐름</p>' +
@@ -1356,7 +1357,10 @@ function renderDetail(rows){
         '<div><p class="grp-title">소비 규모</p>' +
           demandSpendingStats(r, stat) +
         '</div>' +
-      '<div><p class="grp-title">주거 기반</p>' +
+      (isGasStation ? '<div><p class="grp-title">차량 자료</p>' +
+        stat('도로별 차량 통행량', '자료 없음') +
+        stat('주유소 진입 방향', '현장 확인', '인구·소비 수치만으로 차량 고객 수를 계산할 수 없습니다.') +
+      '</div>' : '<div><p class="grp-title">주거 기반</p>' +
         stat('거주 가구', withUnit(r.households, '가구')) +
         stat('아파트 단지', r.apartment ? fmt(r.apartment.complexes) + '개' : '자료 없음') +
         stat('평균 아파트 시세', r.apartment ? money(r.apartment.average_market_price) : '자료 없음') +
@@ -1365,24 +1369,27 @@ function renderDetail(rows){
         stat('전체 시설', r.facilities ? fmt(r.facilities.total) + '개' : '자료 없음') +
         stat('지하철·버스', r.facilities ? '지하철 ' + fmt(r.facilities.subway_stations) + '곳 · 버스 ' + fmt(r.facilities.bus_stops) + '곳' : '자료 없음') +
         stat('학교·대학', r.facilities ? fmt(r.facilities.schools) + '곳' : '자료 없음') +
-      '</div>' +
+      '</div>') +
     '</div>';
   const analysisTab =
     explainRow(r, ROWS) +
     '<div class="groups">' +
       '<div><p class="grp-title">판단 근거</p>' +
-        stat('장사 성격', demandType(r), marketHypothesis) +
+        stat('인구 구성', demandType(r), '거주·직장인구의 상대적 크기입니다. 이 업종의 실제 손님 구성은 아닙니다.') +
         stat('상권 흐름', marketChangeLabel(r), marketChangeTone(r)) +
-        stat('주의 신호', mainCaution(r), scoreGuide(r)) +
+        (hasDongSales ? stat('주의 신호', mainCaution(r), scoreGuide(r)) : '') +
         stat('매출 판단', hasDongSales ? '월평균 ' + money(r.sales_per_store_month) : (estimatedSales ? '추정 월평균 ' + DongSalesEstimate.approxMoney(estimatedSales.monthly_won) : '자료 없음'), hasDongSales ? '이 매출이 가능한 자리인지 입구 위치와 유동 방향을 현장에서 확인해야 합니다.' : (estimatedSales ? '국세청 서울 평균과 동네 다른 업종 매출을 바탕으로 한 참고값입니다.' : '매출 자료가 없으므로 점포 수와 수요 기반으로 먼저 걸러봅니다.')) +
         (visibleTasis ? stat('서울 평균 참고', manwonMoney(visibleTasis.row.avg_monthly_sales_manwon), '국세청 생활업종 기준입니다. 이 동네 매출이 아니라 서울 전체 평균입니다.') : '') +
         stat('경쟁 판단', competitionCountText(r), '가게 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
       '</div>' +
-      '<div><p class="grp-title">생활권 해석</p>' +
+      (isGasStation ? '<div><p class="grp-title">차량 접근성</p>' +
+        stat('차량 통행량', '자료 없음', '현재 자료에는 도로별 차량 통행량이 없습니다.') +
+        stat('진입·출차', '현장 확인', '진입 방향, 유턴 가능 여부, 대기 공간을 직접 확인해야 합니다.') +
+      '</div>' : '<div><p class="grp-title">생활권 해석</p>' +
         stat('주거 기반', r.apartment ? fmt(r.apartment.complexes) + '개 단지' : '자료 없음', apartmentTone(r)) +
         stat('시설 기반', r.facilities ? fmt(r.facilities.total) + '개 시설' : '자료 없음', facilityTone(r)) +
-        stat('반복 수요', r.households ? fmt(r.households) + '가구' : '자료 없음', '주거·시설·교통이 후보 점포 앞에서 만나는지가 핵심입니다.') +
-      '</div>' +
+        stat('거주 가구', r.households ? fmt(r.households) + '가구' : '자료 없음', '동네 규모를 보는 자료입니다. 이 업종의 손님 수가 아닙니다.') +
+      '</div>') +
       '<div><p class="grp-title">현장 검증</p>' +
         stat('첫 번째', '지도 확인', '선택 업종 핀이 어디에 몰리는지 보고, 빈 구간이 실제로 비어 있는지 확인합니다.') +
         stat('두 번째', '임대료 확인', hasDongSales || estimatedSales ? '가게 1곳 월평균 매출이 높아도 임대료·권리금이 높으면 후보에서 제외될 수 있습니다.' : '매출 자료가 없으므로 임대료·권리금과 예상 비용을 현장에서 확인해야 합니다.') +
@@ -1409,12 +1416,13 @@ function renderDetail(rows){
     : (estimatedSales
       ? '1곳 추정 월평균 매출 <b>' + DongSalesEstimate.approxMoney(estimatedSales.monthly_won) + '</b>'
       : '이 동네 매출 자료 <b>없음</b>');
+  const showLead = !['summary', 'sales', 'analysis'].includes(state.tab);
   detailTabs.innerHTML = TABS.map(t => '<button type="button" aria-pressed="' + (state.tab === t.k) + '" data-tab="' + t.k + '">' + t.l + '</button>').join('');
   for (const el of detailTabs.querySelectorAll('button')){
     el.onclick = () => { state.tab = el.dataset.tab; render(); };
   }
   detail.innerHTML =
-    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span><span class="lead">' + leadText + '</span></div>' +
+    '<div class="dhead"><h3>' + r.name + '</h3><span class="p">' + r.gu + ' · 행정동 · ' + BIZ[state.biz].label + ' 기준</span>' + (showLead ? '<span class="lead">' + leadText + '</span>' : '') + '</div>' +
     '<div class="dbody">' + content + '</div>';
   if (state.tab === 'map'){
     for (const el of detail.querySelectorAll('.tg[data-show]')){
@@ -1461,7 +1469,8 @@ function render(){
     '<button type="button" data-sort-dir="asc" aria-pressed="' + (state.sortDir === 'asc') + '">낮은순</button>' +
   '</div>';
   document.querySelectorAll('.commercial-sortdir').forEach(el => el.remove());
-  table.innerHTML = '<div class="commercial-head"><span></span><span>동네</span><span>' + salesColumnTitle + '</span><span>같은 업종 가게 수</span><span>수요 성격</span><span>후보 판단</span></div>' +
+  const showScore = hasSalesData();
+  table.innerHTML = '<div class="commercial-head' + (showScore ? '' : ' no-score') + '"><span></span><span>동네</span><span>' + salesColumnTitle + '</span><span>같은 업종 가게 수</span><span>인구 구성</span>' + (showScore ? '<span>매출·인구·소비·경쟁 지표</span>' : '') + '</div>' +
     (list.length ? list.map((row, idx) => rowHtml(row, pageStart + idx + 1)).join('') : '<div class="none">조건에 맞는 행정동이 없습니다.</div>') +
     pager;
   table.insertAdjacentHTML('beforebegin', sortDirControl);
