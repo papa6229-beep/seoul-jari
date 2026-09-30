@@ -19,6 +19,7 @@ const TARGETS = [
 const totalStores = row => row.similar_store_count ?? (row.store_count || 0) + (row.franchise_store_count || 0);
 const quarterName = value => value.slice(0, 4) + '년 ' + value.slice(4) + '분기';
 const manwon = value => value === null ? '자료 없음' : Math.round(value / 10000).toLocaleString('ko-KR') + '만원';
+const storeCount = value => value === null ? '자료 없음' : value.toLocaleString('ko-KR');
 
 function summarizeQuarter(quarter, data, targets = TARGETS){
   const groups = audit({quarter, ...data}).groups;
@@ -60,18 +61,21 @@ function renderReport(rows, targets = TARGETS){
     const valid = series.filter(row => row.ratio !== null);
     let verdict = '자료 부족';
     if (valid.length === 4){
-      const high = valid.filter(row => row.ratio >= 3).length;
-      verdict = high === 4 ? '4분기 모두 구 평균의 3배 이상' : `4분기 중 ${high}분기가 구 평균의 3배 이상`;
+      if (valid.every(row => row.ratio >= 3)) verdict = '4분기 모두 구 평균의 3배 이상';
+      else if (valid.every(row => row.ratio >= 1.5)) verdict = '4분기 모두 구 평균의 1.5배 이상';
+      else if (valid.every(row => row.ratio <= .5)) verdict = '4분기 모두 구 평균의 절반 이하';
+      else verdict = '분기별 차이가 있어 한 방향으로 단정하기 어려움';
     }
     lines.push(`## ${target.gu_name} ${target.dong_name}`, '', `판정: **${verdict}**`, '',
       '| 분기 | 동 가게 수 | 동 1곳 월평균 | 구 가게 수 | 구 1곳 월평균 | 동/구 비율 |',
       '| --- | ---: | ---: | ---: | ---: | ---: |');
     for (const row of series){
-      lines.push(`| ${quarterName(row.quarter)} | ${row.dong_stores ?? '자료 없음'} | ${manwon(row.dong_monthly)} | ${row.gu_stores ?? '자료 없음'} | ${manwon(row.gu_monthly)} | ${row.ratio === null ? '비교 불가' : row.ratio.toFixed(2) + '배'} |`);
+      lines.push(`| ${quarterName(row.quarter)} | ${storeCount(row.dong_stores)} | ${manwon(row.dong_monthly)} | ${storeCount(row.gu_stores)} | ${manwon(row.gu_monthly)} | ${row.ratio === null ? '비교 불가' : row.ratio.toFixed(2) + '배'} |`);
     }
     lines.push('');
   }
   lines.push('자료 출처: 서울 열린데이터광장 VwsmAdstrdSelngW, VwsmAdstrdStorW, VwsmSignguSelngW, VwsmSignguStorW.',
+    '상봉1동 수치는 커피-음료 단일 업종이다. 커피·제과·패스트푸드를 합친 묶음 수치와 직접 비교하지 않는다.',
     '과거 분기 자료는 점검용으로만 사용했고 공개 사이트의 JSON은 수정하지 않았다.', '');
   return lines.join('\n');
 }

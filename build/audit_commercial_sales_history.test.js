@@ -33,6 +33,15 @@ test('four-quarter report does not call a missing quarter persistent', () => {
   assert.match(report, /2026년 1분기/);
 });
 
+test('four-quarter report describes consistently low and moderately high dongs', () => {
+  const one = summarizeQuarter('20261', rows, [target])[0];
+  const quarters = ['20253', '20254', '20261', '20262'];
+  const low = quarters.map(quarter => ({...one, quarter, ratio: 0.1}));
+  const high = quarters.map(quarter => ({...one, quarter, ratio: 2.1}));
+  assert.match(renderReport(low, [target]), /4분기 모두 구 평균의 절반 이하/);
+  assert.match(renderReport(high, [target]), /4분기 모두 구 평균의 1\.5배 이상/);
+});
+
 test('historical collection reuses archived district rows and calls only dong services', async () => {
   const services = [];
   const archived = {guSales: rows.guSales, guStores: rows.guStores};
