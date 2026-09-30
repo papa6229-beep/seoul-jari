@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
+const dongSalesEstimate = require('../web/dong-sales-estimate.js');
 
 const data = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'web', 'data', 'commercial-view-dong.json'), 'utf8'));
 const errors = {district_complete: [], district_known: [], seoul_known: []};
@@ -88,3 +89,29 @@ function summarize(ratios){
 for (const key of Object.keys(errors)){
   console.log(JSON.stringify({reference: key, model: summarize(errors[key]), reference_only: summarize(baselines[key])}));
 }
+
+const peerModel = dongSalesEstimate.create(data);
+const peerRatios = [];
+const peerBaselines = [];
+for (const type of data.business_types.filter(item => item.id.startsWith('svc_'))){
+  let citySales = 0;
+  let cityStores = 0;
+  for (const row of data.rows){
+    const item = row.biz[type.id];
+    if (!item || !item.sales || item.sales_incomplete || !item.stores) continue;
+    citySales += item.sales;
+    cityStores += item.stores;
+  }
+  if (!cityStores) continue;
+  const reference = citySales / cityStores / 3;
+  for (const row of data.rows){
+    const item = row.biz[type.id];
+    if (!item || !item.sales || item.sales_incomplete || !item.stores) continue;
+    const predicted = peerModel.forDong(type.id, row.code, reference);
+    if (!predicted) continue;
+    const actual = Math.round(item.sales / item.stores / 3);
+    peerRatios.push(predicted.monthly_won / actual);
+    peerBaselines.push(reference / actual);
+  }
+}
+console.log(JSON.stringify({reference: 'seoul_known_peer_model', model: summarize(peerRatios), reference_only: summarize(peerBaselines)}));
