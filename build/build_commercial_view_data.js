@@ -44,6 +44,34 @@ function indexBy(list, key, quarter){
     .map(row => [row[key], row]));
 }
 
+function buildDongIndex(codes, salesRows, storeRows){
+  const known = new Map(codes.dongs.map(item => [item.code, item]));
+  const guByCode = new Map(codes.dongs.map(item => [item.code.slice(0, 5), item.gu]));
+  const sourceByCode = new Map([...salesRows, ...storeRows]
+    .filter(item => item.dong_code)
+    .map(item => [item.dong_code, item]));
+  const byCode = new Map();
+  const orderedCodes = new Set([
+    ...codes.dongs.map(item => item.code).filter(code => sourceByCode.has(code)),
+    ...sourceByCode.keys()
+  ]);
+  for (const code of orderedCodes){
+    const item = sourceByCode.get(code);
+    const knownDong = known.get(code);
+    const gu = knownDong?.gu || guByCode.get(code.slice(0, 5));
+    const name = knownDong?.name || item.dong_name;
+    if (!gu || !name) throw new Error(`행정동 ${code}의 자치구 또는 이름을 확인할 수 없습니다.`);
+    byCode.set(code, {
+      code,
+      gu,
+      name,
+      full_name: knownDong?.full_name || `서울특별시 ${gu} ${name}`,
+      biz: {}
+    });
+  }
+  return byCode;
+}
+
 function matchesBiz(row, biz){
   const name = String(row.business_name || '');
   return GROUP_BIZ[biz].some(word => name.includes(word));
@@ -246,13 +274,7 @@ function compact(){
     .filter(item => item.kind === 'service')
     .sort((a, b) => a.label.localeCompare(b.label, 'ko-KR'));
 
-  const byCode = new Map(codes.dongs.map(code => [code.code, {
-    code: code.code,
-    gu: code.gu,
-    name: code.name,
-    full_name: code.full_name,
-    biz: {}
-  }]));
+  const byCode = buildDongIndex(codes, salesRows, storeRows);
 
   const floatingBy = indexBy(floating, 'dong_code', currentQuarter);
   const workerBy = indexBy(workers, 'dong_code', currentQuarter);
@@ -394,4 +416,4 @@ function compact(){
 
 if (require.main === module) compact();
 
-module.exports = {BIZ: GROUP_BIZ, compact, indexBy, summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales, summarizeTopMarkets};
+module.exports = {BIZ: GROUP_BIZ, buildDongIndex, compact, indexBy, summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales, summarizeTopMarkets};

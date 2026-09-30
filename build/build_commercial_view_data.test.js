@@ -1,5 +1,22 @@
 const assert = require('assert');
-const {indexBy, summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales, summarizeTopMarkets} = require('./build_commercial_view_data');
+const {buildDongIndex, indexBy, summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales, summarizeTopMarkets} = require('./build_commercial_view_data');
+
+const dongIndex = buildDongIndex(
+  {dongs: [
+    {code: '11110001', gu: '첫구', name: '현재동', full_name: '서울특별시 첫구 현재동'},
+    {code: '11110002', gu: '첫구', name: '새동', full_name: '서울특별시 첫구 새동'}
+  ]},
+  [{dong_code: '11110003', dong_name: '옛동', amount: 100}],
+  [{dong_code: '11110001', dong_name: '현재동', similar_store_count: 1},
+    {dong_code: '11110003', dong_name: '옛동', similar_store_count: 2}]
+);
+assert.deepStrictEqual([...dongIndex.keys()], ['11110001', '11110003']);
+assert.deepStrictEqual(dongIndex.get('11110003'), {
+  code: '11110003', gu: '첫구', name: '옛동',
+  full_name: '서울특별시 첫구 옛동', biz: {}
+});
+assert.strictEqual(dongIndex.has('11110002'), false);
+assert.throws(() => buildDongIndex({dongs: []}, [{dong_code: '99999001', dong_name: '알수없는동'}], []), /자치구/);
 
 assert.deepStrictEqual(indexBy({rows: [
   {dong_code: 'A', quarter: '20262', total: 200},
