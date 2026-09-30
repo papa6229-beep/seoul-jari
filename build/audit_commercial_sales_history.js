@@ -10,6 +10,8 @@ const {fetchCommercialRegionalStores} = require('./fetch_commercial_regional_sto
 const ROOT = path.resolve(__dirname, '..');
 const QUARTERS = ['20253', '20254', '20261', '20262'];
 const BUSINESS_CODE = 'CS100010';
+const REPORT_PATH = path.join(ROOT, 'docs', 'commercial-sales-history-audit.md');
+const progress = [];
 const TARGETS = [
   {dong_code: '11710670', dong_name: '잠실2동', gu_code: '11710', gu_name: '송파구'},
   {dong_code: '11710510', dong_name: '풍납1동', gu_code: '11710', gu_name: '송파구'},
@@ -109,6 +111,7 @@ async function fetchQuarter(key, quarter, fetchImpl){
       throw new Error(`${quarter} ${name}: 자료 분기 또는 행 수가 맞지 않습니다.`);
     }
     result[name] = payload.rows;
+    progress.push(`${quarter} ${name}: ${payload.rows.length}행`);
     console.log(`${quarter} ${name}: ${payload.rows.length}행`);
   }
   return result;
@@ -137,13 +140,27 @@ async function main(){
     summaries.push(...summarizeQuarter(quarter, data));
   }
   const report = renderReport(summaries);
-  const out = path.join(ROOT, 'docs', 'commercial-sales-history-audit.md');
-  fs.writeFileSync(out, report, 'utf8');
+  fs.writeFileSync(REPORT_PATH, report, 'utf8');
   console.log(report);
 }
 
 if (require.main === module){
-  main().catch(error => { console.error(error.message); process.exitCode = 1; });
+  main().catch(error => {
+    const report = [
+      '# 커피-음료 행정동 월평균 매출 4분기 점검 미완료',
+      '',
+      '과거 자료 수집이 끝나지 않아 분기별 변화나 지속성을 판단하지 않았다.',
+      '',
+      `오류: ${error.message}`,
+      '',
+      '완료된 조회:',
+      ...progress.map(item => '- ' + item),
+      ''
+    ].join('\n');
+    fs.writeFileSync(REPORT_PATH, report, 'utf8');
+    console.error(error.message);
+    process.exitCode = 1;
+  });
 }
 
 module.exports = {summarizeQuarter, renderReport, pacedFetch, fetchQuarter};

@@ -24,10 +24,12 @@ jobs:
       - name: Compare four quarters
         env:
           SEOUL_OPENAPI_KEY: ${{ secrets.SEOUL_OPENAPI_KEY }}
-        run: |
-          node build/audit_commercial_sales_history.js
-          cat docs/commercial-sales-history-audit.md >> "$GITHUB_STEP_SUMMARY"
+        run: node build/audit_commercial_sales_history.js
+      - name: Show report
+        if: ${{ always() && hashFiles('docs/commercial-sales-history-audit.md') != '' }}
+        run: cat docs/commercial-sales-history-audit.md >> "$GITHUB_STEP_SUMMARY"
       - name: Save report only
+        if: ${{ always() && hashFiles('docs/commercial-sales-history-audit.md') != '' }}
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'Record four-quarter commercial sales audit'
