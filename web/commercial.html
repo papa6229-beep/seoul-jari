@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=130">
+<link rel="stylesheet" href="styles.css?v=131">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '130';
+  var PAGE_V = '131';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -72,9 +72,9 @@
   </main>
 </div>
 
-<script src="dong-sales-estimate.js?v=130"></script>
+<script src="dong-sales-estimate.js?v=131"></script>
 <script>
-const V = '130';
+const V = '131';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -222,14 +222,6 @@ function rowHasSales(row){
 function rowSalesValue(row){
   if (!row) return 0;
   return row.sales_per_store_month || row.estimated_sales_per_store_month || 0;
-}
-
-function rowSalesKind(row){
-  if (!row) return {label: '자료 없음', cls: 'none'};
-  if (row.sales_per_store_month) return {label: '카드매출 기반', cls: 'actual'};
-  if (row.estimated_sales_per_store_month) return {label: '추정', cls: 'estimated'};
-  if (row.reference_sales && row.reference_sales.monthly_sales_per_store) return {label: '참고', cls: 'reference'};
-  return {label: '자료 없음', cls: 'none'};
 }
 
 function businessHasAnySales(){
@@ -910,15 +902,13 @@ function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
   const showScore = hasSalesData();
   const salesValue = rowSalesValue(r);
-  const salesKind = rowSalesKind(r);
-  const showSalesBadge = !!salesValue && !(salesKind.cls === 'estimated' && !hasSalesData());
   const salesText = r.estimated_sales_per_store_month && !r.sales_per_store_month
     ? DongSalesEstimate.approxMoney(salesValue) : money(salesValue);
   const salesLabel = r.estimated_sales_per_store_month && !r.sales_per_store_month ? '1곳 추정 월평균 매출' : '1곳 월평균 매출';
   return '<button type="button" class="commercial-row' + (showScore ? '' : ' no-score') + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + i + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b></span>' +
-    '<span data-label="' + salesLabel + '"><b>' + (salesValue ? salesText : '자료 없음') + '</b>' + (showSalesBadge ? '<small class="row-badge ' + salesKind.cls + '">' + salesKind.label + '</small>' : '') + '</span>' +
+    '<span data-label="' + salesLabel + '"><b>' + (salesValue ? salesText : '자료 없음') + '</b></span>' +
     '<span data-label="같은 업종 가게"><b>' + competitionCountText(r) + '</b></span>' +
     '<span data-label="인구 구성"><b>' + demandType(r) + '</b></span>' +
     (showScore ? (r.sales

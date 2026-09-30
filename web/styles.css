@@ -344,13 +344,6 @@ select.add-col{
 .commercial-row .place b{display:block; font-size:15.5px; word-break:keep-all}
 .commercial-row .place small,.commercial-row span small{display:block; color:var(--ink-3); font-size:12px; font-weight:600}
 .commercial-row span b{font-size:15.5px; font-variant-numeric:tabular-nums}
-.commercial-row .row-badge{
-  display:inline-flex; width:max-content; margin-top:3px; padding:2px 6px; border-radius:999px;
-  border:1px solid var(--line); background:#f6f3eb; color:var(--ink-3); font-size:11px; line-height:1.2;
-}
-.commercial-row .row-badge.actual{border-color:#b8d8c7; background:#edf8f2; color:var(--accent)}
-.commercial-row .row-badge.estimated{border-color:#e4d29a; background:#fff8df; color:#8b6500}
-.commercial-row .row-badge.reference{border-color:#d8d1c2; background:#faf7ef; color:#6f6250}
 .commercial-row [data-label]::before{display:none}
 .detail-tabs{
   display:flex; gap:0; margin:18px 0 0; border:1px solid var(--line); border-bottom:0;
