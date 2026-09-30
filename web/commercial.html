@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '116';
+const V = '121';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -648,7 +648,7 @@ function renderSummary(rows){
   };
   const card = (title, row, desc, cls) => row ? '<button type="button" class="insight-card ' + (cls || '') + '" data-pick="' + row.code + '">' +
     '<span>' + title + '</span><b>' + row.gu + ' ' + row.name + '</b><p>' + desc + '</p>' +
-    '<small>' + rowSalesNote(row) + ' · 점포 ' + fmt(row.stores) + '곳</small></button>' : '';
+    '<small>' + rowSalesNote(row) + ' · 점포 ' + competitionCountText(row) + '</small></button>' : '';
   const status = cov ? coverageLabel(cov) : [
     salesOk ? '매출자료 있음' : '매출자료 없음',
     mapOk ? '지도 지점 ' + fmt(cov && cov.map_points) + '개' : '지도 지점 없음'
@@ -752,14 +752,33 @@ function competitionGuide(r){
   return '선택 업종 점포가 많은 편입니다. 가격·콘셉트·노출 위치로 이길 수 있는지 먼저 봐야 합니다.';
 }
 
+function competitionCounts(row){
+  const stores = row && row.stores ? row.stores : null;
+  const franchises = row && row.franchises ? row.franchises : 0;
+  const split = !!(stores && franchises > stores);
+  return {
+    total: split ? stores + franchises : stores,
+    stores,
+    franchises,
+    split
+  };
+}
+
+function competitionCountText(row){
+  const c = competitionCounts(row);
+  return c.total ? fmt(c.total) + '곳' : '자료 없음';
+}
+
 function franchiseShareText(row){
   if (!row || !row.stores || row.franchises === null || row.franchises === undefined) return null;
   if (row.franchises > row.stores){
+    const total = row.stores + row.franchises;
+    const pctText = Math.round((row.franchises / total) * 100);
     return {
       count: fmt(row.franchises) + '곳',
-      share: '원자료 확인',
-      label: '브랜드 자료 확인',
-      guide: '브랜드·프랜차이즈 수가 전체 가게 수보다 크게 잡혀 있습니다. 원자료 집계 기준이 달라 비율 판단은 보류합니다.'
+      share: pctText + '%',
+      label: '브랜드가 더 많음',
+      guide: '일반 가게 ' + fmt(row.stores) + '곳과 브랜드·프랜차이즈 ' + fmt(row.franchises) + '곳을 합쳐 전체 ' + fmt(total) + '곳으로 봅니다.'
     };
   }
   const pctText = Math.round((row.franchises / row.stores) * 100);
@@ -870,11 +889,12 @@ function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
   const salesValue = r.sales_per_store_month || r.estimated_sales_per_store_month || 0;
   const salesKind = rowSalesKind(r);
+  const showSalesBadge = !(salesKind.cls === 'estimated' && !hasSalesData() && currentReferenceSales());
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + i + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b></span>' +
-    '<span><b>' + (salesValue ? money(salesValue) : '자료 없음') + '</b><small class="row-badge ' + salesKind.cls + '">' + salesKind.label + '</small></span>' +
-    '<span><b>' + fmt(r.stores) + '곳</b></span>' +
+    '<span><b>' + (salesValue ? money(salesValue) : '자료 없음') + '</b>' + (showSalesBadge ? '<small class="row-badge ' + salesKind.cls + '">' + salesKind.label + '</small>' : '') + '</span>' +
+    '<span><b>' + competitionCountText(r) + '</b></span>' +
     '<span><b>' + demandType(r) + '</b></span>' +
     '<span><b>' + scoreShortLabel(r) + '</b><small>' + fmt(r.score) + '점</small></span>' +
   '</button>';
@@ -1157,8 +1177,12 @@ function drawCommercialMap(row, keepView){
       const count = document.getElementById('mapcount');
       if (count){
         const n = t => pts.filter(p => p.t === t).length;
+        const c = competitionCounts(row);
+        const competitionLabel = c.split
+          ? ' / 일반 ' + fmt(c.stores) + '곳 · 브랜드 ' + fmt(c.franchises) + '곳'
+          : (c.total ? ' / 집계 ' + fmt(c.total) + '곳' : '');
         const bizLabel = BIZ[state.biz].label + ' 좌표 ' + n('b') + '곳' +
-          (row.stores ? ' / 집계 ' + fmt(row.stores) + '곳' : '') +
+          competitionLabel +
           (bizRawPts.length && bizRawPts.length !== n('b') ? ' · 실제 점포 ' + bizRawPts.length + '곳' : '');
         const missingBiz = bizPts.length ? '' : ' · 선택 업종 좌표 없음';
         count.textContent = [
@@ -1211,6 +1235,7 @@ function renderDetail(rows){
     : oneStoreTitle;
   const estimatedTitle = r.name + ' ' + BIZ[state.biz].label + ' 1곳 추정 월평균 매출';
   const franchise = franchiseShareText(r);
+  const competition = competitionCounts(r);
   const referenceNote = reference
     ? '동네 조건을 반영한 추정치입니다. 실제 카드매출 통계는 아닙니다.'
     : '';
@@ -1240,7 +1265,7 @@ function renderDetail(rows){
         stat(localOneStoreTitle, hasDongSales ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
         (!hasDongSales && visibleTasis ? stat(seoulOneStoreTitle, manwonMoney(visibleTasis.row.avg_monthly_sales_manwon)) : '') +
         (showReferenceLine ? stat(referenceScope + ' 가게 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
-        stat('같은 업종 가게', withUnit(r.stores, '곳')) +
+        stat('같은 업종 가게', competitionCountText(r)) +
         stat('손님이 생기는 이유', demandType(r)) +
         stat('주의할 점', mainCaution(r)) +
       '</div>' +
@@ -1259,7 +1284,8 @@ function renderDetail(rows){
         (!hasDongSales && reference && reference.customer_unit_price ? stat(referenceScope + ' 참고 객단가', fmt(reference.customer_unit_price) + '원') : '') +
       '</div>' +
       '<div><p class="grp-title">경쟁</p>' +
-        stat(BIZ[state.biz].label + ' 가게 수', withUnit(r.stores, '곳')) +
+        stat(BIZ[state.biz].label + ' 전체 가게 수', competitionCountText(r)) +
+        (competition.split ? stat('일반 ' + BIZ[state.biz].label + ' 가게', withUnit(competition.stores, '곳')) : '') +
         stat('브랜드·프랜차이즈 가게', withUnit(r.franchises, '곳')) +
         (franchise ? stat('브랜드 경쟁', franchise.label + ' · ' + franchise.share, franchise.guide) : '') +
         stat('새로 생긴 가게', withUnit(r.open, '곳')) +
@@ -1307,7 +1333,7 @@ function renderDetail(rows){
         stat('주의 신호', mainCaution(r), scoreGuide(r)) +
         stat('매출 판단', hasDongSales ? '월평균 ' + money(r.sales_per_store_month) : (estimatedSales ? r.name + ' 1곳 월평균 ' + money(estimatedSales) + ' 추정' : '자료 없음'), hasDongSales ? '이 매출이 가능한 자리인지 입구 위치와 유동 방향을 현장에서 확인해야 합니다.' : (estimatedSales ? referenceNote : '매출 자료가 없으므로 점포 수와 수요 기반으로 먼저 걸러봅니다.')) +
         (visibleTasis ? stat('서울 평균 참고', manwonMoney(visibleTasis.row.avg_monthly_sales_manwon), '국세청 생활업종 기준입니다. 이 동네 매출이 아니라 서울 전체 평균입니다.') : '') +
-        stat('경쟁 판단', r.stores ? fmt(r.stores) + '곳' : '자료 없음', '가게 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
+        stat('경쟁 판단', competitionCountText(r), '가게 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
       '</div>' +
       '<div><p class="grp-title">생활권 해석</p>' +
         stat('주거 기반', r.apartment ? fmt(r.apartment.complexes) + '개 단지' : '자료 없음', apartmentTone(r)) +
