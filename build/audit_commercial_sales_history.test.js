@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
-const {summarizeQuarter, renderReport} = require('./audit_commercial_sales_history');
+const {summarizeQuarter, renderReport, fetchQuarter} = require('./audit_commercial_sales_history');
 
 const target = {dong_code: 'A', dong_name: '첫동', gu_code: '1', gu_name: '첫구'};
 const rows = {
@@ -31,4 +31,20 @@ test('four-quarter report does not call a missing quarter persistent', () => {
   const report = renderReport([one], [target]);
   assert.match(report, /자료 부족/);
   assert.match(report, /2026년 1분기/);
+});
+
+test('historical collection reuses archived district rows and calls only dong services', async () => {
+  const services = [];
+  const archived = {guSales: rows.guSales, guStores: rows.guStores};
+  const data = await fetchQuarter('KEY', '20261', async url => {
+    const service = url.split('/')[5];
+    services.push(service);
+    const raw = service === 'VwsmAdstrdSelngW'
+      ? {STDR_YYQU_CD: '20261', ADSTRD_CD: 'A', SVC_INDUTY_CD: 'CS100010', THSMON_SELNG_AMT: '900'}
+      : {STDR_YYQU_CD: '20261', ADSTRD_CD: 'A', SVC_INDUTY_CD: 'CS100010', SIMILR_INDUTY_STOR_CO: '3'};
+    return {ok: true, text: async () => JSON.stringify({[service]: {list_total_count: 1, row: [raw]}})};
+  }, archived);
+  assert.deepEqual(services, ['VwsmAdstrdSelngW', 'VwsmAdstrdStorW']);
+  assert.strictEqual(data.guSales, archived.guSales);
+  assert.strictEqual(data.guStores, archived.guStores);
 });

@@ -21,7 +21,7 @@ jobs:
           node-version: '24'
       - name: Test audit calculations
         run: node --test build/audit_commercial_sales_comparison.test.js build/audit_commercial_sales_history.test.js
-      - name: Compare four quarters
+      - name: Compare four quarters using archived district data
         env:
           SEOUL_OPENAPI_KEY: ${{ secrets.SEOUL_OPENAPI_KEY }}
         run: node build/audit_commercial_sales_history.js

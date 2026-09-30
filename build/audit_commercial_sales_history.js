@@ -4,8 +4,6 @@ const path = require('node:path');
 const {audit} = require('./audit_commercial_sales_comparison');
 const {fetchCommercialSalesDong} = require('./fetch_commercial_sales_dong');
 const {fetchCommercialStoresDong} = require('./fetch_commercial_stores_dong');
-const {fetchCommercialRegionalSales} = require('./fetch_commercial_regional_sales');
-const {fetchCommercialRegionalStores} = require('./fetch_commercial_regional_stores');
 
 const ROOT = path.resolve(__dirname, '..');
 const QUARTERS = ['20253', '20254', '20261', '20262'];
@@ -97,14 +95,12 @@ function pacedFetch(fetchImpl = fetch, intervalMs = 900){
   };
 }
 
-async function fetchQuarter(key, quarter, fetchImpl){
+async function fetchQuarter(key, quarter, fetchImpl, archivedDistrict){
   const requests = [
     ['dongSales', () => fetchCommercialSalesDong({key, quarter, fetchImpl})],
-    ['dongStores', () => fetchCommercialStoresDong({key, quarter, fetchImpl})],
-    ['guSales', () => fetchCommercialRegionalSales({key, scope: 'signgu', quarter, fetchImpl})],
-    ['guStores', () => fetchCommercialRegionalStores({key, scope: 'signgu', quarter, fetchImpl})]
+    ['dongStores', () => fetchCommercialStoresDong({key, quarter, fetchImpl})]
   ];
-  const result = {};
+  const result = {...archivedDistrict};
   for (const [name, request] of requests){
     const payload = await request();
     if (payload.quarter !== quarter || !payload.rows.length || payload.rows.length !== payload.total_count){
@@ -131,12 +127,19 @@ async function main(){
   if (Object.values(current).some(payload => payload.quarter !== currentQuarter)){
     throw new Error('현재 공개 자료의 분기가 20262와 달라 점검을 중단합니다.');
   }
+  const archivedDistrict = {guSales: current.guSales.rows, guStores: current.guStores.rows};
+  for (const quarter of QUARTERS){
+    if (!archivedDistrict.guSales.some(row => row.quarter === quarter) ||
+        !archivedDistrict.guStores.some(row => row.quarter === quarter)){
+      throw new Error(`${quarter}: 저장된 구 자료에 해당 분기가 없습니다.`);
+    }
+  }
   const summaries = [];
   const fetchImpl = pacedFetch();
   for (const quarter of QUARTERS){
     const data = quarter === currentQuarter
       ? Object.fromEntries(Object.entries(current).map(([name, payload]) => [name, payload.rows]))
-      : await fetchQuarter(key, quarter, fetchImpl);
+      : await fetchQuarter(key, quarter, fetchImpl, archivedDistrict);
     summaries.push(...summarizeQuarter(quarter, data));
   }
   const report = renderReport(summaries);
