@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=131">
+<link rel="stylesheet" href="styles.css?v=132">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '131';
+  var PAGE_V = '132';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -72,9 +72,10 @@
   </main>
 </div>
 
-<script src="dong-sales-estimate.js?v=131"></script>
+<script src="dong-sales-estimate.js?v=132"></script>
+<script src="commercial-reference.js?v=132"></script>
 <script>
-const V = '131';
+const V = '132';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -586,8 +587,7 @@ function buildRows(){
     r.reference_sales = officialGuRefs.get(r.gu) ||
       (!gu.missingStoreSales ? makeReference('자치구', gu.amount, gu.count, gu.stores) : null) ||
       seoulReference;
-    r.reference_coverage = r.reference_sales && r.reference_sales.scope === '자치구' && r.reference_sales.amount
-      ? gu.amount / r.reference_sales.amount : null;
+    r.reference_comparable = CommercialReference.assessReference(r.reference_sales, gu).comparable;
   }
 
   const tasis = tasisForCurrentBusiness();
@@ -742,7 +742,7 @@ function scoreLabel(r){
 function mainCaution(row){
   if (!row) return '자료 확인 필요';
   const referenceMonthly = row.reference_sales && row.reference_sales.monthly_sales_per_store;
-  const comparable = row.reference_coverage === null || row.reference_coverage >= .9;
+  const comparable = row.reference_comparable;
   const salesRatio = comparable && row.sales_per_store_month && referenceMonthly ? row.sales_per_store_month / referenceMonthly : null;
   const salesRankStrong = comparable && row.sales_per_store_month && referenceMonthly && row.sales_per_store_month >= referenceMonthly * 1.5 && row.score < 45;
   if (salesRatio && salesRatio >= 2.5) return '매출 높음 · 이유 확인';
@@ -825,15 +825,12 @@ function broadBusinessNote(){
 
 function salesReferenceTone(row){
   const referenceMonthly = row && row.reference_sales && row.reference_sales.monthly_sales_per_store;
-  if (!row || !row.sales_per_store_month || !referenceMonthly) return '';
-  if (row.reference_coverage !== null && row.reference_coverage < .9){
-    return '구 전체 매출에 비해 공개된 동별 매출이 적어, 두 평균을 바로 비교하기 어렵습니다.';
-  }
+  if (!row || !row.sales_per_store_month || !referenceMonthly || !row.reference_comparable) return '';
   const ratio = row.sales_per_store_month / referenceMonthly;
   const label = scopeLabel(row.reference_sales.scope, row);
-  if (ratio >= 2.5) return label + ' 평균보다 크게 높습니다. 동·구 자료는 각각 집계되므로 이 숫자만으로 이유를 단정할 수 없습니다.';
-  if (ratio >= 1.5) return label + ' 평균보다 높습니다. 동·구 자료는 각각 집계되므로 차이의 원인은 별도로 확인해야 합니다.';
-  if (ratio <= .5) return label + ' 평균보다 크게 낮습니다. 동·구 자료는 각각 집계되므로 이 숫자만으로 이유를 단정할 수 없습니다.';
+  if (ratio >= 2.5) return label + ' 평균보다 크게 높습니다. 여러 가게의 합산 매출을 나눈 값이며 개별 가게 매출은 아닙니다.';
+  if (ratio >= 1.5) return label + ' 평균보다 높습니다. 여러 가게의 합산 매출을 나눈 값이며 개별 가게 매출은 아닙니다.';
+  if (ratio <= .5) return label + ' 평균보다 크게 낮습니다. 여러 가게의 합산 매출을 나눈 값이며 개별 가게 매출은 아닙니다.';
   return label + '와 큰 차이 없이 볼 수 있는 동네입니다.';
 }
 
@@ -1263,8 +1260,11 @@ function renderDetail(rows){
   const bizRef = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
   const reference = r.reference_sales || bizRef || tasisReferenceValue(visibleTasis);
   const referenceScope = reference ? scopeLabel(reference.scope, r) : '';
-  const showReferenceLine = !!(reference && !(visibleTasis && reference.scope === '국세청 서울 평균'));
-  const localOneStoreTitle = r.name + ' ' + BIZ[state.biz].label + ' 1곳 ' + (estimatedSales ? '추정 ' : '') + '월평균 매출';
+  const referenceMismatch = !!(hasDongSales && reference && reference.scope === '자치구' && !r.reference_comparable);
+  const showReferenceLine = !!(reference && !referenceMismatch && !(visibleTasis && reference.scope === '국세청 서울 평균'));
+  const localOneStoreTitle = r.name + ' ' + BIZ[state.biz].label + (hasDongSales && r.stores ? ' ' + fmt(r.stores) + '곳 기준' : '') + ' 1곳 ' + (estimatedSales ? '추정 ' : '') + '월평균 매출';
+  const referenceOneStoreTitle = referenceScope + ' ' + BIZ[state.biz].label + (reference && reference.stores ? ' ' + fmt(reference.stores) + '곳 기준' : '') + ' 1곳 참고 월평균 매출';
+  const guRank = CommercialReference.rankWithinGu(ROWS, r);
   const seoulOneStoreTitle = '국세청 기준 서울 평균 ' + BIZ[state.biz].label + ' 1곳 월평균 매출';
   const franchise = franchiseShareText(r);
   const competition = competitionCounts(r);
@@ -1298,8 +1298,9 @@ function renderDetail(rows){
         (broadNote ? noteStat('먼저 확인', broadNote) : '') +
         stat(localOneStoreTitle, localSalesValue) +
         (!hasDongSales && visibleTasis ? stat(seoulOneStoreTitle, manwonMoney(visibleTasis.row.avg_monthly_sales_manwon)) : '') +
-        (showReferenceLine ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
-        stat('같은 업종 가게', competitionCountText(r)) +
+        (showReferenceLine ? stat(referenceOneStoreTitle, money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
+        (referenceMismatch ? stat(r.gu + ' 평균 비교', '동별 합계와 구 자료가 달라 비교 불가') : '') +
+        (!hasDongSales || !r.stores ? stat('같은 업종 가게', competitionCountText(r)) : '') +
         stat('동네 인구 구성', demandType(r)) +
         (hasDongSales ? stat('주의할 점', mainCaution(r)) : '') +
       '</div>' +
@@ -1312,7 +1313,9 @@ function renderDetail(rows){
     '<div class="groups">' +
       '<div><p class="grp-title">매출</p>' +
         stat(localOneStoreTitle, localSalesValue) +
-        (showReferenceLine ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
+        (showReferenceLine ? stat(referenceOneStoreTitle, money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
+        (referenceMismatch ? stat(r.gu + ' 평균 비교', '동별 합계와 구 자료가 달라 비교 불가') : '') +
+        (guRank ? stat(r.gu + ' 안에서 1곳 월평균 매출', '자료 있는 ' + fmt(guRank.total) + '개 동 중 ' + fmt(guRank.rank) + '위') : '') +
         cafeBreakdown +
         (hasDongSales ? stat('손님 1명이 보통 쓰는 돈', r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음') : '') +
         (!hasDongSales && reference && reference.customer_unit_price ? stat(referenceScope + ' 참고 객단가', fmt(reference.customer_unit_price) + '원') : '') +
