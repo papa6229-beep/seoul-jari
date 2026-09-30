@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=127">
+<link rel="stylesheet" href="styles.css?v=128">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '127';
+  var PAGE_V = '128';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '127';
+const V = '128';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -182,7 +182,9 @@ const quarterLabel = q => {
 };
 
 function syncSegments(){
-  if (!hasComparableSalesData() && state.sort === 'sales_per_store_month') state.sort = 'stores';
+  if (!hasSalesData() && state.sort === 'sales_per_store_month') state.sort = 'stores';
+  const salesOption = sortPick.querySelector('option[value="sales_per_store_month"]');
+  if (salesOption) salesOption.disabled = !hasSalesData();
   sortPick.value = state.sort;
 }
 
@@ -200,23 +202,18 @@ function hasSalesData(){
   return c ? !!c.has_sales : ROWS.some(r => r.sales);
 }
 
-function hasComparableSalesData(){
-  return hasSalesData() || ROWS.some(r => r.estimated_sales_per_store_month);
-}
-
 function rowHasSales(row){
   return !!(row && row.sales_per_store_month);
 }
 
 function rowSalesValue(row){
   if (!row) return 0;
-  return row.sales_per_store_month || row.estimated_sales_per_store_month || 0;
+  return row.sales_per_store_month || 0;
 }
 
 function rowSalesKind(row){
   if (!row) return {label: '자료 없음', cls: 'none'};
   if (row.sales_per_store_month) return {label: '카드매출 기반', cls: 'actual'};
-  if (row.estimated_sales_per_store_month) return {label: '추정', cls: 'estimated'};
   if (row.reference_sales && row.reference_sales.monthly_sales_per_store) return {label: '참고', cls: 'reference'};
   return {label: '자료 없음', cls: 'none'};
 }
@@ -306,21 +303,6 @@ function currentReferenceSales(){
   return biz.reference_sales || tasisReferenceValue(tasisForCurrentBusiness());
 }
 
-function estimateFactor(row, ranges){
-  if (!row || !ranges) return 1;
-  const demand = norm(row.demand_raw, ranges.demand_raw.min, ranges.demand_raw.max) / 100;
-  const spending = norm(row.spending || 0, ranges.spending.min, ranges.spending.max) / 100;
-  const core = norm(row.core_people || 0, ranges.core_people.min, ranges.core_people.max) / 100;
-  const competition = norm(competitionStoreValue(row), ranges.stores.min, ranges.stores.max, true) / 100;
-  const raw = demand * .42 + spending * .24 + core * .18 + competition * .16;
-  return Math.max(.75, Math.min(1.35, .72 + raw * .72));
-}
-
-function estimatedMonthlySales(row, reference){
-  if (!row || !competitionStoreValue(row) || !reference || !reference.monthly_sales_per_store) return null;
-  return Math.round(reference.monthly_sales_per_store * (row.estimate_factor || 1));
-}
-
 function isAggregateBusinessId(id){
   return ['cafe', 'food', 'fitness', 'academy', 'unmanned'].includes(id);
 }
@@ -386,7 +368,7 @@ function coverageLabel(cov){
 
 function coverageAction(cov){
   if (!cov) return '업종별 자료 상태를 불러오는 중입니다.';
-  if (!cov.has_sales && cov.has_reference_sales) return '서울 평균 매출을 기준으로 동네 조건을 반영해 추정값을 보여줍니다.';
+  if (!cov.has_sales && cov.has_reference_sales) return '행정동 매출은 없습니다. 서울 평균은 참고값으로만 보여줍니다.';
   return cov.recommended_action || (cov.has_sales
     ? '행정동별 매출과 가게 수를 같이 볼 수 있습니다.'
     : '행정동 매출은 없어서 가게 수와 수요부터 비교합니다.');
@@ -617,11 +599,6 @@ function buildRows(){
     const spending = norm(r.spending || 0, ranges.spending.min, ranges.spending.max);
     const core = norm(r.core_people || 0, ranges.core_people.min, ranges.core_people.max);
     const competition = norm(competitionStoreValue(r), ranges.stores.min, ranges.stores.max, true);
-    const reference = r.reference_sales || currentReferenceSales();
-    r.estimate_factor = estimateFactor(r, ranges);
-    r.estimated_sales_per_store_month = !r.sales_per_store_month && reference
-      ? estimatedMonthlySales(r, reference)
-      : null;
     r.competition_score = Math.round(competition);
     r.score = r.sales
       ? Math.round(demand * .32 + revenue * .28 + spending * .18 + competition * .22)
@@ -652,18 +629,14 @@ function renderSummary(rows){
   const ref = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
   document.querySelectorAll('.commercial-insight').forEach(el => el.remove());
   const directSalesRows = rows.filter(r => r.sales_per_store_month);
-  const estimatedSalesRows = rows.filter(r => r.estimated_sales_per_store_month);
-  const salesRows = directSalesRows.length ? directSalesRows : estimatedSalesRows;
-  const best = salesRows.length
-    ? salesRows.slice().sort((a, z) => rowSalesValue(z) - rowSalesValue(a) || competitionStoreValue(z) - competitionStoreValue(a))[0]
+  const best = directSalesRows.length
+    ? directSalesRows.slice().sort((a, z) => rowSalesValue(z) - rowSalesValue(a) || competitionStoreValue(z) - competitionStoreValue(a))[0]
     : rows.slice().sort((a, z) => competitionStoreValue(z) - competitionStoreValue(a))[0];
   const validStoreRows = rows.filter(r => competitionStoreValue(r));
   const lowComp = (validStoreRows.length ? validStoreRows : rows).slice().sort((a, z) => (z.competition_score || 0) - (a.competition_score || 0) || (z.sales_per_store_month || 0) - (a.sales_per_store_month || 0))[0];
   const highDemand = rows.slice().sort((a, z) => ((z.residents || 0) + (z.workers || 0)) - ((a.residents || 0) + (a.workers || 0)))[0];
   const rowSalesNote = row => {
     if (row.sales_per_store_month) return '가게 1곳 월평균 ' + money(row.sales_per_store_month);
-    if (row.estimated_sales_per_store_month) return '1곳 추정 월평균 ' + money(row.estimated_sales_per_store_month);
-    if (row.reference_sales && row.reference_sales.monthly_sales_per_store) return plainScope(row.reference_sales.scope) + ' 참고 월평균 ' + money(row.reference_sales.monthly_sales_per_store);
     return '매출 자료 없음';
   };
   const card = (title, row, desc, cls) => row ? '<button type="button" class="insight-card ' + (cls || '') + '" data-pick="' + row.code + '">' +
@@ -680,7 +653,7 @@ function renderSummary(rows){
   insight.innerHTML =
     '<div class="insight-title"><b>먼저 볼 동네</b><span>카드를 누르면 아래 내용이 바뀝니다.</span></div>' +
     '<div class="insight-grid">' +
-      card(directSalesRows.length ? '월평균 매출 높은 곳' : (estimatedSalesRows.length ? '추정 월평균 매출 높은 곳' : '가게가 많이 모인 곳'), best, directSalesRows.length ? '카드매출 자료가 있는 동네 중 가게 1곳 평균이 가장 높습니다.' : (estimatedSalesRows.length ? '추정값이 있는 동네 중 가게 1곳 평균이 가장 높습니다.' : '매출 자료가 없어 같은 업종 가게가 많이 모인 곳부터 봅니다.'), '') +
+      card(directSalesRows.length ? '월평균 매출 높은 곳' : '가게가 많이 모인 곳', best, directSalesRows.length ? '카드매출 자료가 있는 동네 중 가게 1곳 평균이 가장 높습니다.' : '매출 자료가 없어 같은 업종 가게가 많이 모인 곳부터 봅니다.', '') +
       card('경쟁이 덜한 곳', lowComp, '같은 업종 가게가 상대적으로 적은 동네입니다.', 'niche') +
       card('수요 기반이 큰 곳', highDemand, '거주인구와 직장인구가 많은 동네입니다.', 'risk') +
     '</div>';
@@ -890,7 +863,7 @@ function filteredRows(){
   out = out.filter(r => r.score || r.sales || competitionStoreValue(r) || r.floating || r.workers || r.residents);
   const key = state.sort;
   if (key === 'sales_per_store_month'){
-    const salesValue = r => r.sales_per_store_month || r.estimated_sales_per_store_month || 0;
+    const salesValue = r => r.sales_per_store_month || 0;
     const withSales = out.filter(r => salesValue(r));
     const withoutSales = out.filter(r => !salesValue(r));
     withSales.sort((a, b) => {
@@ -911,9 +884,9 @@ function filteredRows(){
 
 function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
-  const salesValue = r.sales_per_store_month || r.estimated_sales_per_store_month || 0;
+  const salesValue = r.sales_per_store_month || 0;
   const salesKind = rowSalesKind(r);
-  const showSalesBadge = !!salesValue && !(salesKind.cls === 'estimated' && !hasSalesData() && currentReferenceSales());
+  const showSalesBadge = !!salesValue;
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + i + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b></span>' +
@@ -942,8 +915,7 @@ function dataBasisNotes(ctx){
   const notes = [];
   if (ctx && ctx.salesIncomplete) notes.push('이 동네는 묶음에 포함된 일부 업종의 매출이 없어 전체 묶음 평균을 직접 계산하지 않았습니다.');
   if (!ctx || !ctx.hasDongSales){
-    if (ctx && ctx.estimatedSales) notes.push('추정 매출은 참고 월평균 매출에 동네 수요·소비·경쟁 조건을 반영한 값입니다.');
-    if (ctx && ctx.estimatedSales) notes.push('추정 보정폭은 참고값의 75~135% 안으로 제한합니다.');
+    notes.push('동별 매출 추정은 공개된 다른 업종 자료로 검증했을 때 오차가 커서 표시하지 않습니다.');
     if (ctx && ctx.visibleTasis) notes.push('국세청 값은 서울 전체 평균 참고자료이며, 선택한 행정동의 실제 카드매출은 아닙니다.');
   } else {
     notes.push('행정동 월평균 매출은 ' + quarterLabel(DATA.view && DATA.view.quarter) + ' 카드매출 기준입니다.');
@@ -1097,15 +1069,9 @@ function setMapSelection(p){
 
 function businessPoints(row){
   const all = DATA.stores && DATA.stores.points ? DATA.stores.points : {};
-  const reference = row.reference_sales || currentReferenceSales();
-  const estimatedSales = estimatedMonthlySales(row, reference);
   const salesNote = row.sales_per_store_month
     ? '개별 가게 매출 아님 · 이 동네 ' + BIZ[state.biz].label + ' 가게 1곳의 한 달 평균 매출 ' + money(row.sales_per_store_month)
-    : (estimatedSales
-      ? '개별 가게 매출 아님 · 이 동네 조건을 반영한 1곳 추정 월평균 매출 ' + money(estimatedSales)
-      : (reference && reference.monthly_sales_per_store
-        ? '개별 가게 매출 아님 · ' + plainScope(reference.scope) + ' 기준 가게 1곳의 한 달 참고 매출 ' + money(reference.monthly_sales_per_store)
-        : ''));
+    : '';
   for (const key of storeDongKeys(row)){
     const bucket = all[key] && all[key][state.biz];
     if (Array.isArray(bucket) && bucket.length){
@@ -1261,23 +1227,12 @@ function renderDetail(rows){
   const visibleTasis = showTasisCard(tasis) ? tasis : null;
   const bizRef = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
   const reference = r.reference_sales || bizRef || tasisReferenceValue(visibleTasis);
-  const estimatedSales = estimatedMonthlySales(r, reference);
   const referenceScope = reference ? scopeLabel(reference.scope, r) : '';
   const showReferenceLine = !!(reference && !(visibleTasis && reference.scope === '국세청 서울 평균'));
-  const oneStoreTitle = hasDongSales
-    ? BIZ[state.biz].label + ' 가게 1곳 월평균 매출'
-    : (reference ? referenceScope + ' ' + BIZ[state.biz].label + ' 가게 1곳 월평균 매출' : BIZ[state.biz].label + ' 가게 1곳 월평균 매출');
-  const localOneStoreTitle = r.name + ' ' + BIZ[state.biz].label + ' 1곳 ' +
-    (r.estimated_sales_per_store_month ? '추정 월평균 매출' : '월평균 매출');
-  const seoulOneStoreTitle = tasis
-    ? '국세청 기준 서울 평균 ' + BIZ[state.biz].label + ' 1곳 월평균 매출'
-    : oneStoreTitle;
-  const estimatedTitle = r.name + ' ' + BIZ[state.biz].label + ' 1곳 추정 월평균 매출';
+  const localOneStoreTitle = r.name + ' ' + BIZ[state.biz].label + ' 1곳 월평균 매출';
+  const seoulOneStoreTitle = '국세청 기준 서울 평균 ' + BIZ[state.biz].label + ' 1곳 월평균 매출';
   const franchise = franchiseShareText(r);
   const competition = competitionCounts(r);
-  const referenceNote = reference
-    ? '동네 조건을 반영한 추정치입니다. 실제 카드매출 통계는 아닙니다.'
-    : '';
   const referenceTone = salesReferenceTone(r);
   const broadNote = broadBusinessNote();
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
@@ -1311,7 +1266,7 @@ function renderDetail(rows){
       '<div><p class="grp-title">한눈에 판단</p>' +
         (groupScopeNote() ? noteStat('업종 범위', groupScopeNote()) : '') +
         (broadNote ? noteStat('먼저 확인', broadNote) : '') +
-        stat(localOneStoreTitle, hasDongSales ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
+        stat(localOneStoreTitle, hasDongSales ? money(r.sales_per_store_month) : '자료 없음') +
         (!hasDongSales && visibleTasis ? stat(seoulOneStoreTitle, manwonMoney(visibleTasis.row.avg_monthly_sales_manwon)) : '') +
         (showReferenceLine ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
         stat('같은 업종 가게', competitionCountText(r)) +
@@ -1320,14 +1275,14 @@ function renderDetail(rows){
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
         stat('매출 자료', r.sales_incomplete ? '묶음의 일부 업종 매출 없음' : (hasDongSales ? period + ' 카드매출 추정치' : (hasAnySales ? '이 행정동 카드매출 자료 없음' : '이 업종 행정동 매출 없음'))) +
-        stat('비교 기준', hasDongSales ? '행정동 카드매출 기반 평균' : (estimatedSales ? '참고값에 동네 조건 반영' : '점포·수요 기준')) +
+        stat('비교 기준', hasDongSales ? '행정동 카드매출 기반 평균' : '점포·수요 기준') +
         stat('현장 확인', '입구 위치·차량 동선') +
       '</div>' +
     '</div>';
   const salesTab =
     '<div class="groups">' +
       '<div><p class="grp-title">매출</p>' +
-        stat(localOneStoreTitle, hasDongSales ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
+        stat(localOneStoreTitle, hasDongSales ? money(r.sales_per_store_month) : '자료 없음') +
         (showReferenceLine ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
         cafeBreakdown +
         (hasDongSales ? stat('손님 1명이 보통 쓰는 돈', r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음') : '') +
@@ -1381,7 +1336,7 @@ function renderDetail(rows){
         stat('장사 성격', demandType(r), marketHypothesis) +
         stat('상권 흐름', marketChangeLabel(r), marketChangeTone(r)) +
         stat('주의 신호', mainCaution(r), scoreGuide(r)) +
-        stat('매출 판단', hasDongSales ? '월평균 ' + money(r.sales_per_store_month) : (estimatedSales ? r.name + ' 1곳 월평균 ' + money(estimatedSales) + ' 추정' : '자료 없음'), hasDongSales ? '이 매출이 가능한 자리인지 입구 위치와 유동 방향을 현장에서 확인해야 합니다.' : (estimatedSales ? referenceNote : '매출 자료가 없으므로 점포 수와 수요 기반으로 먼저 걸러봅니다.')) +
+        stat('매출 판단', hasDongSales ? '월평균 ' + money(r.sales_per_store_month) : '자료 없음', hasDongSales ? '이 매출이 가능한 자리인지 입구 위치와 유동 방향을 현장에서 확인해야 합니다.' : '매출 자료가 없으므로 점포 수와 수요 기반으로 먼저 걸러봅니다.') +
         (visibleTasis ? stat('서울 평균 참고', manwonMoney(visibleTasis.row.avg_monthly_sales_manwon), '국세청 생활업종 기준입니다. 이 동네 매출이 아니라 서울 전체 평균입니다.') : '') +
         stat('경쟁 판단', competitionCountText(r), '가게 수보다 더 중요한 것은 후보지 반경 300m 안의 직접 경쟁입니다.') +
       '</div>' +
@@ -1392,7 +1347,7 @@ function renderDetail(rows){
       '</div>' +
       '<div><p class="grp-title">현장 검증</p>' +
         stat('첫 번째', '지도 확인', '선택 업종 핀이 어디에 몰리는지 보고, 빈 구간이 실제로 비어 있는지 확인합니다.') +
-        stat('두 번째', '임대료 확인', hasDongSales || estimatedSales ? '가게 1곳 월평균 매출이 높아도 임대료·권리금이 높으면 후보에서 제외될 수 있습니다.' : '매출 자료가 없으므로 임대료·권리금과 예상 비용을 현장에서 확인해야 합니다.') +
+        stat('두 번째', '임대료 확인', hasDongSales ? '가게 1곳 월평균 매출이 높아도 임대료·권리금이 높으면 후보에서 제외될 수 있습니다.' : '매출 자료가 없으므로 임대료·권리금과 예상 비용을 현장에서 확인해야 합니다.') +
         stat('세 번째', '시간대 확인', demandTone(r)) +
       '</div>' +
       (meta.top_markets && meta.top_markets.length ? '<div><p class="grp-title">서울 안 강한 상권</p><p class="basis-note">선택 업종 가게 1곳의 월평균 매출이 높게 잡힌 상권입니다. 후보 동네와 비교하는 참고용입니다.</p><ol class="market-rank">' + topMarketList(meta.top_markets) + '</ol></div>' : '') +
@@ -1409,13 +1364,11 @@ function renderDetail(rows){
       '</div>' +
       '<aside class="map-selection" id="mapSelection"><span>선택한 장소</span><p>지도에서 관련 업소와 주변 상가·아파트 위치를 볼 수 있습니다. 핀을 누르면 상호명과 주소가 나옵니다.</p></aside>' +
     '</div>';
-  const checksTab = nextChecks(r, {hasDongSales, estimatedSales, visibleTasis, salesIncomplete: r.sales_incomplete});
+  const checksTab = nextChecks(r, {hasDongSales, visibleTasis, salesIncomplete: r.sales_incomplete});
   const content = {summary: summaryTab, sales: salesTab, demand: demandTab, analysis: analysisTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;
   const leadText = r.sales_per_store_month
     ? '가게 1곳 월평균 매출 <b>' + money(r.sales_per_store_month) + '</b>'
-    : (r.estimated_sales_per_store_month
-      ? r.name + ' 1곳 추정 월평균 매출 <b>' + money(r.estimated_sales_per_store_month) + '</b>'
-      : (visibleTasis ? '국세청 서울 평균 월평균 매출 <b>' + manwonMoney(visibleTasis.row.avg_monthly_sales_manwon) + '</b>' : '매출 자료 <b>없음</b>'));
+    : '이 동네 매출 자료 <b>없음</b>';
   detailTabs.innerHTML = TABS.map(t => '<button type="button" aria-pressed="' + (state.tab === t.k) + '" data-tab="' + t.k + '">' + t.l + '</button>').join('');
   for (const el of detailTabs.querySelectorAll('button')){
     el.onclick = () => { state.tab = el.dataset.tab; render(); };
@@ -1453,7 +1406,7 @@ function render(){
   if (!state.picked && list[0]) state.picked = list[0].code;
   renderSummary(rows);
   dataAlert();
-  const salesColumnTitle = hasSalesData() ? '가게 1곳 월평균 매출' : (currentReferenceSales() ? '1곳 추정 월평균 매출' : '가게 1곳 월평균 매출');
+  const salesColumnTitle = '가게 1곳 월평균 매출';
   const pager = rows.length > state.pageSize
     ? '<div class="commercial-pager">' +
         '<button type="button" data-page="prev" ' + (state.page <= 1 ? 'disabled' : '') + '>이전</button>' +
@@ -1499,7 +1452,7 @@ biz.onchange = e => {
   state.picked = '';
   state.page = 1;
   buildRows();
-  if (!hasComparableSalesData() && state.sort === 'sales_per_store_month') state.sort = 'stores';
+  if (!hasSalesData() && state.sort === 'sales_per_store_month') state.sort = 'stores';
   render();
 };
 q.oninput = e => { state.q = e.target.value; state.picked = ''; state.page = 1; render(); };
