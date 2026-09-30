@@ -20,6 +20,15 @@ assert.deepEqual(
 );
 
 assert.deepEqual(
+  coverageStatus({has_sales: true, has_stores: true, has_map_points: true, sales_dongs: 77, store_dongs: 422}),
+  {
+    coverage_level: 'partial_sales',
+    coverage_label: '매출은 일부 동만 있음 · 가게 수·지도 있음',
+    recommended_action: '매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요.'
+  }
+);
+
+assert.deepEqual(
   coverageStatus({has_sales: false, has_stores: true, has_map_points: true}),
   {
     coverage_level: 'needs_private_sales',

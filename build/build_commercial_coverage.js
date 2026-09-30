@@ -12,11 +12,6 @@ function readJson(file){
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
-function readOptional(name){
-  const file = path.join(DATA_DIR, name);
-  return fs.existsSync(file) ? readJson(file) : null;
-}
-
 function countMapDongs(points, id){
   let dongs = 0;
   let pointsCount = 0;
@@ -41,6 +36,13 @@ function referenceSalesStatus(item){
 }
 
 function coverageStatus(item){
+  if (item.has_sales && item.has_stores && item.sales_dongs < item.store_dongs){
+    return {
+      coverage_level: 'partial_sales',
+      coverage_label: item.has_map_points ? '매출은 일부 동만 있음 · 가게 수·지도 있음' : '매출은 일부 동만 있음 · 지도핀 부족',
+      recommended_action: '매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요.'
+    };
+  }
   if (item.has_sales && item.has_stores && item.has_map_points){
     return {
       coverage_level: 'complete',
@@ -76,31 +78,11 @@ function coverageStatus(item){
   };
 }
 
-function typeMatchesSalesRow(type, row){
-  if (type.code && row.business_code === type.code) return true;
-  const words = type.words || [];
-  const name = String(row.business_name || '');
-  return words.length > 0 && words.some(word => name.includes(word));
-}
-
-function referenceSalesScopes(type, regionalSales, quarter){
-  return regionalSales
-    .filter(item => item.payload && (item.payload.rows || []).some(row => row.quarter === quarter && typeMatchesSalesRow(type, row) && row.amount))
-    .map(item => item.scope);
-}
-
 function build(){
   const view = readJson(VIEW);
   const stores = fs.existsSync(STORES) ? readJson(STORES) : {};
   const rows = view.rows || [];
   const points = stores.points || {};
-  const regionalSales = [
-    {scope: 'signgu', payload: readOptional('commercial-sales-signgu.json')},
-    {scope: 'mega', payload: readOptional('commercial-sales-mega.json')},
-    {scope: 'trdar', payload: readOptional('commercial-sales-trdar.json')},
-    {scope: 'trdhl', payload: readOptional('commercial-sales-trdhl.json')}
-  ];
-
   const items = (view.business_types || []).map(type => {
     let salesDongs = 0;
     let storeDongs = 0;
@@ -109,7 +91,7 @@ function build(){
     for (const row of rows){
       const bucket = row.biz && row.biz[type.id];
       if (!bucket) continue;
-      if (bucket.sales){
+      if (bucket.sales && !bucket.sales_incomplete){
         salesDongs++;
         salesTotal += bucket.sales || 0;
       }
@@ -119,7 +101,10 @@ function build(){
       }
     }
     const map = countMapDongs(points, type.id);
-    const referenceScopes = referenceSalesScopes(type, regionalSales, view.quarter);
+    const referenceScopes = [
+      ...(rows.some(row => row.biz && row.biz[type.id] && row.biz[type.id].reference_sales) ? ['signgu'] : []),
+      ...(type.reference_sales ? ['mega'] : [])
+    ];
     const item = {
       id: type.id,
       code: type.code || null,
@@ -160,4 +145,4 @@ function build(){
 
 if (require.main === module) build();
 
-module.exports = {build, countMapDongs, coverageStatus, referenceSalesStatus, referenceSalesScopes};
+module.exports = {build, countMapDongs, coverageStatus, referenceSalesStatus};

@@ -1,6 +1,6 @@
 {
   "title": "상권 업종별 데이터 커버리지",
-  "generated_at": "2026-09-30T00:58:22.720Z",
+  "generated_at": "2026-09-30T01:28:05.228Z",
   "quarter": "20262",
   "rows": 427,
   "summary": {
@@ -19,21 +19,19 @@
       "has_sales": true,
       "has_stores": true,
       "has_map_points": true,
-      "sales_dongs": 418,
+      "sales_dongs": 344,
       "store_dongs": 422,
-      "sales_total": 1234986655756,
+      "sales_total": 1199397106371,
       "store_total": 40504,
       "map_dongs": 427,
       "map_points": 26554,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "food",
@@ -43,21 +41,19 @@
       "has_sales": true,
       "has_stores": true,
       "has_map_points": true,
-      "sales_dongs": 421,
+      "sales_dongs": 191,
       "store_dongs": 422,
-      "sales_total": 5531772368941,
+      "sales_total": 4307122174304,
       "store_total": 96986,
       "map_dongs": 427,
       "map_points": 14717,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "fitness",
@@ -67,21 +63,19 @@
       "has_sales": true,
       "has_stores": true,
       "has_map_points": true,
-      "sales_dongs": 388,
+      "sales_dongs": 294,
       "store_dongs": 422,
-      "sales_total": 219038591521,
+      "sales_total": 203987490207,
       "store_total": 14361,
       "map_dongs": 427,
       "map_points": 9264,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "academy",
@@ -91,21 +85,15 @@
       "has_sales": true,
       "has_stores": true,
       "has_map_points": true,
-      "sales_dongs": 400,
+      "sales_dongs": 77,
       "store_dongs": 422,
-      "sales_total": 1141057296653,
+      "sales_total": 190490779173,
       "store_total": 38893,
       "map_dongs": 427,
       "map_points": 40331,
-      "reference_sales_scopes": [
-        "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
-      ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "unmanned",
@@ -115,21 +103,19 @@
       "has_sales": true,
       "has_stores": true,
       "has_map_points": true,
-      "sales_dongs": 420,
+      "sales_dongs": 264,
       "store_dongs": 422,
-      "sales_total": 2511124163064,
+      "sales_total": 1927358239600,
       "store_total": 32509,
       "map_dongs": 370,
       "map_points": 1371,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300031",
@@ -147,13 +133,11 @@
       "map_points": 1500,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300015",
@@ -171,13 +155,11 @@
       "map_points": 1550,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300032",
@@ -195,13 +177,11 @@
       "map_points": 3963,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200032",
@@ -219,13 +199,11 @@
       "map_points": 3963,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200047",
@@ -299,9 +277,9 @@
         "signgu",
         "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200017",
@@ -319,13 +297,11 @@
       "map_points": 1491,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200013",
@@ -379,13 +355,11 @@
       "map_points": 4839,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200037",
@@ -403,13 +377,11 @@
       "map_points": 5086,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200040",
@@ -445,13 +417,11 @@
       "map_points": 1975,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200038",
@@ -541,13 +511,11 @@
       "map_points": 1719,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300006",
@@ -565,13 +533,11 @@
       "map_points": 1,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200028",
@@ -589,13 +555,11 @@
       "map_points": 20194,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300023",
@@ -631,13 +595,11 @@
       "map_points": 36,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200012",
@@ -745,13 +707,11 @@
       "map_points": 5,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS100008",
@@ -769,13 +729,11 @@
       "map_points": 8152,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200045",
@@ -829,13 +787,11 @@
       "map_points": 1680,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300027",
@@ -853,13 +809,11 @@
       "map_points": 653,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200015",
@@ -895,13 +849,11 @@
       "map_points": 3876,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300008",
@@ -919,13 +871,11 @@
       "map_points": 1162,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300001",
@@ -943,13 +893,11 @@
       "map_points": 8359,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200005",
@@ -967,13 +915,11 @@
       "map_points": 0,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "needs_map",
-      "coverage_label": "매출·점포 있음 · 지도핀 부족",
-      "recommended_action": "매출 분석은 가능하지만 실제 상호 위치가 부족합니다. 지도 데이터 보강 후보로 표시합니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 지도핀 부족",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200024",
@@ -991,13 +937,11 @@
       "map_points": 65,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300017",
@@ -1015,13 +959,11 @@
       "map_points": 2068,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300014",
@@ -1039,13 +981,11 @@
       "map_points": 22838,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300034",
@@ -1081,13 +1021,11 @@
       "map_points": 2735,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300029",
@@ -1105,13 +1043,11 @@
       "map_points": 1580,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS100004",
@@ -1129,13 +1065,11 @@
       "map_points": 7451,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200034",
@@ -1153,13 +1087,11 @@
       "map_points": 2088,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200044",
@@ -1213,13 +1145,11 @@
       "map_points": 1214,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300026",
@@ -1237,13 +1167,11 @@
       "map_points": 9,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200002",
@@ -1261,13 +1189,11 @@
       "map_points": 1639,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300024",
@@ -1285,13 +1211,11 @@
       "map_points": 0,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "needs_map",
-      "coverage_label": "매출·점포 있음 · 지도핀 부족",
-      "recommended_action": "매출 분석은 가능하지만 실제 상호 위치가 부족합니다. 지도 데이터 보강 후보로 표시합니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 지도핀 부족",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300013",
@@ -1327,13 +1251,11 @@
       "map_points": 10983,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300019",
@@ -1351,13 +1273,11 @@
       "map_points": 1421,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200046",
@@ -1393,13 +1313,11 @@
       "map_points": 5830,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300035",
@@ -1417,13 +1335,11 @@
       "map_points": 6168,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200001",
@@ -1441,13 +1357,11 @@
       "map_points": 235,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300011",
@@ -1465,13 +1379,11 @@
       "map_points": 19381,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200006",
@@ -1489,13 +1401,11 @@
       "map_points": 9446,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS100003",
@@ -1513,13 +1423,11 @@
       "map_points": 7718,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200026",
@@ -1537,13 +1445,11 @@
       "map_points": 0,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "needs_map",
-      "coverage_label": "매출·점포 있음 · 지도핀 부족",
-      "recommended_action": "매출 분석은 가능하지만 실제 상호 위치가 부족합니다. 지도 데이터 보강 후보로 표시합니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 지도핀 부족",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300038",
@@ -1579,13 +1485,11 @@
       "map_points": 6559,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300025",
@@ -1603,13 +1507,11 @@
       "map_points": 462,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300040",
@@ -1663,13 +1565,11 @@
       "map_points": 0,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "needs_map",
-      "coverage_label": "매출·점포 있음 · 지도핀 부족",
-      "recommended_action": "매출 분석은 가능하지만 실제 상호 위치가 부족합니다. 지도 데이터 보강 후보로 표시합니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 지도핀 부족",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS100005",
@@ -1687,13 +1587,11 @@
       "map_points": 5804,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300036",
@@ -1711,13 +1609,11 @@
       "map_points": 0,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "needs_map",
-      "coverage_label": "매출·점포 있음 · 지도핀 부족",
-      "recommended_action": "매출 분석은 가능하지만 실제 상호 위치가 부족합니다. 지도 데이터 보강 후보로 표시합니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 지도핀 부족",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300005",
@@ -1807,13 +1703,11 @@
       "map_points": 5780,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300033",
@@ -1831,13 +1725,11 @@
       "map_points": 31,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300009",
@@ -1855,13 +1747,11 @@
       "map_points": 1,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200007",
@@ -1879,13 +1769,11 @@
       "map_points": 4452,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS100007",
@@ -1903,13 +1791,11 @@
       "map_points": 5991,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS100010",
@@ -1927,13 +1813,11 @@
       "map_points": 20071,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300003",
@@ -1951,13 +1835,11 @@
       "map_points": 1409,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200004",
@@ -2029,13 +1911,11 @@
       "map_points": 1,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300002",
@@ -2053,13 +1933,11 @@
       "map_points": 9508,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200030",
@@ -2077,13 +1955,11 @@
       "map_points": 6773,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300012",
@@ -2119,13 +1995,11 @@
       "map_points": 48118,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200008",
@@ -2143,13 +2017,11 @@
       "map_points": 3421,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300004",
@@ -2167,13 +2039,11 @@
       "map_points": 4128,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS100009",
@@ -2191,13 +2061,11 @@
       "map_points": 1243,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300022",
@@ -2215,13 +2083,11 @@
       "map_points": 12563,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS300028",
@@ -2239,13 +2105,11 @@
       "map_points": 3998,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     },
     {
       "id": "svc_CS200014",
@@ -2299,13 +2163,11 @@
       "map_points": 1134,
       "reference_sales_scopes": [
         "signgu",
-        "mega",
-        "trdar",
-        "trdhl"
+        "mega"
       ],
-      "coverage_level": "complete",
-      "coverage_label": "매출·점포·지도 모두 있음",
-      "recommended_action": "상품 화면에서 매출, 경쟁, 지도 분석까지 바로 사용할 수 있습니다."
+      "coverage_level": "partial_sales",
+      "coverage_label": "매출은 일부 동만 있음 · 가게 수·지도 있음",
+      "recommended_action": "매출이 없는 동은 참고 평균을 이용한 추정값인지 확인하고 비교하세요."
     }
   ]
 }

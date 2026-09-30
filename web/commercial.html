@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=116">
+<link rel="stylesheet" href="styles.css?v=126">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '116';
+  var PAGE_V = '126';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '125';
+const V = '126';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -511,7 +511,8 @@ function buildRows(){
     const biz = (src.biz && src.biz[state.biz]) || {};
     const allBiz = Object.entries(src.biz || {});
     const demand = (src.floating || 0) + (src.workers || 0) * 800 + (src.residents || 0) * 250;
-    const unitPrice = biz.sales && biz.sales_count ? Math.round(biz.sales / biz.sales_count) : null;
+    const usableSales = biz.sales_incomplete ? null : (biz.sales || null);
+    const unitPrice = usableSales && biz.sales_count ? Math.round(usableSales / biz.sales_count) : null;
     return {
       code: src.code, gu: src.gu, name: src.name, full_name: src.full_name,
       floating: src.floating || null,
@@ -525,14 +526,15 @@ function buildRows(){
       food_spending: src.food_spending || null,
       education_spending: src.education_spending || null,
       leisure_spending: src.leisure_spending || null,
-      sales: biz.sales || null,
-      sales_month: biz.sales ? Math.round(biz.sales / 3) : null,
-      sales_count: biz.sales_count || null,
+      sales: usableSales,
+      sales_month: usableSales ? Math.round(usableSales / 3) : null,
+      sales_count: usableSales ? (biz.sales_count || null) : null,
       unit_price: unitPrice,
+      sales_incomplete: !!biz.sales_incomplete,
       stores: biz.stores || null,
       independent_stores: biz.independent_stores ?? null,
-      sales_per_store: biz.sales && biz.stores ? Math.round(biz.sales / biz.stores) : null,
-      sales_per_store_month: biz.sales && biz.stores ? Math.round(biz.sales / biz.stores / 3) : null,
+      sales_per_store: usableSales && biz.stores ? Math.round(usableSales / biz.stores) : null,
+      sales_per_store_month: usableSales && biz.stores ? Math.round(usableSales / biz.stores / 3) : null,
       franchises: biz.franchises ?? null,
       open: biz.open ?? null,
       close: biz.close ?? null,
@@ -543,7 +545,7 @@ function buildRows(){
       sales_items: biz.sales_items || [],
       store_items: biz.store_items || [],
       all_sales_items: allBiz
-        .filter(([, item]) => item.sales && item.stores)
+        .filter(([, item]) => item.sales && item.stores && !item.sales_incomplete)
         .map(([id, item]) => ({
           id,
           business_name: bizLabel(id, item),
@@ -596,6 +598,8 @@ function buildRows(){
     r.reference_sales = officialGuRefs.get(r.gu) ||
       (!gu.missingStoreSales ? makeReference('자치구', gu.amount, gu.count, gu.stores) : null) ||
       seoulReference;
+    r.reference_coverage = r.reference_sales && r.reference_sales.scope === '자치구' && r.reference_sales.amount
+      ? gu.amount / r.reference_sales.amount : null;
   }
 
   const rangeFrom = fn => {
@@ -742,8 +746,9 @@ function scoreLabel(r){
 function mainCaution(row){
   if (!row) return '자료 확인 필요';
   const referenceMonthly = row.reference_sales && row.reference_sales.monthly_sales_per_store;
-  const salesRatio = row.sales_per_store_month && referenceMonthly ? row.sales_per_store_month / referenceMonthly : null;
-  const salesRankStrong = rowSalesValue(row) && referenceMonthly && rowSalesValue(row) >= referenceMonthly * 1.5 && row.score < 45;
+  const comparable = row.reference_coverage === null || row.reference_coverage >= .9;
+  const salesRatio = comparable && row.sales_per_store_month && referenceMonthly ? row.sales_per_store_month / referenceMonthly : null;
+  const salesRankStrong = comparable && rowSalesValue(row) && referenceMonthly && rowSalesValue(row) >= referenceMonthly * 1.5 && row.score < 45;
   if (salesRatio && salesRatio >= 2.5) return '매출 높음 · 이유 확인';
   if (salesRankStrong) return '매출만 높고 종합 판단은 낮음';
   if ((row.franchises || 0) && row.stores && row.franchises <= row.stores && row.franchises / row.stores >= .7) return '브랜드 경쟁 강함';
@@ -825,6 +830,9 @@ function broadBusinessNote(){
 function salesReferenceTone(row){
   const referenceMonthly = row && row.reference_sales && row.reference_sales.monthly_sales_per_store;
   if (!row || !row.sales_per_store_month || !referenceMonthly) return '';
+  if (row.reference_coverage !== null && row.reference_coverage < .9){
+    return '구 전체 매출에 비해 공개된 동별 매출이 적어, 두 평균을 바로 비교하기 어렵습니다.';
+  }
   const ratio = row.sales_per_store_month / referenceMonthly;
   const label = scopeLabel(row.reference_sales.scope, row);
   if (ratio >= 2.5) return label + ' 평균보다 크게 높습니다. 동·구 자료는 각각 집계되므로 이 숫자만으로 이유를 단정할 수 없습니다.';
@@ -901,7 +909,7 @@ function rowHtml(r, i){
   const active = state.picked === r.code ? ' active' : '';
   const salesValue = r.sales_per_store_month || r.estimated_sales_per_store_month || 0;
   const salesKind = rowSalesKind(r);
-  const showSalesBadge = !(salesKind.cls === 'estimated' && !hasSalesData() && currentReferenceSales());
+  const showSalesBadge = !!salesValue && !(salesKind.cls === 'estimated' && !hasSalesData() && currentReferenceSales());
   return '<button type="button" class="commercial-row' + active + '" data-code="' + r.code + '">' +
     '<span class="rank">' + i + '</span>' +
     '<span class="place"><b>' + r.gu + ' ' + r.name + '</b></span>' +
@@ -928,6 +936,7 @@ function explainRow(r, rows){
 
 function dataBasisNotes(ctx){
   const notes = [];
+  if (ctx && ctx.salesIncomplete) notes.push('이 동네는 묶음에 포함된 일부 업종의 매출이 없어 전체 묶음 평균을 직접 계산하지 않았습니다.');
   if (!ctx || !ctx.hasDongSales){
     if (ctx && ctx.estimatedSales) notes.push('추정 매출은 참고 월평균 매출에 동네 수요·소비·경쟁 조건을 반영한 값입니다.');
     if (ctx && ctx.estimatedSales) notes.push('추정 보정폭은 참고값의 75~135% 안으로 제한합니다.');
@@ -1253,9 +1262,8 @@ function renderDetail(rows){
   const oneStoreTitle = hasDongSales
     ? BIZ[state.biz].label + ' 가게 1곳 월평균 매출'
     : (reference ? referenceScope + ' ' + BIZ[state.biz].label + ' 가게 1곳 월평균 매출' : BIZ[state.biz].label + ' 가게 1곳 월평균 매출');
-  const localOneStoreTitle = hasDongSales
-    ? r.name + ' ' + BIZ[state.biz].label + ' 1곳 월평균 매출'
-    : r.name + ' ' + BIZ[state.biz].label + ' 1곳 추정 월평균 매출';
+  const localOneStoreTitle = r.name + ' ' + BIZ[state.biz].label + ' 1곳 ' +
+    (r.estimated_sales_per_store_month ? '추정 월평균 매출' : '월평균 매출');
   const seoulOneStoreTitle = tasis
     ? '국세청 기준 서울 평균 ' + BIZ[state.biz].label + ' 1곳 월평균 매출'
     : oneStoreTitle;
@@ -1306,7 +1314,7 @@ function renderDetail(rows){
         stat('주의할 점', mainCaution(r)) +
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
-        stat('매출 자료', hasDongSales ? period + ' 카드매출 추정치' : (hasAnySales ? '이 행정동 카드매출 자료 없음' : '이 업종 행정동 매출 없음')) +
+        stat('매출 자료', r.sales_incomplete ? '묶음의 일부 업종 매출 없음' : (hasDongSales ? period + ' 카드매출 추정치' : (hasAnySales ? '이 행정동 카드매출 자료 없음' : '이 업종 행정동 매출 없음'))) +
         stat('비교 기준', hasDongSales ? '행정동 카드매출 기반 평균' : (estimatedSales ? '참고값에 동네 조건 반영' : '점포·수요 기준')) +
         stat('현장 확인', '입구 위치·차량 동선') +
       '</div>' +
@@ -1396,7 +1404,7 @@ function renderDetail(rows){
       '</div>' +
       '<aside class="map-selection" id="mapSelection"><span>선택한 장소</span><p>지도에서 관련 업소와 주변 상가·아파트 위치를 볼 수 있습니다. 핀을 누르면 상호명과 주소가 나옵니다.</p></aside>' +
     '</div>';
-  const checksTab = nextChecks(r, {hasDongSales, estimatedSales, visibleTasis});
+  const checksTab = nextChecks(r, {hasDongSales, estimatedSales, visibleTasis, salesIncomplete: r.sales_incomplete});
   const content = {summary: summaryTab, sales: salesTab, demand: demandTab, analysis: analysisTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;
   const leadText = r.sales_per_store_month
     ? '가게 1곳 월평균 매출 <b>' + money(r.sales_per_store_month) + '</b>'

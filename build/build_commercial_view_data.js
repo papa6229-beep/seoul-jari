@@ -131,6 +131,8 @@ function summarizeReferenceSales(salesRows, storeRows, type, scope = '서울시'
   const areaMatches = item => !areaCode || String(item.area_code || '') === String(areaCode);
   const matchedSales = rows({rows: salesRows}).filter(item => areaMatches(item) && matchesType(item, type));
   const matchedStores = rows({rows: storeRows}).filter(item => areaMatches(item) && matchesType(item, type));
+  const salesCodes = new Set(matchedSales.filter(item => item.amount > 0).map(item => item.business_code));
+  if (matchedStores.some(item => totalStores(item) > 0 && !salesCodes.has(item.business_code))) return null;
   const amount = addNumbers(...matchedSales.map(item => item.amount));
   const count = addNumbers(...matchedSales.map(item => item.count));
   const stores = addNumbers(...matchedStores.map(totalStores));
@@ -146,26 +148,43 @@ function summarizeReferenceSales(salesRows, storeRows, type, scope = '서울시'
 }
 
 function summarizeTopMarkets(salesRows, storeRows, type, scope = '상권', limit = 5){
-  const storesByArea = new Map(
-    rows({rows: storeRows})
-      .filter(item => matchesType(item, type))
-      .map(item => [String(item.area_code || ''), item])
-  );
-  return rows({rows: salesRows})
-    .filter(item => matchesType(item, type))
-    .map(item => {
-      const store = storesByArea.get(String(item.area_code || '')) || {};
-      const stores = totalStores(store);
-      if (!item.amount || !stores) return null;
+  const storesByArea = new Map();
+  for (const item of rows({rows: storeRows}).filter(item => matchesType(item, type))){
+    const key = String(item.area_code || '');
+    if (!storesByArea.has(key)) storesByArea.set(key, {stores: 0, codes: new Set()});
+    const group = storesByArea.get(key);
+    group.stores += totalStores(item);
+    if (totalStores(item) > 0) group.codes.add(item.business_code);
+  }
+  const salesByArea = new Map();
+  for (const item of rows({rows: salesRows}).filter(item => matchesType(item, type))){
+    const key = String(item.area_code || '');
+    if (!salesByArea.has(key)) salesByArea.set(key, {
+      area_code: item.area_code,
+      area_name: item.area_name,
+      market_type_name: item.market_type_name || null,
+      amount: 0,
+      count: 0,
+      codes: new Set()
+    });
+    const group = salesByArea.get(key);
+    group.amount += item.amount || 0;
+    group.count += item.count || 0;
+    if (item.amount > 0) group.codes.add(item.business_code);
+  }
+  return [...salesByArea.entries()]
+    .map(([key, item]) => {
+      const store = storesByArea.get(key);
+      if (!store || !item.amount || !store.stores || [...store.codes].some(code => !item.codes.has(code))) return null;
       return {
         scope,
         area_code: item.area_code,
         area_name: item.area_name,
-        market_type_name: item.market_type_name || null,
+        market_type_name: item.market_type_name,
         amount: item.amount,
-        stores,
-        monthly_sales_per_store: Math.round(item.amount / stores / 3),
-        customer_unit_price: item.amount && item.count ? Math.round(item.amount / item.count) : null
+        stores: store.stores,
+        monthly_sales_per_store: Math.round(item.amount / store.stores / 3),
+        customer_unit_price: item.count ? Math.round(item.amount / item.count) : null
       };
     })
     .filter(Boolean)
@@ -234,6 +253,8 @@ function compact(){
   const changeBy = indexBy(changeIndex, 'dong_code');
   const apartmentBy = indexBy(apartments, 'dong_code');
   const facilityBy = indexBy(facilities, 'dong_code');
+  const salesCodesByDong = new Set(rows(sales).filter(item => item.amount > 0)
+    .map(item => `${item.dong_code}|${item.business_code}`));
 
   for (const row of byCode.values()){
     const f = floatingBy[row.code] || {};
@@ -294,6 +315,9 @@ function compact(){
       bucket.franchises += item.franchise_store_count || 0;
       bucket.open += item.open_store_count || 0;
       bucket.close += item.close_store_count || 0;
+      if (totalStores(item) > 0 && !salesCodesByDong.has(`${item.dong_code}|${item.business_code}`)){
+        bucket.sales_incomplete = true;
+      }
       addTop(bucket.store_items, {
         business_name: item.business_name,
         store_count: totalStores(item)
@@ -319,6 +343,10 @@ function compact(){
   const signguStoreRows = currentRows(signguStores);
   const megaSalesRows = currentRows(megaSales);
   const megaStoreRows = currentRows(megaStores);
+  const trdarSalesRows = currentRows(trdarSales);
+  const trdarStoreRows = currentRows(trdarStores);
+  const trdhlSalesRows = currentRows(trdhlSales);
+  const trdhlStoreRows = currentRows(trdhlStores);
 
   for (const row of byCode.values()){
     for (const type of businessTypesById.values()){
@@ -331,8 +359,8 @@ function compact(){
 
   const enrichedBusinessTypes = Array.from(businessTypesById.values()).map(type => {
     const referenceSales = summarizeReferenceSales(megaSalesRows, megaStoreRows, type, '서울시');
-    const topMarkets = summarizeTopMarkets(rows(trdarSales), rows(trdarStores), type, '상권');
-    const topHinterlands = summarizeTopMarkets(rows(trdhlSales), rows(trdhlStores), type, '상권배후지');
+    const topMarkets = summarizeTopMarkets(trdarSalesRows, trdarStoreRows, type, '상권');
+    const topHinterlands = summarizeTopMarkets(trdhlSalesRows, trdhlStoreRows, type, '상권배후지');
     return {
       ...type,
       ...(referenceSales ? {reference_sales: referenceSales} : {}),

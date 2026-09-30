@@ -112,6 +112,15 @@ assert.deepStrictEqual(guReferenceSales, {
   customer_unit_price: 20000
 });
 
+assert.strictEqual(summarizeReferenceSales(
+  [{business_code: 'CS100010', business_name: '커피-음료', amount: 300000000, count: 10000}],
+  [
+    {business_code: 'CS100010', business_name: '커피-음료', store_count: 10},
+    {business_code: 'CS100005', business_name: '제과점', store_count: 5}
+  ],
+  {words: ['커피', '제과']}
+), null);
+
 assert.deepStrictEqual(summarizeTopMarkets(
   [
     {area_code: '3001', area_name: 'A상권', market_type_name: '골목상권', business_code: 'CS100001', business_name: '한식음식점', amount: 900000000, count: 30000},
@@ -128,6 +137,23 @@ assert.deepStrictEqual(summarizeTopMarkets(
 ), [
   {scope: '상권', area_code: '3002', area_name: 'B상권', market_type_name: '발달상권', amount: 600000000, stores: 10, monthly_sales_per_store: 20000000, customer_unit_price: 30000},
   {scope: '상권', area_code: '3001', area_name: 'A상권', market_type_name: '골목상권', amount: 900000000, stores: 30, monthly_sales_per_store: 10000000, customer_unit_price: 30000}
+]);
+
+assert.deepStrictEqual(summarizeTopMarkets(
+  [
+    {area_code: '3001', area_name: 'A상권', business_code: 'CS100010', business_name: '커피-음료', amount: 300000000, count: 10000},
+    {area_code: '3001', area_name: 'A상권', business_code: 'CS100005', business_name: '제과점', amount: 600000000, count: 20000},
+    {area_code: '3002', area_name: 'B상권', business_code: 'CS100010', business_name: '커피-음료', amount: 300000000, count: 10000}
+  ],
+  [
+    {area_code: '3001', business_code: 'CS100010', business_name: '커피-음료', store_count: 10},
+    {area_code: '3001', business_code: 'CS100005', business_name: '제과점', store_count: 20},
+    {area_code: '3002', business_code: 'CS100010', business_name: '커피-음료', store_count: 10},
+    {area_code: '3002', business_code: 'CS100005', business_name: '제과점', store_count: 5}
+  ],
+  {words: ['커피', '제과']}
+), [
+  {scope: '상권', area_code: '3001', area_name: 'A상권', market_type_name: null, amount: 900000000, stores: 30, monthly_sales_per_store: 10000000, customer_unit_price: 30000}
 ]);
 
 console.log('build_commercial_view_data test ok');
