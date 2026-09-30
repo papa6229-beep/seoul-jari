@@ -77,6 +77,19 @@ assert.deepStrictEqual(referenceSales, {
   customer_unit_price: 30000
 });
 
+assert.deepStrictEqual(summarizeReferenceSales(
+  [{business_code: 'CS200038', amount: 210000000, count: 10000}],
+  [{business_code: 'CS200038', store_count: 3, franchise_store_count: 4, similar_store_count: 7}],
+  {code: 'CS200038', label: '독서실'}
+), {
+  scope: '서울시',
+  amount: 210000000,
+  count: 10000,
+  stores: 7,
+  monthly_sales_per_store: 10000000,
+  customer_unit_price: 21000
+});
+
 const guReferenceSales = summarizeReferenceSales(
   [
     {area_code: '11740', business_code: 'CS100001', business_name: '한식음식점', amount: 300000000, count: 15000},

@@ -52,6 +52,7 @@ function createBucket(){
     sales: 0,
     sales_count: 0,
     stores: 0,
+    independent_stores: 0,
     franchises: 0,
     open: 0,
     close: 0,
@@ -73,6 +74,10 @@ function addTop(list, item, key, limit = 5){
 
 function addNumbers(...values){
   return values.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
+}
+
+function totalStores(item){
+  return item.similar_store_count ?? addNumbers(item.store_count, item.franchise_store_count);
 }
 
 function summarizeMarketChange(row = {}){
@@ -128,7 +133,7 @@ function summarizeReferenceSales(salesRows, storeRows, type, scope = '서울시'
   const matchedStores = rows({rows: storeRows}).filter(item => areaMatches(item) && matchesType(item, type));
   const amount = addNumbers(...matchedSales.map(item => item.amount));
   const count = addNumbers(...matchedSales.map(item => item.count));
-  const stores = addNumbers(...matchedStores.map(item => item.store_count));
+  const stores = addNumbers(...matchedStores.map(totalStores));
   if (!amount || !stores) return null;
   return {
     scope,
@@ -150,7 +155,7 @@ function summarizeTopMarkets(salesRows, storeRows, type, scope = '상권', limit
     .filter(item => matchesType(item, type))
     .map(item => {
       const store = storesByArea.get(String(item.area_code || '')) || {};
-      const stores = store.store_count || 0;
+      const stores = totalStores(store);
       if (!item.amount || !stores) return null;
       return {
         scope,
@@ -284,39 +289,48 @@ function compact(){
     for (const biz of Object.keys(GROUP_BIZ)){
       if (!matchesBiz(item, biz)) continue;
       const bucket = getBucket(row, biz);
-      bucket.stores += item.store_count || 0;
+      bucket.stores += totalStores(item);
+      bucket.independent_stores += item.store_count || 0;
       bucket.franchises += item.franchise_store_count || 0;
       bucket.open += item.open_store_count || 0;
       bucket.close += item.close_store_count || 0;
       addTop(bucket.store_items, {
         business_name: item.business_name,
-        store_count: item.store_count || 0
+        store_count: totalStores(item)
       }, 'store_count');
     }
     if (item.business_code){
       const bucket = getBucket(row, `svc_${item.business_code}`);
-      bucket.stores += item.store_count || 0;
+      bucket.stores += totalStores(item);
+      bucket.independent_stores += item.store_count || 0;
       bucket.franchises += item.franchise_store_count || 0;
       bucket.open += item.open_store_count || 0;
       bucket.close += item.close_store_count || 0;
       addTop(bucket.store_items, {
         business_name: item.business_name,
-        store_count: item.store_count || 0
+        store_count: totalStores(item)
       }, 'store_count');
     }
   }
+
+  const currentQuarter = sales.quarter || stores.quarter;
+  const currentRows = payload => rows(payload).filter(item => item.quarter === currentQuarter);
+  const signguSalesRows = currentRows(signguSales);
+  const signguStoreRows = currentRows(signguStores);
+  const megaSalesRows = currentRows(megaSales);
+  const megaStoreRows = currentRows(megaStores);
 
   for (const row of byCode.values()){
     for (const type of businessTypesById.values()){
       const bucket = row.biz[type.id];
       if (!bucket) continue;
-      const referenceSales = summarizeReferenceSales(rows(signguSales), rows(signguStores), type, '자치구', row.code.slice(0, 5));
+      const referenceSales = summarizeReferenceSales(signguSalesRows, signguStoreRows, type, '자치구', row.code.slice(0, 5));
       if (referenceSales) bucket.reference_sales = referenceSales;
     }
   }
 
   const enrichedBusinessTypes = Array.from(businessTypesById.values()).map(type => {
-    const referenceSales = summarizeReferenceSales(rows(megaSales), rows(megaStores), type, '서울시');
+    const referenceSales = summarizeReferenceSales(megaSalesRows, megaStoreRows, type, '서울시');
     const topMarkets = summarizeTopMarkets(rows(trdarSales), rows(trdarStores), type, '상권');
     const topHinterlands = summarizeTopMarkets(rows(trdhlSales), rows(trdhlStores), type, '상권배후지');
     return {
