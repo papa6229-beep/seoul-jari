@@ -44,6 +44,7 @@ jobs:
           node build/fetch_commercial_regional_stores.test.js
           node build/build_commercial_view_data.test.js
           node --test build/validate_commercial_view_data.test.js
+          node --test web/commercial-map-data.test.js
       - name: Fetch living population
         env:
           SEOUL_OPENAPI_KEY: ${{ secrets.SEOUL_OPENAPI_KEY }}

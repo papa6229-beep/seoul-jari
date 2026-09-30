@@ -46,6 +46,7 @@ jobs:
           node build/fetch_commercial_regional_stores.test.js
           node build/build_commercial_view_data.test.js
           node --test build/validate_commercial_view_data.test.js
+          node --test web/commercial-map-data.test.js
           node build/build_commercial_coverage.test.js
       - name: Fetch store data
         env:
