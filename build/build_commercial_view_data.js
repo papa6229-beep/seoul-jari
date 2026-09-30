@@ -38,8 +38,10 @@ function rows(payload){
   return [];
 }
 
-function indexBy(list, key){
-  return Object.fromEntries(rows(list).map(row => [row[key], row]));
+function indexBy(list, key, quarter){
+  return Object.fromEntries(rows(list)
+    .filter(row => row.quarter === quarter)
+    .map(row => [row[key], row]));
 }
 
 function matchesBiz(row, biz){
@@ -211,6 +213,12 @@ function compact(){
   const trdarStores = readJsonOptional('commercial-stores-trdar.json');
   const trdhlSales = readJsonOptional('commercial-sales-trdhl.json');
   const trdhlStores = readJsonOptional('commercial-stores-trdhl.json');
+  const currentQuarter = sales.quarter || stores.quarter;
+  if (sales.quarter && stores.quarter && sales.quarter !== stores.quarter){
+    throw new Error('행정동 매출과 점포의 기준 분기가 다릅니다.');
+  }
+  const salesRows = rows(sales).filter(item => item.quarter === currentQuarter);
+  const storeRows = rows(stores).filter(item => item.quarter === currentQuarter);
 
   const businessTypesById = new Map(Object.keys(GROUP_BIZ).map(key => [key, {
     id: key,
@@ -220,7 +228,7 @@ function compact(){
     words: GROUP_BIZ[key]
   }]));
 
-  for (const item of [...rows(sales), ...rows(stores)]){
+  for (const item of [...salesRows, ...storeRows]){
     if (!item.business_code || !item.business_name) continue;
     const id = `svc_${item.business_code}`;
     if (!businessTypesById.has(id)){
@@ -246,14 +254,14 @@ function compact(){
     biz: {}
   }]));
 
-  const floatingBy = indexBy(floating, 'dong_code');
-  const workerBy = indexBy(workers, 'dong_code');
-  const residentBy = indexBy(residents, 'dong_code');
-  const incomeBy = indexBy(income, 'dong_code');
-  const changeBy = indexBy(changeIndex, 'dong_code');
-  const apartmentBy = indexBy(apartments, 'dong_code');
-  const facilityBy = indexBy(facilities, 'dong_code');
-  const salesCodesByDong = new Set(rows(sales).filter(item => item.amount > 0)
+  const floatingBy = indexBy(floating, 'dong_code', currentQuarter);
+  const workerBy = indexBy(workers, 'dong_code', currentQuarter);
+  const residentBy = indexBy(residents, 'dong_code', currentQuarter);
+  const incomeBy = indexBy(income, 'dong_code', currentQuarter);
+  const changeBy = indexBy(changeIndex, 'dong_code', currentQuarter);
+  const apartmentBy = indexBy(apartments, 'dong_code', currentQuarter);
+  const facilityBy = indexBy(facilities, 'dong_code', currentQuarter);
+  const salesCodesByDong = new Set(salesRows.filter(item => item.amount > 0)
     .map(item => `${item.dong_code}|${item.business_code}`));
 
   for (const row of byCode.values()){
@@ -280,7 +288,7 @@ function compact(){
     if (facility) row.facilities = facility;
   }
 
-  for (const item of rows(sales)){
+  for (const item of salesRows){
     const row = byCode.get(item.dong_code);
     if (!row) continue;
     for (const biz of Object.keys(GROUP_BIZ)){
@@ -304,7 +312,7 @@ function compact(){
     }
   }
 
-  for (const item of rows(stores)){
+  for (const item of storeRows){
     const row = byCode.get(item.dong_code);
     if (!row) continue;
     for (const biz of Object.keys(GROUP_BIZ)){
@@ -337,7 +345,6 @@ function compact(){
     }
   }
 
-  const currentQuarter = sales.quarter || stores.quarter;
   const currentRows = payload => rows(payload).filter(item => item.quarter === currentQuarter);
   const signguSalesRows = currentRows(signguSales);
   const signguStoreRows = currentRows(signguStores);
@@ -387,4 +394,4 @@ function compact(){
 
 if (require.main === module) compact();
 
-module.exports = {BIZ: GROUP_BIZ, compact, summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales, summarizeTopMarkets};
+module.exports = {BIZ: GROUP_BIZ, compact, indexBy, summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales, summarizeTopMarkets};

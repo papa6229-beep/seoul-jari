@@ -1,5 +1,14 @@
 const assert = require('assert');
-const {summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales, summarizeTopMarkets} = require('./build_commercial_view_data');
+const {indexBy, summarizeApartment, summarizeFacilities, summarizeMarketChange, summarizeReferenceSales, summarizeTopMarkets} = require('./build_commercial_view_data');
+
+assert.deepStrictEqual(indexBy({rows: [
+  {dong_code: 'A', quarter: '20262', total: 200},
+  {dong_code: 'A', quarter: '20211', total: 100},
+  {dong_code: 'B', quarter: '20262', total: 300}
+]}, 'dong_code', '20262'), {
+  A: {dong_code: 'A', quarter: '20262', total: 200},
+  B: {dong_code: 'B', quarter: '20262', total: 300}
+});
 
 const apartment = summarizeApartment({
   apartment_complexes: 42,

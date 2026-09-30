@@ -5,11 +5,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>상권 데이터 — 서울자리</title>
-<link rel="stylesheet" href="styles.css?v=126">
+<link rel="stylesheet" href="styles.css?v=127">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0d6d1f6f1bf11cb9d1c630cf365f8a2c&autoload=false"></script>
 <script>
 (function(){
-  var PAGE_V = '126';
+  var PAGE_V = '127';
   fetch('version.json?t=' + Date.now(), {cache: 'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '126';
+const V = '127';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -292,7 +292,7 @@ function showTasisCard(tasis){
 }
 
 function tasisReferenceValue(tasis){
-  if (!tasis || !tasis.row || !Number.isFinite(tasis.row.avg_monthly_sales_manwon)) return null;
+  if (!showTasisCard(tasis) || !Number.isFinite(tasis.row.avg_monthly_sales_manwon)) return null;
   return {
     scope: '국세청 서울 평균',
     monthly_sales_per_store: Math.round(tasis.row.avg_monthly_sales_manwon * 10000),
@@ -651,8 +651,12 @@ function renderSummary(rows){
   const meta = businessMeta();
   const ref = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
   document.querySelectorAll('.commercial-insight').forEach(el => el.remove());
-  const bestBySales = rows.slice().sort((a, z) => rowSalesValue(z) - rowSalesValue(a) || competitionStoreValue(z) - competitionStoreValue(a))[0];
-  const best = salesOk ? bestBySales : rows.slice().sort((a, z) => competitionStoreValue(z) - competitionStoreValue(a))[0];
+  const directSalesRows = rows.filter(r => r.sales_per_store_month);
+  const estimatedSalesRows = rows.filter(r => r.estimated_sales_per_store_month);
+  const salesRows = directSalesRows.length ? directSalesRows : estimatedSalesRows;
+  const best = salesRows.length
+    ? salesRows.slice().sort((a, z) => rowSalesValue(z) - rowSalesValue(a) || competitionStoreValue(z) - competitionStoreValue(a))[0]
+    : rows.slice().sort((a, z) => competitionStoreValue(z) - competitionStoreValue(a))[0];
   const validStoreRows = rows.filter(r => competitionStoreValue(r));
   const lowComp = (validStoreRows.length ? validStoreRows : rows).slice().sort((a, z) => (z.competition_score || 0) - (a.competition_score || 0) || (z.sales_per_store_month || 0) - (a.sales_per_store_month || 0))[0];
   const highDemand = rows.slice().sort((a, z) => ((z.residents || 0) + (z.workers || 0)) - ((a.residents || 0) + (a.workers || 0)))[0];
@@ -676,7 +680,7 @@ function renderSummary(rows){
   insight.innerHTML =
     '<div class="insight-title"><b>먼저 볼 동네</b><span>카드를 누르면 아래 내용이 바뀝니다.</span></div>' +
     '<div class="insight-grid">' +
-      card(salesOk ? '월평균 매출 높은 곳' : '가게가 많이 모인 곳', best, salesOk ? '같은 업종 가게 1곳의 월평균 매출이 가장 높게 잡힌 동네입니다.' : '매출 자료가 없어 같은 업종 가게가 많이 모인 곳부터 봅니다.', '') +
+      card(directSalesRows.length ? '월평균 매출 높은 곳' : (estimatedSalesRows.length ? '추정 월평균 매출 높은 곳' : '가게가 많이 모인 곳'), best, directSalesRows.length ? '카드매출 자료가 있는 동네 중 가게 1곳 평균이 가장 높습니다.' : (estimatedSalesRows.length ? '추정값이 있는 동네 중 가게 1곳 평균이 가장 높습니다.' : '매출 자료가 없어 같은 업종 가게가 많이 모인 곳부터 봅니다.'), '') +
       card('경쟁이 덜한 곳', lowComp, '같은 업종 가게가 상대적으로 적은 동네입니다.', 'niche') +
       card('수요 기반이 큰 곳', highDemand, '거주인구와 직장인구가 많은 동네입니다.', 'risk') +
     '</div>';
@@ -732,7 +736,7 @@ function demandSpendingStats(row, stat){
 }
 
 function scoreGuide(r){
-  if ((r.score || 0) >= 70) return '서울 행정동 중 매출·수요·경쟁 조건이 함께 강한 후보입니다.';
+  if ((r.score || 0) >= 70) return r.sales ? '서울 행정동 중 매출·수요·경쟁 조건이 함께 강한 후보입니다.' : '카드매출 자료는 없지만 수요·경쟁 조건이 강한 후보입니다.';
   if ((r.score || 0) >= 45) return '조건은 보통 이상입니다. 실제 임대료와 보행 동선을 같이 보면 판단이 쉬워집니다.';
   return '한두 지표만 보고 들어가기보다 현장 조건을 먼저 확인해야 하는 후보입니다.';
 }
@@ -923,7 +927,7 @@ function rowHtml(r, i){
 function explainRow(r, rows){
   const b = BIZ[state.biz];
   const bits = [
-    level(r.sales, rows, 'sales', '선택 업종 매출이 서울 상위권입니다', '선택 업종 매출이 중상위권입니다', '선택 업종 매출 신호는 약합니다'),
+    r.sales ? level(r.sales, rows, 'sales', '매출 자료가 있는 동네 중 이 업종 전체 매출이 높은 편입니다', '매출 자료가 있는 동네 중 이 업종 전체 매출이 중간 이상입니다', '이 업종 전체 매출은 자료가 있는 동네 중 낮은 편입니다') : '이 동네의 카드매출 자료는 없습니다',
     level(r.workers, rows, 'workers', '직장인구가 많아 평일 수요가 강합니다', '직장인구가 일정 수준 있습니다', '직장인구 신호는 약합니다'),
     level(r.residents, rows, 'residents', '상주인구 기반 수요도 큽니다', '상주인구 기반 수요가 보통입니다', '상주인구 기반 수요는 제한적입니다')
   ];
@@ -942,8 +946,9 @@ function dataBasisNotes(ctx){
     if (ctx && ctx.estimatedSales) notes.push('추정 보정폭은 참고값의 75~135% 안으로 제한합니다.');
     if (ctx && ctx.visibleTasis) notes.push('국세청 값은 서울 전체 평균 참고자료이며, 선택한 행정동의 실제 카드매출은 아닙니다.');
   } else {
-    notes.push('행정동 월평균 매출은 2026년 2분기 카드매출 기준입니다.');
+    notes.push('행정동 월평균 매출은 ' + quarterLabel(DATA.view && DATA.view.quarter) + ' 카드매출 기준입니다.');
   }
+  notes.push('유동인구는 기준 분기의 집계값입니다. 하루 평균 인구가 아닙니다.');
   return notes;
 }
 
@@ -1349,9 +1354,9 @@ function renderDetail(rows){
         stat('현장 확인', '시간대별 손님 흐름', demandTone(r)) +
       '</div>' +
         '<div><p class="grp-title">인구 흐름</p>' +
-          stat('하루 생활인구', withUnit(r.floating, '명')) +
-          stat('점심 시간대 인구', withUnit(r.lunch_flow, '명')) +
-          stat('저녁 시간대 인구', withUnit(r.evening_flow, '명')) +
+          stat('분기 유동인구', withUnit(r.floating, '명')) +
+          stat('분기 점심 시간대 유동인구', withUnit(r.lunch_flow, '명')) +
+          stat('분기 저녁 시간대 유동인구', withUnit(r.evening_flow, '명')) +
           stat('직장인구', withUnit(r.workers, '명')) +
           stat('거주인구', withUnit(r.residents, '명')) +
         '</div>' +
@@ -1370,7 +1375,7 @@ function renderDetail(rows){
       '</div>' +
     '</div>';
   const analysisTab =
-    explainRow(r, rows) +
+    explainRow(r, ROWS) +
     '<div class="groups">' +
       '<div><p class="grp-title">판단 근거</p>' +
         stat('장사 성격', demandType(r), marketHypothesis) +
@@ -1387,11 +1392,11 @@ function renderDetail(rows){
       '</div>' +
       '<div><p class="grp-title">현장 검증</p>' +
         stat('첫 번째', '지도 확인', '선택 업종 핀이 어디에 몰리는지 보고, 빈 구간이 실제로 비어 있는지 확인합니다.') +
-        stat('두 번째', '임대료 확인', '가게 1곳 월평균 매출이 높아도 임대료·권리금이 높으면 후보에서 제외될 수 있습니다.') +
+        stat('두 번째', '임대료 확인', hasDongSales || estimatedSales ? '가게 1곳 월평균 매출이 높아도 임대료·권리금이 높으면 후보에서 제외될 수 있습니다.' : '매출 자료가 없으므로 임대료·권리금과 예상 비용을 현장에서 확인해야 합니다.') +
         stat('세 번째', '시간대 확인', demandTone(r)) +
       '</div>' +
-      '<div><p class="grp-title">서울 안 강한 상권</p><p class="basis-note">선택 업종 가게 1곳의 월평균 매출이 높게 잡힌 상권입니다. 후보 동네와 비교하는 참고용입니다.</p><ol class="market-rank">' + topMarketList(meta.top_markets) + '</ol></div>' +
-      '<div><p class="grp-title">주변 생활권 참고</p><p class="basis-note">상권배후지 기준으로 같은 업종이 강하게 잡힌 곳입니다.</p><ol class="market-rank">' + topMarketList(meta.top_hinterlands) + '</ol></div>' +
+      (meta.top_markets && meta.top_markets.length ? '<div><p class="grp-title">서울 안 강한 상권</p><p class="basis-note">선택 업종 가게 1곳의 월평균 매출이 높게 잡힌 상권입니다. 후보 동네와 비교하는 참고용입니다.</p><ol class="market-rank">' + topMarketList(meta.top_markets) + '</ol></div>' : '') +
+      (meta.top_hinterlands && meta.top_hinterlands.length ? '<div><p class="grp-title">주변 생활권 참고</p><p class="basis-note">상권배후지 기준으로 같은 업종이 강하게 잡힌 곳입니다.</p><ol class="market-rank">' + topMarketList(meta.top_hinterlands) + '</ol></div>' : '') +
     '</div>';
   const mapTab =
     '<div class="maparea"><div id="map"></div>' +
