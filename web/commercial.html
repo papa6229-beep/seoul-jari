@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '124';
+const V = '125';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -575,20 +575,27 @@ function buildRows(){
     acc.amount += r.sales || 0;
     acc.count += r.sales_count || 0;
     acc.stores += r.stores || 0;
+    if (r.stores && !r.sales) acc.missingStoreSales = true;
     return acc;
-  }, {amount: 0, count: 0, stores: 0});
-  const seoulReference = makeReference('서울 전체', seoulSum.amount, seoulSum.count, seoulSum.stores);
+  }, {amount: 0, count: 0, stores: 0, missingStoreSales: false});
+  const seoulReference = currentReferenceSales() ||
+    (!seoulSum.missingStoreSales ? makeReference('서울 전체', seoulSum.amount, seoulSum.count, seoulSum.stores) : null);
   const guSums = new Map();
+  const officialGuRefs = new Map();
   for (const r of base){
-    if (!guSums.has(r.gu)) guSums.set(r.gu, {amount: 0, count: 0, stores: 0});
+    if (!guSums.has(r.gu)) guSums.set(r.gu, {amount: 0, count: 0, stores: 0, missingStoreSales: false});
     const acc = guSums.get(r.gu);
     acc.amount += r.sales || 0;
     acc.count += r.sales_count || 0;
     acc.stores += r.stores || 0;
+    if (r.stores && !r.sales) acc.missingStoreSales = true;
+    if (r.reference_sales && r.reference_sales.scope === '자치구') officialGuRefs.set(r.gu, r.reference_sales);
   }
   for (const r of base){
     const gu = guSums.get(r.gu);
-    r.reference_sales = makeReference('자치구', gu.amount, gu.count, gu.stores) || seoulReference || r.reference_sales;
+    r.reference_sales = officialGuRefs.get(r.gu) ||
+      (!gu.missingStoreSales ? makeReference('자치구', gu.amount, gu.count, gu.stores) : null) ||
+      seoulReference;
   }
 
   const rangeFrom = fn => {
@@ -820,9 +827,9 @@ function salesReferenceTone(row){
   if (!row || !row.sales_per_store_month || !referenceMonthly) return '';
   const ratio = row.sales_per_store_month / referenceMonthly;
   const label = scopeLabel(row.reference_sales.scope, row);
-  if (ratio >= 2.5) return label + '보다 매우 높게 잡힌 동네입니다. 대형 매장, 프랜차이즈, 특수 입지 영향인지 확인해야 합니다.';
-  if (ratio >= 1.5) return label + '보다 높게 잡힌 동네입니다. 유동 동선과 직접 경쟁을 같이 확인하세요.';
-  if (ratio <= .5) return label + '보다 낮게 잡힌 동네입니다. 수요가 약한지, 매장이 너무 많은지 확인하세요.';
+  if (ratio >= 2.5) return label + ' 평균보다 크게 높습니다. 동·구 자료는 각각 집계되므로 이 숫자만으로 이유를 단정할 수 없습니다.';
+  if (ratio >= 1.5) return label + ' 평균보다 높습니다. 동·구 자료는 각각 집계되므로 차이의 원인은 별도로 확인해야 합니다.';
+  if (ratio <= .5) return label + ' 평균보다 크게 낮습니다. 동·구 자료는 각각 집계되므로 이 숫자만으로 이유를 단정할 수 없습니다.';
   return label + '와 큰 차이 없이 볼 수 있는 동네입니다.';
 }
 
