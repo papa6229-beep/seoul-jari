@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '121';
+const V = '122';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -311,13 +311,13 @@ function estimateFactor(row, ranges){
   const demand = norm(row.demand_raw, ranges.demand_raw.min, ranges.demand_raw.max) / 100;
   const spending = norm(row.spending || 0, ranges.spending.min, ranges.spending.max) / 100;
   const core = norm(row.core_people || 0, ranges.core_people.min, ranges.core_people.max) / 100;
-  const competition = norm(row.stores || 0, ranges.stores.min, ranges.stores.max, true) / 100;
+  const competition = norm(competitionStoreValue(row), ranges.stores.min, ranges.stores.max, true) / 100;
   const raw = demand * .42 + spending * .24 + core * .18 + competition * .16;
   return Math.max(.75, Math.min(1.35, .72 + raw * .72));
 }
 
 function estimatedMonthlySales(row, reference){
-  if (!row || !row.stores || !reference || !reference.monthly_sales_per_store) return null;
+  if (!row || !competitionStoreValue(row) || !reference || !reference.monthly_sales_per_store) return null;
   return Math.round(reference.monthly_sales_per_store * (row.estimate_factor || 1));
 }
 
@@ -590,17 +590,21 @@ function buildRows(){
     r.reference_sales = makeReference('자치구', gu.amount, gu.count, gu.stores) || seoulReference || r.reference_sales;
   }
 
+  const rangeFrom = fn => {
+    const vals = base.map(fn).filter(v => Number.isFinite(v));
+    return vals.length ? {min: Math.min(...vals), max: Math.max(...vals)} : {min: 0, max: 0};
+  };
   const ranges = {};
-  ['demand_raw','sales','stores','spending','core_people','workers','residents'].forEach(k => {
-    const vals = base.map(r => r[k]).filter(v => Number.isFinite(v));
-    ranges[k] = vals.length ? {min: Math.min(...vals), max: Math.max(...vals)} : {min: 0, max: 0};
+  ['demand_raw','sales','spending','core_people','workers','residents'].forEach(k => {
+    ranges[k] = rangeFrom(r => r[k]);
   });
+  ranges.stores = rangeFrom(r => competitionStoreValue(r));
   base.forEach(r => {
     const demand = norm(r.demand_raw, ranges.demand_raw.min, ranges.demand_raw.max);
     const revenue = norm(r.sales || 0, ranges.sales.min, ranges.sales.max);
     const spending = norm(r.spending || 0, ranges.spending.min, ranges.spending.max);
     const core = norm(r.core_people || 0, ranges.core_people.min, ranges.core_people.max);
-    const competition = norm(r.stores || 0, ranges.stores.min, ranges.stores.max, true);
+    const competition = norm(competitionStoreValue(r), ranges.stores.min, ranges.stores.max, true);
     const reference = r.reference_sales || currentReferenceSales();
     r.estimate_factor = estimateFactor(r, ranges);
     r.estimated_sales_per_store_month = !r.sales_per_store_month && reference
@@ -635,9 +639,9 @@ function renderSummary(rows){
   const meta = businessMeta();
   const ref = (BIZ[state.biz] && BIZ[state.biz].reference_sales) || meta.reference_sales;
   document.querySelectorAll('.commercial-insight').forEach(el => el.remove());
-  const bestBySales = rows.slice().sort((a, z) => rowSalesValue(z) - rowSalesValue(a) || (z.stores || 0) - (a.stores || 0))[0];
-  const best = salesOk ? bestBySales : rows.slice().sort((a, z) => (z.stores || 0) - (a.stores || 0))[0];
-  const validStoreRows = rows.filter(r => r.stores);
+  const bestBySales = rows.slice().sort((a, z) => rowSalesValue(z) - rowSalesValue(a) || competitionStoreValue(z) - competitionStoreValue(a))[0];
+  const best = salesOk ? bestBySales : rows.slice().sort((a, z) => competitionStoreValue(z) - competitionStoreValue(a))[0];
+  const validStoreRows = rows.filter(r => competitionStoreValue(r));
   const lowComp = (validStoreRows.length ? validStoreRows : rows).slice().sort((a, z) => (z.competition_score || 0) - (a.competition_score || 0) || (z.sales_per_store_month || 0) - (a.sales_per_store_month || 0))[0];
   const highDemand = rows.slice().sort((a, z) => ((z.residents || 0) + (z.workers || 0)) - ((a.residents || 0) + (a.workers || 0)))[0];
   const rowSalesNote = row => {
@@ -735,7 +739,7 @@ function mainCaution(row){
   if (salesRatio && salesRatio >= 2.5) return '매출 높음 · 이유 확인';
   if (salesRankStrong) return '매출만 높고 종합 판단은 낮음';
   if ((row.franchises || 0) && row.stores && row.franchises <= row.stores && row.franchises / row.stores >= .7) return '브랜드 경쟁 강함';
-  if ((row.stores || 0) >= 100) return '같은 업종 많음';
+  if (competitionStoreValue(row) >= 100) return '같은 업종 많음';
   return scoreLabel(row);
 }
 
@@ -746,7 +750,7 @@ function scoreShortLabel(r){
 }
 
 function competitionGuide(r){
-  if (!r.stores) return '선택 업종 점포 수가 낮게 잡혀 실제 영업점 확인이 필요합니다.';
+  if (!competitionStoreValue(r)) return '선택 업종 점포 수가 낮게 잡혀 실제 영업점 확인이 필요합니다.';
   if (r.competition_score >= 70) return '선택 업종 점포 부담이 낮은 편입니다. 단, 수요가 충분한지 같이 봐야 합니다.';
   if (r.competition_score >= 35) return '경쟁은 보통 수준입니다. 상권 안쪽 위치 차이가 결과를 크게 가를 수 있습니다.';
   return '선택 업종 점포가 많은 편입니다. 가격·콘셉트·노출 위치로 이길 수 있는지 먼저 봐야 합니다.';
@@ -762,6 +766,10 @@ function competitionCounts(row){
     franchises,
     split
   };
+}
+
+function competitionStoreValue(row){
+  return competitionCounts(row).total || 0;
 }
 
 function competitionCountText(row){
@@ -863,7 +871,7 @@ function filteredRows(){
   let out = ROWS;
   if (state.dong) out = out.filter(r => r.code === state.dong);
   if (q) out = out.filter(r => (r.full_name + ' ' + r.gu + ' ' + r.name).includes(q));
-  out = out.filter(r => r.score || r.sales || r.stores || r.floating || r.workers || r.residents);
+  out = out.filter(r => r.score || r.sales || competitionStoreValue(r) || r.floating || r.workers || r.residents);
   const key = state.sort;
   if (key === 'sales_per_store_month'){
     const salesValue = r => r.sales_per_store_month || r.estimated_sales_per_store_month || 0;
@@ -877,8 +885,8 @@ function filteredRows(){
     return withSales.concat(withoutSales);
   }
   out = out.slice().sort((a, b) => {
-    const av = a[key] || 0;
-    const bv = b[key] || 0;
+    const av = key === 'stores' ? competitionStoreValue(a) : (a[key] || 0);
+    const bv = key === 'stores' ? competitionStoreValue(b) : (b[key] || 0);
     const diff = state.sortDir === 'asc' ? av - bv : bv - av;
     return diff || a.code.localeCompare(b.code);
   });
@@ -907,8 +915,9 @@ function explainRow(r, rows){
     level(r.workers, rows, 'workers', '직장인구가 많아 평일 수요가 강합니다', '직장인구가 일정 수준 있습니다', '직장인구 신호는 약합니다'),
     level(r.residents, rows, 'residents', '상주인구 기반 수요도 큽니다', '상주인구 기반 수요가 보통입니다', '상주인구 기반 수요는 제한적입니다')
   ];
-  const caution = r.stores
-    ? b.label + ' 관련 점포가 ' + fmt(r.stores) + '곳이라 경쟁 강도는 별도 확인이 필요합니다.'
+  const totalStores = competitionStoreValue(r);
+  const caution = totalStores
+    ? b.label + ' 관련 점포가 ' + competitionCountText(r) + '이라 경쟁 강도는 별도 확인이 필요합니다.'
     : b.label + ' 관련 점포 수가 낮게 잡혀 현장 확인이 필요합니다.';
   return '<div class="commercial-why"><b>왜 이 후보인가</b><p>' + bits.join(' · ') + '.</p><p class="warn">' + caution + '</p></div>';
 }
@@ -940,7 +949,7 @@ function nextChecks(r, ctx){
     unmanned: ['야간 유동, CCTV 시야, 출입 관리, 민원 가능성을 먼저 확인', '아파트 출입 동선과 편의점·마트 경쟁 위치를 같이 확인', '재고 보충 거리와 관리 빈도를 감당할 수 있는지 확인']
   };
   const checks = [...(byBiz[state.biz] || []), ...common];
-  if ((r.stores || 0) > 100) checks.unshift('선택 업종 점포가 많으므로 가격, 콘셉트, 회전율 차별화 가능성을 먼저 확인');
+  if (competitionStoreValue(r) > 100) checks.unshift('선택 업종 점포가 많으므로 가격, 콘셉트, 회전율 차별화 가능성을 먼저 확인');
   if ((r.workers || 0) > (r.residents || 0) * 2) checks.unshift('평일 점심·퇴근 수요형인지, 주말 공백을 버틸 수 있는지 확인');
   if ((r.residents || 0) > (r.workers || 0) * 2) checks.unshift('주거 수요형인지, 야간·주말 운영 시간과 손님 1명이 보통 쓰는 돈이 맞는지 확인');
   if (r.market_change && r.market_change.name) checks.unshift('상권 변화지표가 ' + r.market_change.name + '인지, 실제 임대료와 공실 분위기가 같은지 확인');
@@ -1181,9 +1190,10 @@ function drawCommercialMap(row, keepView){
         const competitionLabel = c.split
           ? ' / 일반 ' + fmt(c.stores) + '곳 · 브랜드 ' + fmt(c.franchises) + '곳'
           : (c.total ? ' / 집계 ' + fmt(c.total) + '곳' : '');
-        const bizLabel = BIZ[state.biz].label + ' 좌표 ' + n('b') + '곳' +
-          competitionLabel +
-          (bizRawPts.length && bizRawPts.length !== n('b') ? ' · 실제 점포 ' + bizRawPts.length + '곳' : '');
+        const pointLabel = bizRawPts.length && bizRawPts.length !== n('b')
+          ? BIZ[state.biz].label + ' 점포 ' + bizRawPts.length + '곳 / 지도 좌표 ' + n('b') + '곳'
+          : BIZ[state.biz].label + ' 좌표 ' + n('b') + '곳';
+        const bizLabel = pointLabel + competitionLabel;
         const missingBiz = bizPts.length ? '' : ' · 선택 업종 좌표 없음';
         count.textContent = [
           bizLabel,
