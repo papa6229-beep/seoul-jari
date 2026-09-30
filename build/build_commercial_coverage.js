@@ -83,9 +83,9 @@ function typeMatchesSalesRow(type, row){
   return words.length > 0 && words.some(word => name.includes(word));
 }
 
-function referenceSalesScopes(type, regionalSales){
+function referenceSalesScopes(type, regionalSales, quarter){
   return regionalSales
-    .filter(item => item.payload && (item.payload.rows || []).some(row => typeMatchesSalesRow(type, row) && row.amount))
+    .filter(item => item.payload && (item.payload.rows || []).some(row => row.quarter === quarter && typeMatchesSalesRow(type, row) && row.amount))
     .map(item => item.scope);
 }
 
@@ -119,7 +119,7 @@ function build(){
       }
     }
     const map = countMapDongs(points, type.id);
-    const referenceScopes = referenceSalesScopes(type, regionalSales);
+    const referenceScopes = referenceSalesScopes(type, regionalSales, view.quarter);
     const item = {
       id: type.id,
       code: type.code || null,

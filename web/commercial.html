@@ -73,7 +73,7 @@
 </div>
 
 <script>
-const V = '123';
+const V = '124';
 const FILES = {
   view: 'commercial-view-dong.json',
   places: 'places/index.json',
@@ -89,7 +89,7 @@ const BIZ = {
     caution: '카페는 임대료와 체류 동선 영향이 큽니다. 매출이 높아도 경쟁 점포 수를 같이 봅니다.'
   },
   cafe: {
-    label: '카페·간식 묶음',
+    label: '커피·제과·패스트푸드 묶음',
     words: ['커피', '음료', '제과', '패스트푸드'],
     demand: ['유동인구', '20~40대 상주·직장인', '식료품·음식 소비'],
     caution: '카페는 임대료와 체류 동선 영향이 큽니다. 매출이 높아도 경쟁 점포 수를 같이 봅니다.'
@@ -101,7 +101,7 @@ const BIZ = {
     caution: '점심형 업종은 11~14시 신호와 직장인구가 중요합니다. 배달 플랫폼 노출은 별도 확인이 필요합니다.'
   },
   fitness: {
-    label: '필라테스 · PT',
+    label: '운동시설·강습 묶음',
     words: ['스포츠 강습', '스포츠클럽', '헬스', '체육'],
     demand: ['20~40대 상주·직장인', '저녁 유동', '여가·문화 소비'],
     caution: '건물 조건, 샤워실, 층고, 방음, 주차는 공공데이터로 판단할 수 없습니다.'
@@ -113,10 +113,10 @@ const BIZ = {
     caution: '행정동 상권자료와 학원 인허가 자료는 기준이 다릅니다. 최종 판단은 기존 입지 분석 화면과 함께 봅니다.'
   },
   unmanned: {
-    label: '무인점포',
+    label: '생활소매·세탁 묶음',
     words: ['편의점', '슈퍼', '문구', '세탁', '생활용품'],
     demand: ['상주인구', '야간·저녁 유동', '가구 수'],
-    caution: '무인 운영 리스크, 민원, 치안, 관리 거리는 현장 확인이 필요합니다.'
+    caution: '이 통계는 무인 여부를 구분하지 않습니다. 무인 운영에 필요한 관리·치안 조건은 현장에서 확인해야 합니다.'
   }
 };
 
@@ -215,7 +215,7 @@ function rowSalesValue(row){
 
 function rowSalesKind(row){
   if (!row) return {label: '자료 없음', cls: 'none'};
-  if (row.sales_per_store_month) return {label: '실제 평균', cls: 'actual'};
+  if (row.sales_per_store_month) return {label: '카드매출 기반', cls: 'actual'};
   if (row.estimated_sales_per_store_month) return {label: '추정', cls: 'estimated'};
   if (row.reference_sales && row.reference_sales.monthly_sales_per_store) return {label: '참고', cls: 'reference'};
   return {label: '자료 없음', cls: 'none'};
@@ -234,7 +234,7 @@ function salesMissingText(){
   const picked = ROWS.find(r => r.code === state.picked);
   const ref = (picked && picked.reference_sales) || currentReferenceSales();
   if (ref && ref.monthly_sales_per_store){
-    return '행정동 실제 매출은 없지만 ' + scopeLabel(ref.scope, picked) + ' 가게 1곳 월평균 매출을 참고값으로 보여줍니다.';
+    return '이 행정동의 카드매출 자료는 없지만 ' + scopeLabel(ref.scope, picked) + ' 가게 1곳 월평균 매출을 참고값으로 보여줍니다.';
   }
   return '이 업종은 행정동 매출이 없어 가게 수와 수요부터 비교합니다.';
 }
@@ -404,7 +404,7 @@ function renderCoverageBox(){
     cov.has_sales ? '행정동 매출 ' + fmt(cov.sales_dongs) + '개 동' : '행정동 매출 없음',
     cov.has_reference_sales ? '서울 평균 참고 가능' : '',
     cov.has_stores ? '가게 수 ' + fmt(cov.store_dongs) + '개 동' : '가게 수 없음',
-    cov.has_map_points ? '지도 지점 ' + fmt(cov.map_points) + '개' : '지도 지점 없음'
+    cov.has_map_points ? '관련 업소 지도 지점 ' + fmt(cov.map_points) + '개' : '지도 지점 없음'
   ].filter(Boolean) : ['자료 확인 중'];
   coverageBox.className = 'coverage-box ' + coverageClass(cov);
   coverageBox.innerHTML =
@@ -454,7 +454,7 @@ function applyBusinessTypes(){
   }
   biz.innerHTML = groupOrder.concat([...byGroup.keys()].filter(g => !groupOrder.includes(g))).filter(g => byGroup.has(g)).map(group => {
     const options = byGroup.get(group).map(item =>
-      '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.id === 'cafe' ? '카페·간식 묶음' : item.label) + '</option>'
+      '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(item.label) + '</option>'
     ).join('');
     return '<optgroup label="' + escapeHtml(group) + '">' + options + '</optgroup>';
   }).join('');
@@ -800,13 +800,18 @@ function franchiseShareText(row){
 }
 
 function groupScopeNote(){
-  return state.biz === 'cafe'
-    ? '커피·음료, 제과점, 패스트푸드점을 합친 넓은 묶음입니다. 커피 창업 판단은 업종에서 커피-음료를 선택해 보세요.'
-    : '';
+  return {
+    cafe: '커피-음료·제과점·패스트푸드점의 매출과 점포를 합친 평균입니다. 커피만 보려면 커피-음료를 선택하세요.',
+    food: '한식·중식·일식·양식·분식·패스트푸드점 등을 합친 넓은 묶음입니다.',
+    fitness: '스포츠 강습과 스포츠클럽 등을 합친 통계입니다. 필라테스·PT만의 매출은 아닙니다.',
+    academy: '여러 학원·교습 업종을 합친 통계입니다.',
+    unmanned: '편의점·슈퍼·문구·세탁·생활용품점 전체를 합친 통계입니다. 무인 운영 여부는 구분되지 않습니다.'
+  }[state.biz] || '';
 }
 
 function broadBusinessNote(){
-  if (state.biz === 'cafe') return '묶음 안의 업종 차이가 커서 평균이 크게 튈 수 있습니다. 커피만 볼 때는 커피-음료 기준을 우선 보세요.';
+  if (state.biz === 'cafe') return '패스트푸드점 매출도 포함된 평균입니다. 커피 가게의 매출로 읽지 마세요.';
+  if (state.biz === 'unmanned') return '무인점포만의 매출은 알 수 없습니다. 지도에는 상호·업종명에 무인·셀프가 표시된 업소가 나옵니다.';
   return '';
 }
 
@@ -1061,7 +1066,7 @@ function setMapSelection(p){
   const panel = document.getElementById('mapSelection');
   if (!panel) return;
   if (!p){
-    panel.innerHTML = '<span>선택한 장소</span><p>지도에서 같은 업종 핀과 주변 상가·아파트 위치를 같이 보세요. 핀을 누르면 상호명, 업종, 주소가 나옵니다.</p>';
+    panel.innerHTML = '<span>선택한 장소</span><p>지도에서 관련 업소와 주변 상가·아파트 위치를 볼 수 있습니다. 핀을 누르면 상호명과 주소가 나옵니다.</p>';
     return;
   }
   panel.innerHTML =
@@ -1087,6 +1092,16 @@ function businessPoints(row){
     }
   }
   return [];
+}
+
+function mapBusinessLabel(){
+  return {
+    cafe: '카페·커피 관련 업소',
+    food: '분식·김밥·샌드위치 관련 업소',
+    fitness: '필라테스·헬스 관련 업소',
+    academy: '학원·교습소 관련 업소',
+    unmanned: '무인·셀프 표기 업소'
+  }[state.biz] || BIZ[state.biz].label + ' 관련 업소';
 }
 
 function groupBusinessPoints(points){
@@ -1179,20 +1194,22 @@ function drawCommercialMap(row, keepView){
       if (count){
         const n = t => pts.filter(p => p.t === t).length;
         const c = competitionCounts(row);
-        const competitionLabel = c.split
-          ? ' / 일반 ' + fmt(c.stores) + '곳 · 브랜드 ' + fmt(c.franchises) + '곳'
-          : (c.total ? ' / 집계 ' + fmt(c.total) + '곳' : '');
-        const pointLabel = bizRawPts.length && bizRawPts.length !== n('b')
-          ? BIZ[state.biz].label + ' 점포 ' + bizRawPts.length + '곳 / 지도 좌표 ' + n('b') + '곳'
-          : BIZ[state.biz].label + ' 좌표 ' + n('b') + '곳';
-        const bizLabel = pointLabel + competitionLabel;
-        const missingBiz = bizPts.length ? '' : ' · 선택 업종 좌표 없음';
+        const pointLabel = state.show.business === false
+          ? mapBusinessLabel() + ' 핀 숨김'
+          : '지도에 표시한 ' + mapBusinessLabel() + ' ' + fmt(bizRawPts.length) + '곳' +
+            (bizRawPts.length !== n('b') ? ' (' + fmt(n('b')) + '개 위치)' : '') +
+            (bizRawPts.length >= 250 ? ' · 최대 250곳 표시' : '');
+        const competitionLabel = c.total
+          ? '서울시 통계상 전체 ' + fmt(c.total) + '곳' +
+            (c.split ? ' (일반 ' + fmt(c.stores) + ' · 프랜차이즈 ' + fmt(c.franchises) + ')' : '')
+          : '서울시 통계상 점포 수 없음';
         count.textContent = [
-          bizLabel,
+          pointLabel,
+          competitionLabel,
           state.biz === 'academy' ? '학원참고 ' + n('a') : '',
           '아파트 ' + n('p'),
           '상가 ' + n('g')
-        ].filter(Boolean).join(' · ') + missingBiz;
+        ].filter(Boolean).join(' · ');
       }
     });
   }).catch(() => {
@@ -1245,6 +1262,16 @@ function renderDetail(rows){
   const broadNote = broadBusinessNote();
   const stat = (k, v, s) => '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span>' + (s ? '<span class="sub-note">' + s + '</span>' : '') + '</div>';
   const noteStat = (k, v) => '<div class="stat stat-note"><span class="k">' + k + '</span><span class="note-v">' + escapeHtml(v) + '</span></div>';
+  const cafeBreakdown = state.biz === 'cafe'
+    ? [
+        ['svc_CS100010', '커피-음료'],
+        ['svc_CS100005', '제과점'],
+        ['svc_CS100006', '패스트푸드점']
+      ].map(([id, label]) => {
+        const entry = r.all_sales_items.find(item => item.id === id);
+        return entry ? stat(label + ' 1곳 월평균 매출', money(entry.monthly_per_store), fmt(entry.stores) + '곳 기준') : '';
+      }).join('')
+    : '';
   const item = r => {
     if (r.amount){
       return '<li><b>' + r.business_name + '</b><span>1곳 월평균 ' + money(r.monthly_per_store) + (r.stores ? ' · ' + fmt(r.stores) + '곳 기준' : '') + '</span></li>';
@@ -1266,14 +1293,14 @@ function renderDetail(rows){
         (broadNote ? noteStat('먼저 확인', broadNote) : '') +
         stat(localOneStoreTitle, hasDongSales ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
         (!hasDongSales && visibleTasis ? stat(seoulOneStoreTitle, manwonMoney(visibleTasis.row.avg_monthly_sales_manwon)) : '') +
-        (showReferenceLine ? stat(referenceScope + ' 가게 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
+        (showReferenceLine ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
         stat('같은 업종 가게', competitionCountText(r)) +
         stat('손님이 생기는 이유', demandType(r)) +
         stat('주의할 점', mainCaution(r)) +
       '</div>' +
       '<div><p class="grp-title">먼저 볼 것</p>' +
-        stat('매출 자료', hasDongSales ? period + ' 카드매출 기준' : (hasAnySales ? '이 행정동 실제 매출 없음' : '이 업종 행정동 매출 없음')) +
-        stat('비교 기준', hasDongSales ? '행정동 실제 평균' : (estimatedSales ? '참고값에 동네 조건 반영' : '점포·수요 기준')) +
+        stat('매출 자료', hasDongSales ? period + ' 카드매출 추정치' : (hasAnySales ? '이 행정동 카드매출 자료 없음' : '이 업종 행정동 매출 없음')) +
+        stat('비교 기준', hasDongSales ? '행정동 카드매출 기반 평균' : (estimatedSales ? '참고값에 동네 조건 반영' : '점포·수요 기준')) +
         stat('현장 확인', '입구 위치·차량 동선') +
       '</div>' +
     '</div>';
@@ -1282,6 +1309,7 @@ function renderDetail(rows){
       '<div><p class="grp-title">매출</p>' +
         stat(localOneStoreTitle, hasDongSales ? money(r.sales_per_store_month) : (r.estimated_sales_per_store_month ? money(r.estimated_sales_per_store_month) : '자료 없음')) +
         (showReferenceLine ? stat(referenceScope + ' ' + BIZ[state.biz].label + ' 1곳 참고 월평균 매출', money(reference.monthly_sales_per_store), hasDongSales ? referenceTone : '') : '') +
+        cafeBreakdown +
         (hasDongSales ? stat('손님 1명이 보통 쓰는 돈', r.unit_price ? fmt(r.unit_price) + '원' : '자료 없음') : '') +
         (!hasDongSales && reference && reference.customer_unit_price ? stat(referenceScope + ' 참고 객단가', fmt(reference.customer_unit_price) + '원') : '') +
       '</div>' +
@@ -1353,13 +1381,13 @@ function renderDetail(rows){
   const mapTab =
     '<div class="maparea"><div id="map"></div>' +
       '<div class="maplegend commercial-map-legend">' +
-        mapToggle('business', BIZ[state.biz].label, 'b1') +
+        mapToggle('business', mapBusinessLabel(), 'b1') +
         (state.biz === 'academy' ? mapToggle('academy', '기존 학원 참고', 'a1') : '') +
         mapToggle('apartment', '아파트', 'p3') +
         mapToggle('shop', '상가', 'g3') +
         '<span class="hint" id="mapcount"></span>' +
       '</div>' +
-      '<aside class="map-selection" id="mapSelection"><span>선택한 장소</span><p>지도에서 같은 업종 핀과 주변 상가·아파트 위치를 같이 보세요. 핀을 누르면 상호명, 업종, 주소가 나옵니다.</p></aside>' +
+      '<aside class="map-selection" id="mapSelection"><span>선택한 장소</span><p>지도에서 관련 업소와 주변 상가·아파트 위치를 볼 수 있습니다. 핀을 누르면 상호명과 주소가 나옵니다.</p></aside>' +
     '</div>';
   const checksTab = nextChecks(r, {hasDongSales, estimatedSales, visibleTasis});
   const content = {summary: summaryTab, sales: salesTab, demand: demandTab, analysis: analysisTab, map: mapTab, checks: checksTab}[state.tab] || summaryTab;

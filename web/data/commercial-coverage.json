@@ -1,6 +1,6 @@
 {
   "title": "상권 업종별 데이터 커버리지",
-  "generated_at": "2026-09-30T00:45:21.156Z",
+  "generated_at": "2026-09-30T00:58:22.720Z",
   "quarter": "20262",
   "rows": 427,
   "summary": {
@@ -14,7 +14,7 @@
     {
       "id": "cafe",
       "code": null,
-      "label": "개인 카페",
+      "label": "커피·제과·패스트푸드 묶음",
       "kind": "group",
       "has_sales": true,
       "has_stores": true,
@@ -62,7 +62,7 @@
     {
       "id": "fitness",
       "code": null,
-      "label": "필라테스 · PT",
+      "label": "운동시설·강습 묶음",
       "kind": "group",
       "has_sales": true,
       "has_stores": true,
@@ -110,7 +110,7 @@
     {
       "id": "unmanned",
       "code": null,
-      "label": "무인점포",
+      "label": "생활소매·세탁 묶음",
       "kind": "group",
       "has_sales": true,
       "has_stores": true,

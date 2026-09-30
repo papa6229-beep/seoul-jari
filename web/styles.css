@@ -470,7 +470,7 @@ select.add-col{
 .maplegend .tg[aria-pressed="false"]{opacity:.42; background:#f4f2ee}
 .maplegend .tg[aria-pressed="false"] .pin{filter:grayscale(1)}
 .maplegend .opt{display:flex; align-items:center; gap:6px; cursor:pointer; margin-left:6px}
-.maplegend .hint{margin-left:auto; color:var(--ink-3); font-variant-numeric:tabular-nums}
+.maplegend .hint{width:100%; color:var(--ink-2); font-size:14px; line-height:1.5; font-variant-numeric:tabular-nums}
 
 /* 지도 위 핀.
    카카오 바탕은 POI 아이콘이 많고 복잡하다. 바탕은 흑백에 가깝게 누르고,

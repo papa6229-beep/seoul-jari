@@ -15,11 +15,11 @@ const GROUP_BIZ = {
 };
 
 const GROUP_LABELS = {
-  cafe: '개인 카페',
+  cafe: '커피·제과·패스트푸드 묶음',
   food: '분식 · 김밥 · 식사',
-  fitness: '필라테스 · PT',
+  fitness: '운동시설·강습 묶음',
   academy: '학원 · 교습소',
-  unmanned: '무인점포'
+  unmanned: '생활소매·세탁 묶음'
 };
 
 function readJson(name){
