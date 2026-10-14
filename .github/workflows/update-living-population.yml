@@ -44,6 +44,7 @@ jobs:
           node build/fetch_commercial_regional_stores.test.js
           node build/build_commercial_view_data.test.js
           node --test build/validate_commercial_view_data.test.js
+          node --test build/validate_data_refresh.test.js
           node --test web/commercial-map-data.test.js
       - name: Fetch living population
         env:
@@ -73,6 +74,8 @@ jobs:
           node build/validate_commercial_view_data.js
           node build/build_commercial_coverage.js
           python3 build/prep_dates.py
+      - name: Guard against empty or shrunken data before commit
+        run: node build/validate_data_refresh.js
       - name: Commit updated data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
