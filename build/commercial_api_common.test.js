@@ -11,6 +11,37 @@ function pages(payloads,extra={}){
 }
 const page=(total,row)=>({Test:{list_total_count:total,row}});
 
+const confirmedHistoryServices=[
+  'VwsmAdstrdAptW','VwsmAdstrdIxQq','VwsmAdstrdFcltyW','VwsmAdstrdNcmCnsmpW','VwsmAdstrdRepopW',
+  'VwsmSignguSelngW','VwsmMegaSelngW','VwsmSignguStorW','VwsmMegaStorW'
+];
+test('confirmed nine additional history feeds filter only after complete validated paging',async()=>{
+  for(const service of confirmedHistoryServices){
+    const rows=[
+      {STDR_YYQU_CD:'20211',id:1},{STDR_YYQU_CD:'20262',id:2},
+      {STDR_YYQU_CD:'20261',id:3},{STDR_YYQU_CD:'20262',id:4}
+    ];
+    const calls=[];
+    const run=quarter=>fetchPagedRows({key:'KEY',service,quarter,pageSize:2,fetchImpl:async url=>{
+      const start=Number(new URL(url).pathname.split('/')[4]);calls.push(start);
+      return {ok:true,text:async()=>JSON.stringify({[service]:{list_total_count:4,row:rows.slice(start-1,start+1)}})};
+    }});
+    const result=await run('20262');
+    assert.deepEqual(result,{total:4,rows:[rows[1],rows[3]]},service);
+    assert.deepEqual(calls,[1,3],service);
+    await assert.rejects(run('20263'),/quarter/i,service);
+  }
+});
+
+test('expanded history policy still rejects incomplete pages and invalid historical quarters',async()=>{
+  const service='VwsmAdstrdRepopW';
+  for(const payload of [
+    {list_total_count:3,row:[{STDR_YYQU_CD:'20262'}]},
+    {list_total_count:2,row:[{STDR_YYQU_CD:'bad'},{STDR_YYQU_CD:'20262'}]}
+  ])await assert.rejects(fetchPagedRows({key:'KEY',service,quarter:'20262',
+    fetchImpl:async()=>({ok:true,text:async()=>JSON.stringify({[service]:payload})})}));
+});
+
 test('only the explicit floating history service filters a complete history to the requested quarter',async()=>{
   const service='VwsmAdstrdFlpopW';
   const history=[{STDR_YYQU_CD:'20251',id:1},{STDR_YYQU_CD:'20262',id:2},{STDR_YYQU_CD:'20262',id:3}];

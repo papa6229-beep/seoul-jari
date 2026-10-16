@@ -4,7 +4,12 @@ const crypto = require('node:crypto');
 const {fetchSeoulOpenApi} = require('./fetch_seoul_openapi');
 
 const ROOT = path.resolve(__dirname, '..');
-const HISTORY_SERVICES = Object.freeze(['VwsmAdstrdFlpopW']);
+// These verified providers return multi-quarter history despite a quarter argument.
+const HISTORY_SERVICES = Object.freeze([
+  'VwsmAdstrdFlpopW',
+  'VwsmAdstrdAptW', 'VwsmAdstrdIxQq', 'VwsmAdstrdFcltyW', 'VwsmAdstrdNcmCnsmpW', 'VwsmAdstrdRepopW',
+  'VwsmSignguSelngW', 'VwsmMegaSelngW', 'VwsmSignguStorW', 'VwsmMegaStorW'
+]);
 
 function isCompactDate(value){
   if (typeof value !== 'string' || !/^[1-9]\d{7}$/.test(value)) return false;
