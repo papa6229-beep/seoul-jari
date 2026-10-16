@@ -26,3 +26,19 @@ test('limited store runs cannot mutate or commit canonical files',()=>{
     assert.ok(step,title);assert.match(step,/inputs\.limit_gu == '' && inputs\.max_pages == ''/,title);
   }
 });
+test('only accepted main data commits request the existing Pages deployment',()=>{
+  for(const name of ['update-living-population','update-store-data']){
+    const text=read(name);
+    assert.match(text,/permissions:[\s\S]*pages: write/);
+    const commit=text.split('      - name: ').find(x=>x.startsWith('Commit updated data'));
+    assert.match(commit,/id: commit/);
+    const step=text.split('      - name: ').find(x=>x.startsWith('Refresh existing GitHub Pages'));
+    assert.ok(step);
+    assert.match(step,/github\.ref == 'refs\/heads\/main'/);
+    assert.match(step,/steps\.commit\.outputs\.changes_detected == 'true'/);
+    assert.match(step,/EXPECTED_DATA_COMMIT: \$\{\{ steps\.commit\.outputs\.commit_hash \}\}/);
+    assert.match(step,/GITHUB_TOKEN: \$\{\{ github\.token \}\}/);
+    assert.match(step,/node build\/refresh_existing_pages\.js/);
+    assert.ok(text.indexOf('Refresh existing GitHub Pages')>text.indexOf('Guard final data before commit'));
+  }
+});
