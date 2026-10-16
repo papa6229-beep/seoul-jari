@@ -12,9 +12,8 @@
   출력:
     web/data/living-population-daily-gu.json
 */
-const fs = require('fs');
 const path = require('path');
-const {fetchSeoulOpenApi} = require('./fetch_seoul_openapi');
+const {fetchPagedRows, writeJson, isCompactDate} = require('./commercial_api_common');
 
 const ROOT = path.resolve(__dirname, '..');
 const SERVICE = 'SPOP_DAILYSUM_JACHI_250';
@@ -76,30 +75,17 @@ async function fetchDailyGuPopulation({
   key,
   date = '',
   pageSize = 1000,
-  fetchImpl = fetch
+  fetchImpl = fetch,
+  requestOptions = {}
 }){
-  const rows = [];
-  let start = 1;
-  let total = null;
-
-  while (total === null || start <= total){
-    const end = start + pageSize - 1;
-    const data = await fetchSeoulOpenApi({
-      key,
-      service: SERVICE,
-      start,
-      end,
-      args: date ? [date] : [],
-      fetchImpl
-    });
-    const payload = data.payload || {};
-    total = Number(payload.list_total_count || 0);
-    rows.push(...(payload.row || []));
-    if (!payload.row || payload.row.length === 0) break;
-    start = end + 1;
-  }
-
-  const gu = normalizeRows(rows);
+  const {rows, total} = await fetchPagedRows({key, service: SERVICE, date, pageSize, fetchImpl, requestOptions,
+    rowIdentity: row => {
+      if (!isCompactDate(row.STDR_DE_ID) || !/^11\d{3}$/.test(row.SIGNGU_CODE_SE || '')) throw new Error('Invalid daily date/district');
+      return row.STDR_DE_ID + ':' + row.SIGNGU_CODE_SE;
+    }});
+  const latest = date || rows.reduce((max, row) => row.STDR_DE_ID > max ? row.STDR_DE_ID : max, '');
+  const gu = normalizeRows(rows.filter(row => row.STDR_DE_ID === latest));
+  if (!gu.length) throw new Error('No district rows for selected daily date');
   return {
     title: '자치구별 서울 생활인구(250m) 일별집계',
     source: '서울 열린데이터광장 SPOP_DAILYSUM_JACHI_250',
@@ -124,13 +110,24 @@ async function fetchDailyGuPopulation({
   };
 }
 
+async function fetchPublishedDailyGuPopulation({key, date = '', now = new Date(), maxLookbackDays = 7, pageSize = 1000, fetchImpl = fetch, requestOptions = {}}){
+  if (!Number.isInteger(maxLookbackDays) || maxLookbackDays < 0 || maxLookbackDays > 7) throw new Error('Invalid daily lookback bound');
+  if (date) return fetchDailyGuPopulation({key, date, pageSize, fetchImpl, requestOptions});
+  const initial = defaultLivingPopulationDate(now);
+  const base = new Date(initial.slice(0, 4) + '-' + initial.slice(4, 6) + '-' + initial.slice(6, 8) + 'T00:00:00Z');
+  for (let offset = 0; offset <= maxLookbackDays; offset++) {
+    const candidate = new Date(base.getTime() - offset * 86400000).toISOString().slice(0, 10).replace(/-/g, '');
+    try { return await fetchDailyGuPopulation({key, date: candidate, pageSize, fetchImpl, requestOptions}); }
+    catch (error) { if (error.code !== 'INFO-200' || offset === maxLookbackDays) throw error; }
+  }
+}
+
 async function main(){
   const key = getKey();
-  const date = getArg('date', defaultLivingPopulationDate());
+  const date = getArg('date', '');
   const out = path.resolve(getArg('out', DEFAULT_OUT));
-  const summary = await fetchDailyGuPopulation({key, date});
-  fs.mkdirSync(path.dirname(out), {recursive: true});
-  fs.writeFileSync(out, JSON.stringify(summary, null, 2) + '\n', 'utf8');
+  const summary = await fetchPublishedDailyGuPopulation({key, date});
+  writeJson(out, summary);
   console.log(`저장: ${path.relative(ROOT, out)}  기준일=${summary.date || '-'}  ${summary.gu.length}개 구`);
 }
 
@@ -141,4 +138,4 @@ if (require.main === module){
   });
 }
 
-module.exports = {SERVICE, compactDate, defaultLivingPopulationDate, normalizeRows, fetchDailyGuPopulation};
+module.exports = {SERVICE, compactDate, defaultLivingPopulationDate, normalizeRows, fetchDailyGuPopulation, fetchPublishedDailyGuPopulation};

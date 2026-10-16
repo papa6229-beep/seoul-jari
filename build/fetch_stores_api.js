@@ -10,10 +10,12 @@
     node build/fetch_stores_api.js
 
   빠른 점검:
-    node build/fetch_stores_api.js --limit-gu=강남구 --max-pages=1
+    node build/fetch_stores_api.js --limit-gu=강남구 --max-pages=1 --out=sample-stores.json
 */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const {writeJson} = require('./commercial_api_common');
 const {summarizeRows, CATEGORIES} = require('./prep_stores');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -29,10 +31,32 @@ const SEOUL_GU = [
   ['11620', '관악구'], ['11650', '서초구'], ['11680', '강남구'], ['11710', '송파구'], ['11740', '강동구']
 ];
 
-function getArg(name, fallback = ''){
+function getArg(args, name, fallback = ''){
   const prefix = '--' + name + '=';
-  const hit = process.argv.find(a => a.startsWith(prefix));
+  const matches = args.filter(a => a.startsWith(prefix));
+  if (args.includes('--' + name) || matches.length > 1) throw new Error('Invalid --' + name);
+  const hit = matches[0];
   return hit ? hit.slice(prefix.length) : fallback;
+}
+
+function validateMaxPages(maxPages){
+  if (maxPages !== Infinity && (!Number.isSafeInteger(maxPages) || maxPages < 1)) throw new Error('Invalid max-pages');
+}
+
+function parseCliOptions(args = process.argv.slice(2)){
+  const out = getArg(args, 'out');
+  if (args.includes('--out=') || args.includes('--out')) throw new Error('Invalid --out');
+  const output = path.resolve(out || DEFAULT_OUT);
+  const limitGu = getArg(args, 'limit-gu');
+  const rawPages = getArg(args, 'max-pages', null);
+  if (rawPages !== null && !/^[1-9]\d*$/.test(rawPages)) throw new Error('Invalid max-pages');
+  const maxPages = rawPages === null ? Infinity : Number(rawPages);
+  validateMaxPages(maxPages);
+  const resolvedTarget = fs.existsSync(output) ? fs.realpathSync(output) : output;
+  const canonical = fs.existsSync(DEFAULT_OUT) ? fs.realpathSync(DEFAULT_OUT) : DEFAULT_OUT;
+  const samePath = process.platform === 'win32' ? resolvedTarget.toLowerCase() === canonical.toLowerCase() : resolvedTarget === canonical;
+  if ((limitGu || maxPages !== Infinity) && (!out || samePath)) throw new Error('Limited collection requires explicit noncanonical --out');
+  return {output, limitGu, maxPages, asOf: getArg(args, 'as-of', new Date().toISOString().slice(0, 10))};
 }
 
 function getServiceKey(){
@@ -43,29 +67,51 @@ function getServiceKey(){
 
 function itemsFromJson(json){
   const body = json && json.body;
+  if (!isObject(body)) throw new Error('Invalid API body');
   const items = body && body.items;
-  if (!items) return [];
+  if (items === undefined || items === null || items === '') return [];
   if (Array.isArray(items)) return items;
-  if (Array.isArray(items.item)) return items.item;
-  if (items.item) return [items.item];
-  return [];
+  if (isObject(items) && Array.isArray(items.item)) return items.item;
+  if (isObject(items) && isObject(items.item)) return [items.item];
+  throw new Error('Invalid API items');
 }
 
-async function fetchJson(url, fetchImpl = fetch){
-  let res;
-  try {
-    res = await fetchImpl(url);
-  } catch (err) {
-    const cause = err && err.cause ? ` (${err.cause.code || err.cause.message || err.cause})` : '';
-    throw new Error('API 연결 실패: ' + (err.message || err) + cause);
+const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const stable = value => Array.isArray(value) ? value.map(stable) : isObject(value)
+  ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
+function rowIdentity(row){
+  if (!isObject(row)) throw new Error('Invalid API item');
+  if (Object.hasOwn(row, 'bizesId')) {
+    if (!(typeof row.bizesId === 'string' && row.bizesId.trim() || typeof row.bizesId === 'number' && Number.isFinite(row.bizesId))) throw new Error('Invalid bizesId');
+    return 'id:' + row.bizesId;
   }
-  const text = await res.text();
-  if (!res.ok) throw new Error('API HTTP ' + res.status + ': ' + text.slice(0, 200));
+  // Fixtures/older responses without IDs use the entire record, not an invented business key.
+  return 'row:' + crypto.createHash('sha256').update(JSON.stringify(stable(row))).digest('hex');
+}
+
+function requestError(code, message, retryable = false){
+  return Object.assign(new Error(message), {code, retryable});
+}
+
+async function fetchJson(url, fetchImpl = fetch, {timeoutMs = 20000} = {}){
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000) throw new Error('Invalid request timeout');
+  const controller = new AbortController();
+  let timer;
   try {
-    return JSON.parse(text);
-  } catch (err) {
-    throw new Error('JSON 파싱 실패: ' + text.slice(0, 200));
-  }
+    const request = (async () => {
+      let res, text;
+      try {
+        res = await fetchImpl(url, {signal: controller.signal});
+        text = await res.text();
+      } catch { throw requestError('NETWORK', 'API 연결/응답 읽기 실패', true); }
+      if (!res.ok) throw requestError('HTTP_ERROR', 'API HTTP ' + (Number.isInteger(res.status) ? res.status : '오류'), res.status >= 500 && res.status <= 599);
+      try { return JSON.parse(text); } catch { throw requestError('SCHEMA', 'JSON 파싱 실패'); }
+    })();
+    const timeout = new Promise((resolve, reject) => {
+      timer = setTimeout(() => { reject(requestError('TIMEOUT', 'API 응답 시간 초과', true)); controller.abort(); }, timeoutMs);
+    });
+    return await Promise.race([request, timeout]);
+  } finally { clearTimeout(timer); }
 }
 
 async function fetchJsonWithRetry(url, fetchImpl = fetch){
@@ -76,7 +122,7 @@ async function fetchJsonWithRetry(url, fetchImpl = fetch){
       return await fetchJson(url, fetchImpl);
     } catch (err) {
       lastError = err;
-      if (i === tries) break;
+      if (i === tries || !err.retryable) break;
       const waitMs = i * 2500;
       console.warn(`API 호출 실패, ${waitMs / 1000}초 후 재시도 ${i}/${tries - 1}: ${err.message}`);
       await new Promise(resolve => setTimeout(resolve, waitMs));
@@ -97,52 +143,73 @@ function buildUrl({serviceKey, guCode, pageNo}){
 }
 
 async function fetchGu({serviceKey, guCode, guName, maxPages = Infinity, fetchImpl = fetch}){
+  validateMaxPages(maxPages);
   const rows = [];
+  const identities = new Set();
   let totalCount = null;
   for (let pageNo = 1; pageNo <= maxPages; pageNo++){
     const url = buildUrl({serviceKey, guCode, pageNo});
     const json = await fetchJsonWithRetry(url, fetchImpl);
-    const body = json.body || {};
-    if (totalCount === null) totalCount = Number(body.totalCount || 0);
+    if (!isObject(json)) throw new Error('Invalid API response');
+    // SEMAS OpenAPI guide documents resultCode "00" as NORMAL SERVICE.
+    if (Object.hasOwn(json, 'header') && (!isObject(json.header) || json.header.resultCode !== '00')) throw new Error('API header failure');
+    const body = json.body;
+    if (!isObject(body)) throw new Error('Invalid API body');
+    const count = body.totalCount;
+    if (!(typeof count === 'number' || typeof count === 'string' && /^\d+$/.test(count)) || !Number.isSafeInteger(Number(count)) || Number(count) < 0) throw new Error('Invalid API totalCount');
+    const pageTotal = Number(count);
+    if (totalCount !== null && pageTotal !== totalCount) throw new Error('API totalCount changed');
+    totalCount = pageTotal;
     const items = itemsFromJson(json);
+    if (items.length !== Math.min(NUM_ROWS, Math.max(0, totalCount - rows.length))) throw new Error('Incomplete API page');
+    for (const row of items) {
+      const identity = rowIdentity(row);
+      if (identities.has(identity)) throw new Error('Duplicate API item/page');
+      identities.add(identity);
+    }
     rows.push(...items);
-    if (!items.length || rows.length >= totalCount) break;
+    if (rows.length === totalCount) break;
   }
-  return {guCode, guName, totalCount: totalCount || rows.length, rows};
+  return {guCode, guName, totalCount, rows, complete: rows.length === totalCount};
 }
 
 async function fetchSeoulStores({serviceKey, limitGu = '', maxPages = Infinity, fetchImpl = fetch}){
+  validateMaxPages(maxPages);
   const targets = limitGu ? SEOUL_GU.filter(([, name]) => name === limitGu) : SEOUL_GU;
-  if (!targets.length) throw new Error('알 수 없는 서울 구 이름입니다: ' + limitGu);
+  if (!targets.length) throw new Error('알 수 없는 서울 구 이름입니다.');
   const all = [];
   const fetched = [];
+  const identities = new Set();
   for (const [guCode, guName] of targets){
     const result = await fetchGu({serviceKey, guCode, guName, maxPages, fetchImpl});
-    fetched.push({guCode, guName, totalCount: result.totalCount, rows: result.rows.length});
+    for (const row of result.rows) {
+      const identity = rowIdentity(row);
+      if (identities.has(identity)) throw new Error('Duplicate API item across gu');
+      identities.add(identity);
+    }
+    fetched.push({guCode, guName, totalCount: result.totalCount, rows: result.rows.length, complete: result.complete});
     all.push(...result.rows);
     console.log(`${guName}: ${result.rows.length.toLocaleString('ko-KR')} / ${result.totalCount.toLocaleString('ko-KR')}`);
   }
-  return {rows: all, fetched};
+  return {rows: all, fetched, complete: !limitGu && fetched.length === SEOUL_GU.length && fetched.every(item => item.complete)};
 }
 
 async function main(){
+  const {output, limitGu, maxPages, asOf} = parseCliOptions();
   const serviceKey = getServiceKey();
-  const output = path.resolve(getArg('out', DEFAULT_OUT));
-  const limitGu = getArg('limit-gu', '');
-  const maxPages = Number(getArg('max-pages', '0')) || Infinity;
-  const asOf = getArg('as-of', new Date().toISOString().slice(0, 10));
 
-  const {rows, fetched} = await fetchSeoulStores({serviceKey, limitGu, maxPages});
+  const {rows, fetched, complete} = await fetchSeoulStores({serviceKey, limitGu, maxPages});
   const summary = summarizeRows(rows, asOf);
   summary.fetch = {
     endpoint: API_BASE + '/storeListInDong',
     divId: 'signguCd',
+    complete,
+    sample: !!limitGu || maxPages !== Infinity,
     fetched,
     categories: CATEGORIES.map(({id, label}) => ({id, label}))
   };
 
-  fs.mkdirSync(path.dirname(output), {recursive: true});
-  fs.writeFileSync(output, JSON.stringify(summary, null, 2) + '\n', 'utf8');
+  writeJson(output, summary);
   console.log(`저장: ${path.relative(ROOT, output)}  서울 ${summary.source_rows.toLocaleString('ko-KR')}행`);
 }
 
@@ -153,4 +220,4 @@ if (require.main === module){
   });
 }
 
-module.exports = {SEOUL_GU, buildUrl, itemsFromJson, fetchGu, fetchSeoulStores};
+module.exports = {SEOUL_GU, buildUrl, itemsFromJson, fetchJson, fetchGu, fetchSeoulStores, parseCliOptions};

@@ -8,7 +8,6 @@
   예:
     node build/fetch_seoul_openapi.js --service=서비스명 --start=1 --end=1000 --out=data/raw/seoul-service-sample.json
 */
-const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -33,31 +32,85 @@ function buildSeoulUrl({key, service, start = 1, end = 1000, format = 'json', ar
   return parts.join('/');
 }
 
-async function fetchSeoulOpenApi({key, service, start = 1, end = 1000, format = 'json', args = [], fetchImpl = fetch}){
+function apiError(code, message){
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
+async function fetchSeoulOpenApi({key, service, start = 1, end = 1000, format = 'json', args = [], fetchImpl = fetch,
+  maxAttempts = 3, timeoutMs = 20000, retryDelayMs = 500}){
+  if (!Number.isSafeInteger(start) || start < 1 || !Number.isSafeInteger(end) || end < start || end - start >= 1000)
+    throw new Error('서울 OpenAPI 페이지 범위 오류');
+  if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 3 ||
+    !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000 ||
+    !Number.isInteger(retryDelayMs) || retryDelayMs < 0 || retryDelayMs > 2000) throw new Error('Invalid request bounds');
   const url = buildSeoulUrl({key, service, start, end, format, args});
-  let res;
-  try {
-    res = await fetchImpl(url);
-  } catch (err) {
-    const cause = err.cause && (err.cause.code || err.cause.message);
-    throw new Error(`서울 OpenAPI 연결 실패 service=${service} start=${start} end=${end}: ${err.message}${cause ? ` (${cause})` : ''}`);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    let timer;
+    try {
+      const response = (async () => {
+        let res, text;
+        try {
+          res = await fetchImpl(url, {signal: controller.signal});
+          text = await res.text();
+        } catch { throw apiError('NETWORK', '서울 OpenAPI 연결/응답 읽기 실패'); }
+        if (!res.ok) throw apiError(res.status >= 500 && res.status <= 599 ? 'HTTP_5XX' : 'HTTP_ERROR',
+          '서울 OpenAPI HTTP ' + (Number.isInteger(res.status) ? res.status : '오류'));
+        return parseResponse({url, text, format, service, start, end});
+      })();
+      const timeout = new Promise((resolve, reject) => {
+        timer = setTimeout(() => { reject(apiError('TIMEOUT', '서울 OpenAPI 응답 시간 초과')); controller.abort(); }, timeoutMs);
+      });
+      return await Promise.race([response, timeout]);
+    } catch (error) {
+      if (attempt === maxAttempts || !['NETWORK', 'TIMEOUT', 'HTTP_5XX', 'ERROR-500'].includes(error.code)) throw error;
+    } finally { clearTimeout(timer); }
+    await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempt));
   }
-  const text = await res.text();
-  if (!res.ok) throw new Error('서울 OpenAPI HTTP ' + res.status + ': ' + text.slice(0, 200));
+}
+
+function parseResponse({url, text, format, service, start, end}){
+  // A JSON request can receive the provider's XML error envelope. Never echo its body/key.
+  const xmlCode = /^\s*</.test(text) && text.match(/<CODE>\s*((?:ERROR|INFO)-\d{3})\s*<\/CODE>/);
+  if (xmlCode && xmlCode[1] !== 'INFO-000') throw apiError(xmlCode[1], '서울 OpenAPI 오류 ' + xmlCode[1]);
   if (format !== 'json') return {url, text};
   let json;
   try {
     json = JSON.parse(text);
   } catch (err) {
-    throw new Error('서울 OpenAPI JSON 파싱 실패: ' + text.slice(0, 200));
+    throw apiError('SCHEMA', '서울 OpenAPI JSON 파싱 실패');
   }
-  const firstKey = Object.keys(json)[0];
-  const payload = json[firstKey];
-  const result = payload && payload.RESULT;
-  if (result && result.CODE && result.CODE !== 'INFO-000'){
-    throw new Error('서울 OpenAPI 오류 ' + result.CODE + ': ' + result.MESSAGE);
-  }
-  return {url, json, serviceKey: firstKey, payload};
+  const record = value => value && typeof value === 'object' && !Array.isArray(value);
+  if (!record(json)) throw new Error('서울 OpenAPI 응답 형식 오류');
+  const checkResult = container => {
+    if (!Object.hasOwn(container, 'RESULT')) return;
+    const result = container.RESULT;
+    if (!record(result) || typeof result.CODE !== 'string' || !result.CODE) throw new Error('서울 OpenAPI RESULT 형식 오류');
+    if (result.CODE !== 'INFO-000') {
+      if (result.CODE === 'INFO-200') {
+        const evidence = container === json && Object.hasOwn(json, service) ? json[service] : container;
+        if (!record(evidence) || Object.hasOwn(evidence, 'row') && (!Array.isArray(evidence.row) || evidence.row.length) ||
+          Object.hasOwn(evidence, 'list_total_count') && evidence.list_total_count !== 0 && evidence.list_total_count !== '0')
+          throw apiError('SCHEMA', '서울 OpenAPI no-data 응답 모순');
+      }
+      const code = /^(?:ERROR|INFO)-\d{3}$/.test(result.CODE) ? result.CODE : 'API_RESULT';
+      throw apiError(code, '서울 OpenAPI 오류 ' + code);
+    }
+  };
+  checkResult(json);
+  if (!Object.hasOwn(json, service) || !record(json[service])) throw new Error('서울 OpenAPI 요청 서비스 응답 없음: ' + service);
+  const payload = json[service];
+  checkResult(payload);
+  const rawTotal = payload.list_total_count;
+  const total = Number(rawTotal);
+  if (!(typeof rawTotal === 'number' || typeof rawTotal === 'string' && /^\d+$/.test(rawTotal)) ||
+    !Number.isSafeInteger(total) || total < 0) throw new Error('서울 OpenAPI total 형식 오류: ' + service);
+  if (!Array.isArray(payload.row) || payload.row.some(row => !record(row))) throw new Error('서울 OpenAPI row 형식 오류: ' + service);
+  const expected = Math.min(end - start + 1, Math.max(0, total - start + 1));
+  if (payload.row.length !== expected) throw new Error('서울 OpenAPI 불완전한 페이지: ' + service + ' start=' + start);
+  return {url, json, serviceKey: service, payload};
 }
 
 async function main(){
@@ -68,8 +121,8 @@ async function main(){
   const out = getArg('out', path.join(ROOT, 'data', 'raw', `${service || 'seoul-openapi'}-${start}-${end}.json`));
   const args = getArg('args', '').split(',').map(v => v.trim()).filter(Boolean);
   const data = await fetchSeoulOpenApi({key, service, start, end, args});
-  fs.mkdirSync(path.dirname(path.resolve(out)), {recursive: true});
-  fs.writeFileSync(path.resolve(out), JSON.stringify(data.json, null, 2) + '\n', 'utf8');
+  // Lazy import avoids the common helper's fetchSeoulOpenApi dependency cycle.
+  require('./commercial_api_common').writeJson(path.resolve(out), data.json);
   console.log(`저장: ${path.relative(ROOT, path.resolve(out))}  service=${data.serviceKey}`);
 }
 
