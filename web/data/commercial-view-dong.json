@@ -2,7 +2,7 @@
   "title": "서울 상권 화면용 행정동 통합 데이터",
   "source": "서울신용보증재단 상권분석서비스 OpenAPI",
   "quarter": "20262",
-  "generated_at": "2026-10-16T08:41:07.332Z",
+  "generated_at": "2026-10-16T08:51:08.230Z",
   "business_types": [
     {
       "id": "cafe",
