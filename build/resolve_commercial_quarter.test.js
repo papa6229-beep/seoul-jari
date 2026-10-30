@@ -18,6 +18,12 @@ function fixture(handler){
 }
 const present = ({service, quarter}) => ({[service]: {list_total_count: 1, row: [{STDR_YYQU_CD: quarter}]}});
 const base = {key: 'SECRET', baseline: '20262', now: new Date('2026-10-16T00:00:00+09:00'), services: ['Sales', 'Stores']};
+test('resolver keeps safe transport cause instead of discarding failure diagnostics',async()=>{
+  await assert.rejects(resolveCommercialQuarter({...base,requestOptions:{maxAttempts:1,onDiagnostic:()=>{}},fetchImpl:async()=>{
+    throw Object.assign(Error('SECRET http://private'),{cause:{code:'EAI_AGAIN'}});
+  }}),error=>error.code==='NETWORK'&&error.network_code==='EAI_AGAIN'&&error.phase==='connect'&&
+    /attempts=1/.test(error.message)&&!error.message.includes('SECRET')&&!error.message.includes('private'));
+});
 
 test('latest common published quarter, not calendar quarter, is chosen with first-page probes', async () => {
   const f = fixture(request => request.quarter === '20263' && request.service === 'Stores' ? noData : present(request));

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
-const {fetchSeoulOpenApi} = require('./fetch_seoul_openapi');
+const {fetchSeoulOpenApi,safeRequestDiagnostic} = require('./fetch_seoul_openapi');
 const {getKey, latestClosedQuarter, fetchPagedRows, HISTORY_SERVICES} = require('./commercial_api_common');
 
 const REQUIRED_SERVICES = Object.freeze([
@@ -52,9 +52,10 @@ async function resolveCommercialQuarter({key, quarter = '', baseline, now = new 
         }
       } catch (error) {
         if (error.code !== 'INFO-200') {
-          const code = /^(?:(?:ERROR|INFO)-\d{3}|NETWORK|TIMEOUT|HTTP_5XX|HTTP_ERROR)$/.test(error.code || '') ? error.code : 'SCHEMA';
-          const failure = new Error('Publication probe failed: service=' + service + ' quarter=' + candidate + ' code=' + code);
-          failure.code = code;
+          const diagnostic=safeRequestDiagnostic(error);
+          const failure = new Error('Publication probe failed: service=' + service + ' quarter=' + candidate + ' ' +
+            Object.entries(diagnostic).map(([name,value])=>name+'='+value).join(' '));
+          Object.assign(failure,diagnostic);
           throw failure;
         }
         published = false;

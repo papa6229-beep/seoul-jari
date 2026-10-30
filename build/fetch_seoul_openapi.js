@@ -38,14 +38,42 @@ function apiError(code, message){
   return error;
 }
 
+const NETWORK_CODES = new Set(['EAI_AGAIN','ENOTFOUND','ECONNREFUSED','ECONNRESET','ETIMEDOUT','EHOSTUNREACH','ENETUNREACH',
+  'UND_ERR_CONNECT_TIMEOUT','UND_ERR_HEADERS_TIMEOUT','UND_ERR_BODY_TIMEOUT','UND_ERR_SOCKET',
+  'CERT_HAS_EXPIRED','DEPTH_ZERO_SELF_SIGNED_CERT','UNABLE_TO_VERIFY_LEAF_SIGNATURE','ERR_TLS_CERT_ALTNAME_INVALID',
+  'SELF_SIGNED_CERT_IN_CHAIN','UNABLE_TO_GET_ISSUER_CERT_LOCALLY','REQUEST_TIMEOUT','UNKNOWN']);
+const TLS_CODES = new Set(['CERT_HAS_EXPIRED','DEPTH_ZERO_SELF_SIGNED_CERT','UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+  'ERR_TLS_CERT_ALTNAME_INVALID','SELF_SIGNED_CERT_IN_CHAIN','UNABLE_TO_GET_ISSUER_CERT_LOCALLY']);
+
+function transportError(original, phase){
+  const candidates=[original,original?.cause,...(Array.isArray(original?.cause?.errors)?original.cause.errors.slice(0,4):[])];
+  const code=candidates.map(x=>x?.code).find(x=>NETWORK_CODES.has(x)) || 'UNKNOWN';
+  return Object.assign(apiError(TLS_CODES.has(code)?'TLS':'NETWORK','서울 OpenAPI 연결/응답 읽기 실패'),{network_code:code,phase});
+}
+
+function safeRequestDiagnostic(error){
+  return {
+    code:/^(?:(?:ERROR|INFO)-\d{3}|NETWORK|TIMEOUT|TLS|HTTP_5XX|HTTP_ERROR)$/.test(error?.code||'')?error.code:'SCHEMA',
+    ...(NETWORK_CODES.has(error?.network_code)?{network_code:error.network_code}:{}),
+    ...(['connect','body','request'].includes(error?.phase)?{phase:error.phase}:{}),
+    ...(Number.isInteger(error?.attempts)&&error.attempts>=1&&error.attempts<=4?{attempts:error.attempts}:{})
+  };
+}
+
 async function fetchSeoulOpenApi({key, service, start = 1, end = 1000, format = 'json', args = [], fetchImpl = fetch,
-  maxAttempts = 3, timeoutMs = 20000, retryDelayMs = 500}){
+  maxAttempts = 4, timeoutMs = 20000, retryDelayMs = null,
+  sleep = ms => new Promise(resolve => setTimeout(resolve,ms)),
+  onDiagnostic = entry => process.stderr.write(JSON.stringify(entry)+'\n')}){
   if (!Number.isSafeInteger(start) || start < 1 || !Number.isSafeInteger(end) || end < start || end - start >= 1000)
     throw new Error('서울 OpenAPI 페이지 범위 오류');
-  if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 3 ||
+  if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 4 ||
     !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000 ||
-    !Number.isInteger(retryDelayMs) || retryDelayMs < 0 || retryDelayMs > 2000) throw new Error('Invalid request bounds');
+    retryDelayMs!==null&&(!Number.isInteger(retryDelayMs)||retryDelayMs<0||retryDelayMs>2000) ||
+    typeof sleep!=='function'||typeof onDiagnostic!=='function') throw new Error('Invalid request bounds');
   const url = buildSeoulUrl({key, service, start, end, format, args});
+  const report=entry=>{
+    try {onDiagnostic({event:'seoul_api_request',service:/^[A-Za-z][A-Za-z0-9_]*$/.test(service)?service:'invalid',start,end,...entry});} catch {}
+  };
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const controller = new AbortController();
     let timer;
@@ -54,20 +82,29 @@ async function fetchSeoulOpenApi({key, service, start = 1, end = 1000, format = 
         let res, text;
         try {
           res = await fetchImpl(url, {signal: controller.signal});
-          text = await res.text();
-        } catch { throw apiError('NETWORK', '서울 OpenAPI 연결/응답 읽기 실패'); }
+        } catch(error) { throw transportError(error,'connect'); }
+        try {text=await res.text();} catch(error) {throw transportError(error,'body');}
         if (!res.ok) throw apiError(res.status >= 500 && res.status <= 599 ? 'HTTP_5XX' : 'HTTP_ERROR',
           '서울 OpenAPI HTTP ' + (Number.isInteger(res.status) ? res.status : '오류'));
         return parseResponse({url, text, format, service, start, end});
       })();
       const timeout = new Promise((resolve, reject) => {
-        timer = setTimeout(() => { reject(apiError('TIMEOUT', '서울 OpenAPI 응답 시간 초과')); controller.abort(); }, timeoutMs);
+        timer = setTimeout(() => { reject(Object.assign(apiError('TIMEOUT', '서울 OpenAPI 응답 시간 초과'),
+          {network_code:'REQUEST_TIMEOUT',phase:'request'})); controller.abort(); }, timeoutMs);
       });
-      return await Promise.race([response, timeout]);
+      const result=await Promise.race([response, timeout]);
+      if(attempt>1)report({outcome:'recovered',attempt,max_attempts:maxAttempts});
+      return result;
     } catch (error) {
-      if (attempt === maxAttempts || !['NETWORK', 'TIMEOUT', 'HTTP_5XX', 'ERROR-500'].includes(error.code)) throw error;
+      error.attempts=attempt;
+      const retry=attempt<maxAttempts&&['NETWORK','TIMEOUT','HTTP_5XX','ERROR-500'].includes(error.code);
+      const wait=retry?(retryDelayMs===null?[5000,30000,60000][attempt-1]:retryDelayMs*attempt):0;
+      if(error.code!=='INFO-200')report({outcome:retry?'retry':'failed',...safeRequestDiagnostic(error),
+        attempt,max_attempts:maxAttempts,will_retry:retry,wait_ms:wait});
+      if(!retry)throw error;
+      clearTimeout(timer);
+      await sleep(wait);
     } finally { clearTimeout(timer); }
-    await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempt));
   }
 }
 
@@ -133,4 +170,4 @@ if (require.main === module){
   });
 }
 
-module.exports = {BASE_URL, buildSeoulUrl, fetchSeoulOpenApi};
+module.exports = {BASE_URL, buildSeoulUrl, fetchSeoulOpenApi, safeRequestDiagnostic};

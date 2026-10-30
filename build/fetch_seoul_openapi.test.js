@@ -3,6 +3,34 @@ const assert=require('node:assert/strict');
 const {buildSeoulUrl,fetchSeoulOpenApi}=require('./fetch_seoul_openapi');
 const fetchJson=value=>async()=>({ok:true,text:async()=>JSON.stringify(value)});
 const request=(json,extra={})=>fetchSeoulOpenApi({key:'KEY',service:'Test',fetchImpl:fetchJson(json),...extra});
+
+test('transport recovery uses spaced bounded retries and safe diagnostic codes',async()=>{
+  const waits=[],diagnostics=[];let calls=0;
+  const result=await fetchSeoulOpenApi({key:'SECRET',service:'Test',sleep:async ms=>waits.push(ms),
+    onDiagnostic:entry=>diagnostics.push(entry),fetchImpl:async()=>{
+      if(++calls<4)throw Object.assign(Error('http://SECRET/ address=private'),{cause:{code:'UND_ERR_CONNECT_TIMEOUT',address:'SECRET'}});
+      return {ok:true,text:async()=>JSON.stringify({Test:{list_total_count:1,row:[{}]}})};
+    }});
+  assert.equal(result.payload.row.length,1);assert.equal(calls,4);
+  assert.deepEqual(waits,[5000,30000,60000]);
+  assert.equal(diagnostics[0].network_code,'UND_ERR_CONNECT_TIMEOUT');
+  assert.equal(diagnostics[0].phase,'connect');
+  assert.equal(diagnostics.at(-1).outcome,'recovered');
+  assert.doesNotMatch(JSON.stringify(diagnostics),/SECRET|http:|private/);
+});
+
+test('final transport failure preserves safe phase/code and never retries TLS configuration errors',async()=>{
+  let calls=0;const entries=[];
+  await assert.rejects(fetchSeoulOpenApi({key:'SECRET',service:'Test',retryDelayMs:0,onDiagnostic:x=>entries.push(x),
+    fetchImpl:async()=>{calls++;return {ok:true,text:async()=>{throw Object.assign(Error('SECRET'),{cause:{code:'ECONNRESET'}});}};}}),
+    error=>error.code==='NETWORK'&&error.network_code==='ECONNRESET'&&error.phase==='body'&&error.attempts===4&&!error.message.includes('SECRET'));
+  assert.equal(calls,4);assert.equal(entries.at(-1).will_retry,false);
+  calls=0;
+  await assert.rejects(fetchSeoulOpenApi({key:'SECRET',service:'Test',retryDelayMs:0,onDiagnostic:()=>{},fetchImpl:async()=>{
+    calls++;throw Object.assign(Error('SECRET'),{cause:{code:'CERT_HAS_EXPIRED'}});
+  }}),error=>error.code==='TLS'&&error.network_code==='CERT_HAS_EXPIRED');
+  assert.equal(calls,1);
+});
 test('URL and requested wrappers remain compatible with unrelated metadata first',async()=>{
   assert.equal(buildSeoulUrl({key:'KEY',service:'CardSubwayStatsNew',start:1,end:5,args:['20260923']}),'http://openapi.seoul.go.kr:8088/KEY/json/CardSubwayStatsNew/1/5/20260923');
   for(const RESULT of [undefined,{CODE:'INFO-000',MESSAGE:'ok'}]){

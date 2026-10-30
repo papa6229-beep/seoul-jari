@@ -42,3 +42,15 @@ test('only accepted main data commits request the existing Pages deployment',()=
     assert.ok(text.indexOf('Refresh existing GitHub Pages')>text.indexOf('Guard final data before commit'));
   }
 });
+test('weekly refresh is preserved and catch-up cannot run collection after a healthy publication',()=>{
+  const text=read('update-living-population');
+  assert.match(text,/cron: '30 21 \* \* 2'/);
+  assert.match(text,/cron: '30 21 \* \* 0,1,3,4,5,6'/);
+  assert.match(text,/actions: read/);
+  assert.match(text,/node build\/decide_refresh_run\.js/);
+  assert.match(text,/SCHEDULE: \$\{\{ github\.event\.schedule \}\}/);
+  for(const title of ['Test refresh scripts','Resolve published quarter','Fetch living population','Guard final data before commit','Commit updated data']){
+    const step=text.split('      - name: ').find(x=>x.startsWith(title+'\n')||x.startsWith(title+'\r\n'));
+    assert.match(step,/steps\.refresh\.outputs\.run == 'true'/,title);
+  }
+});

@@ -3,6 +3,7 @@
 ## Normal operation
 
 - `Update Living Population` runs weekly on Tuesday 21:30 UTC, Wednesday 06:30 KST. GitHub may delay scheduled jobs.
+- Other days at the same time are catch-up checks only. A previous failed refresh triggers collection; a successful scheduled or manual publication suppresses unnecessary collection. Green verification-only runs and skipped catch-ups do not count as publication. Recent workflow and job metadata are read with `actions: read`, without creating or rewriting credentials. The bounded history window falls back to a guarded refresh if no accepted publication is found.
 - The job selects the newest quarter actually published by every required commercial feed, never earlier than the committed view quarter. A calendar quarter is not evidence of publication.
 - Daily population starts four days before today in KST and searches at most seven additional days. Only a validated `INFO-200` permits trying an earlier date. An explicit date or quarter never silently falls back.
 - Ten confirmed Seoul services return history despite quarter parameters. Full pagination is validated before selecting the requested quarter.
@@ -23,7 +24,8 @@ For store API smoke tests, specify `limit_gu` and/or `max_pages`. These runs wri
 ## Failure handling
 
 - Missing publication: normal default selection may choose the prior already-approved period. If no common period is available at or above baseline, stop and retain committed data.
-- Network timeout, HTTP 5xx or Seoul `ERROR-500`: bounded retry, then fail. Authentication, schema, duplicate identity, incomplete pages and unstable totals fail closed.
+- Network timeout, HTTP 5xx or Seoul `ERROR-500`: at most four request attempts with waits of 5, 30 and 60 seconds. Exhaustion fails the job, preserves committed data, and the next scheduled catch-up attempts recovery. Authentication, TLS certificate/configuration, schema, duplicate identity, incomplete pages and unstable totals fail closed rather than silently substituting data.
+- Diagnostics retain an allowlisted transport code (for example DNS `EAI_AGAIN`, connect timeout `UND_ERR_CONNECT_TIMEOUT`, or reset `ECONNRESET`), connect/body/request phase, service/page, attempts and recovery outcome. Do not infer provider responsibility from a generic NETWORK code: exact origin still requires contemporaneous evidence. Keys, raw exception messages, response bodies, credential URLs and addresses are never logged.
 - Inspect the first failed step and its service/period/error code. Never print credential URLs or raw provider error bodies.
 - Correct the demonstrated cause on a branch, run tests, then run a real `verify_only` workflow. A local mock test alone is not an operational recovery check.
 - Failed jobs do not run the final commit step. Preserve the last accepted repository snapshot. Independent hosting rollouts must preserve their own last good deployment.
@@ -45,3 +47,10 @@ If the final rebuild step fails, the accepted data commit may already exist; dis
 - Isolated store authentication smoke test: https://github.com/papa6229-beep/seoul-jari/actions/runs/38873753675 . Succeeded; no canonical data commit.
 - Complete real-source verification: https://github.com/papa6229-beep/seoul-jari/actions/runs/38873974523 . Succeeded for quarter `20262`, 425 view dongs, 105 industry types and daily population `20261012` across 25 gu. Checked 17 commercial feeds, 733 place files, 427 store shards / 435,683 points, exact core consistency and the existing 19-dataset retention guard. Commit was deliberately skipped.
 - Accepted branch publication: https://github.com/papa6229-beep/seoul-jari/actions/runs/38874775790 . Succeeded through the automatic data commit `1696a91`. The accepted snapshot was fetched back and independently passed the final disk and 19-dataset retention checks.
+
+## Recovery audit, 2026-10-30
+
+- Scheduled Oct21 collection and Pages publication succeeded: https://github.com/papa6229-beep/seoul-jari/actions/runs/39518855806 .
+- Oct28 stopped with `NETWORK` while probing `VwsmAdstrdSelngW` for `20263`, before collection or commit: https://github.com/papa6229-beep/seoul-jari/actions/runs/40610150922 . The old logger discarded the underlying transport exception, so historical DNS/socket/provider attribution cannot be reconstructed.
+- Oct30 unchanged-code full verification succeeded, including 17 commercial feeds, 25 gu dated `20261026` and all acceptance gates: https://github.com/papa6229-beep/seoul-jari/actions/runs/41043796250 . This proves current connectivity, not the exact cause of the Oct28 interruption.
+- Confirmed local resilience gaps were short 0.5/1-second waits, missing safe transport diagnostics, and no retry between weekly runs. The Oct30 patch addresses these gaps without weakening accepted-data checks.
